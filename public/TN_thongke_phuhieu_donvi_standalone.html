@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thống kê phù hiệu xe theo đơn vị vận tải</title>
+    <script src="/runtime-config.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --brand: #b91c1c;
+        --brand-2: #dc2626;
+        --brand-soft: #fff1f2;
+        --gold: #f6c453;
+        --ink: #172033;
+        --muted: #667085;
+        --line: #e4e7ec;
+        --bg: #f5f6f8;
+        --card: #ffffff;
+        --success: #047857;
+        --warning: #b45309;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Arial, sans-serif;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        min-height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--brand);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 700;
+        padding: 0 14px;
+      }
+
+      button:hover {
+        background: #991b1b;
+      }
+
+      button.secondary {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+      }
+
+      button.secondary:hover {
+        background: #f9fafb;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-width: 0;
+        height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--ink);
+        padding: 0 12px;
+        outline: none;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: rgba(185, 28, 28, 0.55);
+        box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+      }
+
+      .app {
+        width: min(1500px, 100%);
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: start;
+        overflow: hidden;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #991b1b 0%, #b91c1c 48%, #dc2626 100%);
+        color: #fff;
+        padding: 18px;
+        box-shadow: 0 14px 30px rgba(185, 28, 28, 0.22);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .brand img {
+        width: 50px;
+        height: 50px;
+        flex: 0 0 auto;
+        border-radius: 12px;
+        background: #fff;
+        object-fit: contain;
+        padding: 4px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.25;
+      }
+
+      .subtitle {
+        margin-top: 6px;
+        color: #ffe4e6;
+        font-size: 14px;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .hero-actions button {
+        background: #fff;
+        color: var(--brand);
+      }
+
+      .hero-actions button.secondary {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.28);
+      }
+
+      .panel,
+      .stat,
+      .mobile-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--card);
+        box-shadow: 0 10px 26px rgba(16, 24, 40, 0.06);
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: minmax(240px, 2fr) repeat(4, minmax(140px, 1fr));
+        gap: 14px;
+        align-items: end;
+        margin-top: 16px;
+        padding: 16px;
+      }
+
+      .field {
+        display: grid;
+        min-width: 0;
+        gap: 7px;
+      }
+
+      .field span {
+        color: #344054;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+        margin: 16px 0;
+      }
+
+      .stat {
+        padding: 16px;
+      }
+
+      .stat small {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .stat strong {
+        display: block;
+        margin-top: 8px;
+        color: var(--brand);
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .table-panel {
+        overflow: hidden;
+      }
+
+      .table-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .table-head h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .table-head p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .table-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .table-wrap {
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        min-width: 1180px;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 11px 10px;
+        text-align: left;
+        vertical-align: top;
+        font-size: 13px;
+      }
+
+      th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--brand);
+        color: #fff;
+        white-space: nowrap;
+      }
+
+      tbody tr:nth-child(even) {
+        background: #f9fafb;
+      }
+
+      .num {
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .total {
+        color: var(--success);
+      }
+
+      .active {
+        color: var(--brand);
+      }
+
+      .mobile-list {
+        display: none;
+        padding: 12px;
+      }
+
+      .mobile-card {
+        padding: 14px;
+      }
+
+      .mobile-card + .mobile-card {
+        margin-top: 12px;
+      }
+
+      .mobile-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .mobile-top h3 {
+        margin: 4px 0 0;
+        font-size: 16px;
+      }
+
+      .eyebrow {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .badge-total {
+        flex: 0 0 auto;
+        border-radius: 12px;
+        background: #ecfdf3;
+        color: var(--success);
+        padding: 8px 10px;
+        text-align: center;
+      }
+
+      .badge-total small {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .badge-total strong {
+        display: block;
+        font-size: 20px;
+      }
+
+      .mobile-info {
+        display: grid;
+        gap: 6px;
+        margin-top: 12px;
+        color: #475467;
+        font-size: 13px;
+      }
+
+      .mobile-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .metric {
+        border-radius: 12px;
+        background: #f9fafb;
+        padding: 10px;
+      }
+
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--brand);
+        font-size: 18px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 12px;
+      }
+
+      .chip {
+        border-radius: 999px;
+        background: #f2f4f7;
+        color: #344054;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 9px;
+      }
+
+      .pager {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      .message {
+        margin-top: 16px;
+        border: 1px dashed var(--line);
+        border-radius: 14px;
+        background: #fff;
+        padding: 28px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .message strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--ink);
+      }
+
+      @media (max-width: 1180px) {
+        .stats {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .filters {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .app {
+          padding: 12px;
+        }
+
+        .hero,
+        .table-head {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-actions,
+        .table-actions {
+          justify-content: stretch;
+        }
+
+        .hero-actions button,
+        .table-actions button,
+        .pager button {
+          width: 100%;
+        }
+
+        .filters,
+        .stats {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 20px;
+        }
+
+        .table-wrap {
+          display: none;
+        }
+
+        .mobile-list {
+          display: block;
+        }
+
+        .pager {
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div class="brand">
+          <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
+          <div>
+            <h1>Thống kê phù hiệu xe theo đơn vị vận tải</h1>
+            <div class="subtitle" id="statusText">Sẵn sàng tải dữ liệu từ AppSheet.</div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="secondary" id="clearButton" type="button">Xóa lọc</button>
+          <button id="reloadButton" type="button">Tải dữ liệu</button>
+        </div>
+      </section>
+
+      <section class="panel filters">
+        <label class="field">
+          <span>Tìm kiếm đơn vị</span>
+          <input id="searchInput" placeholder="Nhập tên đơn vị, mã doanh nghiệp..." />
+        </label>
+        <label class="field">
+          <span>Loại hình đơn vị</span>
+          <select id="typeFilter"><option value="">Tất cả</option></select>
+        </label>
+        <label class="field">
+          <span>Loại phù hiệu</span>
+          <select id="emblemFilter"><option value="">Tất cả</option></select>
+        </label>
+        <label class="field">
+          <span>Xã / phường</span>
+          <select id="wardFilter"><option value="">Tất cả</option></select>
+        </label>
+        <label class="field">
+          <span>Tổng phù hiệu</span>
+          <select id="totalFilter">
+            <option value="">Tất cả</option>
+            <option value="gte-10">Từ 10 trở lên</option>
+            <option value="gte-50">Từ 50 trở lên</option>
+            <option value="gte-100">Từ 100 trở lên</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="stats" id="statsCards"></section>
+
+      <section class="panel table-panel">
+        <div class="table-head">
+          <div>
+            <h2>Danh sách đơn vị vận tải</h2>
+            <p id="resultText">Chưa có dữ liệu.</p>
+          </div>
+          <div class="table-actions">
+            <span id="updatedText" class="subtitle">Cập nhật: Chưa có</span>
+            <button class="secondary" id="exportButton" type="button">Xuất CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="mobile-list" id="mobileList"></div>
+        <div class="pager">
+          <button class="secondary" id="prevButton" type="button">Trang trước</button>
+          <span id="pageText" class="subtitle">Trang 1 / 1</span>
+          <button class="secondary" id="nextButton" type="button">Trang sau</button>
+        </div>
+      </section>
+
+      <div class="message" id="emptyMessage" hidden>
+        <strong>Không có dữ liệu phù hợp</strong>
+        Hãy thử đổi từ khóa, nới bộ lọc hoặc tải lại dữ liệu từ AppSheet.
+      </div>
+    </main>
+
+    <script>
+      const config = window.__APPSHEET_RUNTIME_CONFIG__ || {};
+      const PAGE_SIZE = 20;
+      const state = {
+        stats: [],
+        types: [],
+        page: 1,
+        loading: false,
+        lastUpdated: ''
+      };
+
+      const els = {
+        status: document.getElementById('statusText'),
+        reload: document.getElementById('reloadButton'),
+        clear: document.getElementById('clearButton'),
+        export: document.getElementById('exportButton'),
+        search: document.getElementById('searchInput'),
+        type: document.getElementById('typeFilter'),
+        emblem: document.getElementById('emblemFilter'),
+        ward: document.getElementById('wardFilter'),
+        total: document.getElementById('totalFilter'),
+        statsCards: document.getElementById('statsCards'),
+        resultText: document.getElementById('resultText'),
+        updatedText: document.getElementById('updatedText'),
+        head: document.getElementById('tableHead'),
+        body: document.getElementById('tableBody'),
+        mobile: document.getElementById('mobileList'),
+        empty: document.getElementById('emptyMessage'),
+        prev: document.getElementById('prevButton'),
+        next: document.getElementById('nextButton'),
+        pageText: document.getElementById('pageText')
+      };
+
+      function normalize(value) {
+        return String(value || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd')
+          .replace(/Đ/g, 'D')
+          .toLowerCase();
+      }
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, (char) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[char]));
+      }
+
+      function requireConfig() {
+        if (!config.API_PROXY_URL) {
+          throw new Error('Thiếu cấu hình proxy AppSheet. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
+        }
+      }
+
+      async function appSheetFind(tableName, selector) {
+        requireConfig();
+        const response = await fetch(config.API_PROXY_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            tableName,
+            action: 'Find',
+            payload: {
+              Properties: { Selector: selector || `Filter(${tableName}, true)` }
+            }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`AppSheet ${response.status}: không tải được dữ liệu.`);
+        }
+
+        const text = await response.text();
+        return text ? JSON.parse(text) : [];
+      }
+
+      function isValidEmblem(item) {
+        if (String(item.TrangThai || '').trim() !== 'Hiệu lực') return false;
+        if (!item.NgayHetHan) return true;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return new Date(item.NgayHetHan) >= today;
+      }
+
+      function isActive(item) {
+        if (!isValidEmblem(item)) return false;
+        const status = normalize(item.TrangThaiKhaiThac);
+        if (!status || status.includes('dang') || status.includes('hoat dong')) return true;
+        if (status.includes('ngung') || status.includes('dung')) return false;
+        return true;
+      }
+
+      function buildStats(emblems, companies) {
+        const companyLookup = new Map(companies.map((item) => [String(item.IDDoanhNghiep || '').trim(), item]));
+        const typeSet = new Set();
+        const map = new Map();
+
+        emblems.filter(isValidEmblem).forEach((item, index) => {
+          const ref = String(item.Ref_DonViCapPhuHieu || '').trim();
+          const key = ref || String(item.Ten_don_vi || '').trim() || `unknown_${index}`;
+          const company = ref ? companyLookup.get(ref) : null;
+          const loai = String(item.LoaiPH || '').trim();
+          if (loai) typeSet.add(loai);
+
+          if (!map.has(key)) {
+            const tenDonVi = item.Ten_don_vi || company?.TenDoanhNghiep || '';
+            const maDN = company?.MaDN || company?.IDDoanhNghiep || key;
+            const loaihinh = item.Loaihinh_donvi || company?.Loaihinh_donvi || company?.LoaihinhDonvi || '';
+            map.set(key, {
+              companyId: key,
+              tenDonVi,
+              maDN,
+              loaihinh,
+              diaChi: company?.DiaChiSauSapNhap || '',
+              quanHuyen: company?.XaPhuongSauSapNhap || '',
+              nguoiDaiDien: company?.NguoiDaiDienTheoPhapLuat || company?.NguoiDaiDien || '',
+              dienThoai: company?.SoDienThoai || company?.DienThoai || '',
+              email: company?.Email || company?.EmailDonVi || item.GuiEmailbao || '',
+              searchIndex: normalize(`${tenDonVi} ${maDN} ${loaihinh}`),
+              total: 0,
+              active: 0,
+              byType: {}
+            });
+          }
+
+          const row = map.get(key);
+          row.total += 1;
+          if (isActive(item)) row.active += 1;
+          if (loai) row.byType[loai] = (row.byType[loai] || 0) + 1;
+        });
+
+        return {
+          stats: Array.from(map.values()).sort((a, b) => (b.total || 0) - (a.total || 0)),
+          types: Array.from(typeSet).sort()
+        };
+      }
+
+      function setOptions(select, values) {
+        select.innerHTML = '<option value="">Tất cả</option>';
+        values.filter(Boolean).sort().forEach((value) => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = value;
+          select.appendChild(option);
+        });
+      }
+
+      function filteredStats() {
+        const search = normalize(els.search.value);
+        const minTotal = els.total.value ? Number(els.total.value.split('-')[1]) : 0;
+        return state.stats.filter((item) => {
+          if (search && !item.searchIndex.includes(search)) return false;
+          if (els.type.value && item.loaihinh !== els.type.value) return false;
+          if (els.ward.value && item.quanHuyen !== els.ward.value) return false;
+          if (els.emblem.value && !(item.byType[els.emblem.value] > 0)) return false;
+          if (minTotal && item.total < minTotal) return false;
+          return true;
+        });
+      }
+
+      function calculateSummary(rows) {
+        const summary = {
+          totalCompany: rows.length,
+          totalEmblem: 0,
+          totalActive: 0,
+          typeTotals: {}
+        };
+        state.types.forEach((type) => { summary.typeTotals[type] = 0; });
+        rows.forEach((item) => {
+          summary.totalEmblem += item.total || 0;
+          summary.totalActive += item.active || 0;
+          state.types.forEach((type) => {
+            summary.typeTotals[type] += item.byType[type] || 0;
+          });
+        });
+        return summary;
+      }
+
+      function renderStats(summary) {
+        const cards = [
+          ['Đơn vị vận tải', summary.totalCompany],
+          ['Tổng phù hiệu', summary.totalEmblem],
+          ['Đang khai thác', summary.totalActive],
+          ['Loại phù hiệu', state.types.length],
+          ...state.types.slice(0, 2).map((type) => [type, summary.typeTotals[type] || 0])
+        ];
+
+        els.statsCards.innerHTML = cards.map(([label, value]) => `
+          <article class="stat">
+            <small>${escapeHtml(label)}</small>
+            <strong>${Number(value || 0).toLocaleString('vi-VN')}</strong>
+          </article>
+        `).join('');
+      }
+
+      function renderTable(rows) {
+        els.head.innerHTML = `<tr>
+          <th>STT</th>
+          <th>Loại hình</th>
+          <th>Tên đơn vị</th>
+          <th>Địa chỉ</th>
+          <th>Người đại diện</th>
+          <th>Điện thoại</th>
+          <th>Email</th>
+          <th>Đang KT</th>
+          <th>Tổng PH</th>
+          ${state.types.map((type) => `<th>${escapeHtml(type)}</th>`).join('')}
+        </tr>`;
+
+        els.body.innerHTML = rows.map((item, index) => `<tr>
+          <td>${(state.page - 1) * PAGE_SIZE + index + 1}</td>
+          <td>${escapeHtml(item.loaihinh)}</td>
+          <td><strong>${escapeHtml(item.tenDonVi)}</strong><br /><span>${escapeHtml(item.maDN)}</span></td>
+          <td>${escapeHtml(item.diaChi)}</td>
+          <td>${escapeHtml(item.nguoiDaiDien)}</td>
+          <td>${escapeHtml(item.dienThoai)}</td>
+          <td>${escapeHtml(item.email)}</td>
+          <td class="num active">${item.active || ''}</td>
+          <td class="num total">${item.total || 0}</td>
+          ${state.types.map((type) => `<td class="num">${item.byType[type] || ''}</td>`).join('')}
+        </tr>`).join('');
+      }
+
+      function renderMobile(rows) {
+        els.mobile.innerHTML = rows.map((item, index) => {
+          const chips = state.types
+            .map((type) => ({ type, total: item.byType[type] || 0 }))
+            .filter((entry) => entry.total > 0)
+            .map((entry) => `<span class="chip">${escapeHtml(entry.type)}: ${entry.total}</span>`)
+            .join('');
+
+          return `<article class="mobile-card">
+            <div class="mobile-top">
+              <div>
+                <div class="eyebrow">#${(state.page - 1) * PAGE_SIZE + index + 1} · ${escapeHtml(item.loaihinh || 'Chưa có loại hình')}</div>
+                <h3>${escapeHtml(item.tenDonVi || 'Chưa có tên đơn vị')}</h3>
+              </div>
+              <div class="badge-total"><small>Tổng PH</small><strong>${item.total || 0}</strong></div>
+            </div>
+            <div class="mobile-info">
+              ${item.diaChi ? `<div>${escapeHtml(item.diaChi)}</div>` : ''}
+              ${item.dienThoai ? `<div>Điện thoại: ${escapeHtml(item.dienThoai)}</div>` : ''}
+              ${item.email ? `<div>Email: ${escapeHtml(item.email)}</div>` : ''}
+            </div>
+            <div class="mobile-metrics">
+              <div class="metric"><span>Đang khai thác</span><strong>${item.active || 0}</strong></div>
+              <div class="metric"><span>Mã đơn vị</span><strong>${escapeHtml(item.maDN || item.companyId)}</strong></div>
+            </div>
+            ${chips ? `<div class="chips">${chips}</div>` : ''}
+          </article>`;
+        }).join('');
+      }
+
+      function render() {
+        const rows = filteredStats();
+        const summary = calculateSummary(rows);
+        const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+        if (state.page > totalPages) state.page = totalPages;
+        const start = (state.page - 1) * PAGE_SIZE;
+        const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+        renderStats(summary);
+        renderTable(pageRows);
+        renderMobile(pageRows);
+
+        els.resultText.textContent = state.loading
+          ? 'Đang tải dữ liệu...'
+          : `Hiển thị ${pageRows.length ? start + 1 : 0}-${Math.min(start + PAGE_SIZE, rows.length)} / ${rows.length} đơn vị`;
+        els.updatedText.textContent = `Cập nhật: ${state.lastUpdated || 'Chưa có'}`;
+        els.pageText.textContent = `Trang ${state.page} / ${totalPages}`;
+        els.prev.disabled = state.page <= 1;
+        els.next.disabled = state.page >= totalPages;
+        els.empty.hidden = state.loading || rows.length > 0;
+      }
+
+      async function loadData() {
+        state.loading = true;
+        els.reload.disabled = true;
+        els.status.textContent = 'Đang tải dữ liệu từ AppSheet...';
+        render();
+
+        try {
+          const [emblems, companies] = await Promise.all([
+            appSheetFind('PHUHIEUXE', 'Filter(PHUHIEUXE, [TrangThai] = "Hiệu lực")'),
+            appSheetFind('THONGTINDONVIVANTAI', 'Filter(THONGTINDONVIVANTAI, true)')
+          ]);
+          const result = buildStats(emblems, companies);
+          state.stats = result.stats;
+          state.types = result.types;
+          state.page = 1;
+          state.lastUpdated = new Date().toLocaleString('vi-VN');
+          setOptions(els.type, Array.from(new Set(state.stats.map((item) => item.loaihinh))));
+          setOptions(els.ward, Array.from(new Set(state.stats.map((item) => item.quanHuyen))));
+          setOptions(els.emblem, state.types);
+          els.status.textContent = `Đã tải ${state.stats.length.toLocaleString('vi-VN')} đơn vị vận tải.`;
+        } catch (error) {
+          els.status.textContent = error.message || 'Không tải được dữ liệu.';
+          state.stats = [];
+          state.types = [];
+        } finally {
+          state.loading = false;
+          els.reload.disabled = false;
+          render();
+        }
+      }
+
+      function clearFilters() {
+        els.search.value = '';
+        els.type.value = '';
+        els.emblem.value = '';
+        els.ward.value = '';
+        els.total.value = '';
+        state.page = 1;
+        render();
+      }
+
+      function exportCsv() {
+        const rows = filteredStats();
+        if (!rows.length) {
+          els.status.textContent = 'Không có dữ liệu để xuất CSV.';
+          return;
+        }
+
+        const headers = ['STT', 'Loại hình', 'Tên đơn vị', 'Địa chỉ', 'Người đại diện', 'Điện thoại', 'Email', 'Đang khai thác', 'Tổng phù hiệu', ...state.types];
+        const csvRows = [headers, ...rows.map((item, index) => [
+          index + 1,
+          item.loaihinh,
+          item.tenDonVi,
+          item.diaChi,
+          item.nguoiDaiDien,
+          item.dienThoai,
+          item.email,
+          item.active || 0,
+          item.total || 0,
+          ...state.types.map((type) => item.byType[type] || 0)
+        ])];
+
+        const csv = csvRows.map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ThongKePhuHieu_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      [els.search, els.type, els.emblem, els.ward, els.total].forEach((el) => {
+        el.addEventListener('input', () => {
+          state.page = 1;
+          render();
+        });
+      });
+
+      els.clear.addEventListener('click', clearFilters);
+      els.reload.addEventListener('click', loadData);
+      els.export.addEventListener('click', exportCsv);
+      els.prev.addEventListener('click', () => {
+        state.page = Math.max(1, state.page - 1);
+        render();
+      });
+      els.next.addEventListener('click', () => {
+        state.page += 1;
+        render();
+      });
+
+      render();
+      loadData();
+    </script>
+  </body>
+</html>

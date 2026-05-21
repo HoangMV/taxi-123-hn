@@ -1,0 +1,15 @@
+{
+  "short_name": "TAXI123HN",
+  "name": "TAXI 123_HN",
+  "icons": [
+    {
+      "src": "logo-taxi-123.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#f8fafc"
+}

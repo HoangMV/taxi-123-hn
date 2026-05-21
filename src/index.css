@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 47.4% 11.2%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+    --primary: 4 90% 48%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 43 96% 56%;
+    --secondary-foreground: 24 10% 10%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 0 84% 60%;
+    --accent-foreground: 24 10% 10%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 4 90% 48%;
+    --radius: 1rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-image:
+      radial-gradient(circle at top left, rgba(220, 38, 38, 0.10), transparent 25%),
+      radial-gradient(circle at bottom right, rgba(250, 204, 21, 0.12), transparent 20%);
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+@layer utilities {
+  .scrollbar-enterprise {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+  }
+
+  .scrollbar-enterprise::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .scrollbar-enterprise::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-enterprise::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.42);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+  }
+
+  .scrollbar-enterprise::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.7);
+    background-clip: padding-box;
+  }
+
+  .scrollbar-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(203, 213, 225, 0.28) transparent;
+  }
+
+  .scrollbar-sidebar::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .scrollbar-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(203, 213, 225, 0.22);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+  }
+
+  .scrollbar-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(203, 213, 225, 0.42);
+    background-clip: padding-box;
+  }
+}

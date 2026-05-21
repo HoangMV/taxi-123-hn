@@ -1,0 +1,56 @@
+{
+  "name": "taxi-123-hn",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.2.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "docxtemplater": "^3.67.4",
+    "file-saver": "^2.0.5",
+    "lucide-react": "^0.456.0",
+    "pizzip": "^3.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "react-scripts": "5.0.1",
+    "react-toastify": "^10.0.6",
+    "tailwind-merge": "^2.6.0",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "prestart": "node scripts/generate-runtime-config.cjs",
+    "start": "react-scripts start",
+    "proxy": "node scripts/appsheet-proxy.cjs",
+    "serve:proxy": "node scripts/generate-runtime-config.cjs && node scripts/appsheet-proxy.cjs",
+    "prebuild": "node scripts/generate-runtime-config.cjs",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "proxy": "http://localhost:8787",
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17"
+  }
+}
