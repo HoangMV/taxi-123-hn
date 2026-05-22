@@ -17,7 +17,8 @@ const config = {
     HOME: '/',
     DASHBOARD: '/dashboard',
     THONG_KE_PHU_HIEU_REACT: '/thong-ke-phu-hieu-don-vi',
-    QUYET_DINH_THU_HOI_GPKD_REACT: '/quyet-dinh-thu-hoi-gpkd'
+    QUYET_DINH_THU_HOI_GPKD_REACT: '/quyet-dinh-thu-hoi-gpkd',
+    BAN_GIAO_XE_REACT: '/ban-giao-xe'
   }
 };
 

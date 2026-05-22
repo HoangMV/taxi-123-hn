@@ -1,4 +1,4 @@
-import { FileText, IdCard, LayoutDashboard } from 'lucide-react';
+import { Car, FileText, IdCard, LayoutDashboard } from 'lucide-react';
 import config from './config';
 
 export const menuSections = [
@@ -23,6 +23,12 @@ export const menuSections = [
         text: 'Thu hồi GPKD',
         path: config.ROUTES.QUYET_DINH_THU_HOI_GPKD_REACT,
         icon: FileText
+      },
+      {
+        id: 'ban-giao-xe',
+        text: 'Bàn giao xe',
+        path: config.ROUTES.BAN_GIAO_XE_REACT,
+        icon: Car
       }
     ]
   }

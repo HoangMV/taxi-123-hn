@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bàn giao xe</title>
+    <script src="/runtime-config.js"></script>
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+      :root {
+        --brand: #b91c1c;
+        --ink: #172033;
+        --muted: #667085;
+        --line: #e4e7ec;
+        --bg: #f6f7f9;
+      }
+
+      @page {
+        size: A4;
+        margin: 1.5cm;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Arial, sans-serif;
+      }
+
+      .shell {
+        width: 100%;
+        margin: 0 auto;
+        padding: 12px;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.96);
+        padding: 14px;
+        box-shadow: 0 10px 28px rgba(16, 24, 40, 0.06);
+        backdrop-filter: blur(10px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand img {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        object-fit: contain;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .status {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--brand);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 700;
+        padding: 0 14px;
+      }
+
+      button.secondary {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .message {
+        margin-top: 16px;
+        border: 1px dashed var(--line);
+        border-radius: 12px;
+        background: #fff;
+        padding: 24px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .summary-item {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 10px;
+      }
+
+      .summary-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .summary-value {
+        margin-top: 4px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+      }
+
+      .preview {
+        margin-top: 16px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #d8dde6;
+        padding: 8px;
+      }
+
+      .page {
+        width: 21cm;
+        min-height: 29.7cm;
+        margin: 0 auto;
+        background: #fff;
+        padding: 1.5cm;
+        color: #000;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 14pt;
+        line-height: 1.35;
+        box-shadow: 0 16px 34px rgba(16, 24, 40, 0.2);
+      }
+
+      .national,
+      .subtitle,
+      .title {
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .subtitle {
+        text-decoration: underline;
+        text-underline-offset: 5px;
+      }
+
+      .title {
+        margin: 22px 0 8px;
+        font-size: 18pt;
+      }
+
+      .row {
+        margin: 8px 0;
+      }
+
+      .section-title {
+        margin: 18px 0 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 24px;
+      }
+
+      .label {
+        font-weight: 700;
+      }
+
+      .check-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px 18px;
+        margin-top: 8px;
+      }
+
+      .signatures {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 36px;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .sign-note {
+        margin-top: 4px;
+        font-weight: 400;
+        font-style: italic;
+      }
+
+      @media (max-width: 900px) {
+        .toolbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .actions,
+        .actions button,
+        .summary {
+          width: 100%;
+        }
+
+        .summary {
+          grid-template-columns: 1fr;
+        }
+
+        .page {
+          transform: scale(calc((100vw - 44px) / 793.7));
+          transform-origin: top left;
+          margin-left: 0;
+          margin-bottom: calc(-29.7cm + (29.7cm * ((100vw - 44px) / 793.7)) + 16px);
+        }
+      }
+
+      @media print {
+        html,
+        body {
+          width: auto !important;
+          height: auto !important;
+          overflow: visible !important;
+          background: #fff;
+        }
+
+        .toolbar,
+        .message,
+        .summary {
+          display: none !important;
+        }
+
+        .shell,
+        .preview {
+          margin: 0;
+          padding: 0;
+          border: 0;
+          background: #fff;
+          width: auto;
+          overflow: visible;
+        }
+
+        .page {
+          width: auto;
+          min-height: 0;
+          margin: 0;
+          padding: 0;
+          box-shadow: none;
+          border: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="toolbar">
+        <div class="brand">
+          <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
+          <div>
+            <h1>Bàn giao xe</h1>
+            <div class="status" id="statusText">Đang kiểm tra tham số ID_BienBanXe.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="secondary" id="reloadButton" type="button">Tải lại</button>
+          <button id="printButton" type="button" disabled>In tài liệu</button>
+          <button id="exportWordButton" type="button" disabled>Xuất Word</button>
+        </div>
+      </section>
+
+      <div class="message" id="messageBox" hidden></div>
+      <section class="summary" id="summary" hidden></section>
+      <section class="preview" id="preview" hidden>
+        <article class="page" id="documentPage"></article>
+      </section>
+    </main>
+
+    <script>
+      const config = window.__APPSHEET_RUNTIME_CONFIG__ || {};
+      const statusText = document.getElementById('statusText');
+      const messageBox = document.getElementById('messageBox');
+      const summary = document.getElementById('summary');
+      const preview = document.getElementById('preview');
+      const page = document.getElementById('documentPage');
+      const reloadButton = document.getElementById('reloadButton');
+      const printButton = document.getElementById('printButton');
+      const exportWordButton = document.getElementById('exportWordButton');
+      const idBienBanXe = new URLSearchParams(window.location.search).get('ID_BienBanXe') || '';
+      let currentPayload = null;
+
+      const identityItems = ['4 Mã đàm', 'SĐT xanh, trắng', 'Tem app', 'Tem mào, tròn, tem sườn', 'Bảng giá', 'Tem 10 điểm vàng'];
+      const equipmentItems = ['Lốp sơ cua', 'Kích lốp', 'Cầu trì ắc quy', 'Tay quay', 'Chụp ốc', 'Ốc giữ lốp'];
+      const paperItems = ['Đăng ký', 'Bảo hiểm', 'Chứng chỉ', 'Đăng kiểm', 'Phù hiệu taxi', 'Thẻ nhân viên, thẻ từ'];
+
+      function requireConfig() {
+        if (!config.API_PROXY_URL) {
+          throw new Error('Thiếu cấu hình proxy AppSheet. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, (char) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[char]));
+      }
+
+      function cleanValue(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).trim();
+      }
+
+      function parseDateValue(value) {
+        if (!value) return null;
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+      }
+
+      function adminDateParts(value) {
+        const date = parseDateValue(value);
+        if (!date) return { day: '', month: '', year: '' };
+        const day = String(date.getDate()).padStart(2, '0');
+        const monthValue = date.getMonth() + 1;
+        const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+        return { day, month, year: String(date.getFullYear()) };
+      }
+
+      function formatAdministrativeDate(value) {
+        const date = adminDateParts(value);
+        if (!date.day || !date.month || !date.year) return '';
+        return `${date.day}/${date.month}/${date.year}`;
+      }
+
+      function escapeSelectorValue(value) {
+        return String(value || '').replace(/"/g, '\\"');
+      }
+
+      async function appSheetFind(tableName, selector) {
+        requireConfig();
+        const response = await fetch(config.API_PROXY_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            tableName,
+            action: 'Find',
+            payload: {
+              Properties: { Selector: selector || `Filter(${tableName}, true)` }
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`AppSheet ${response.status}: ${text || 'Yêu cầu thất bại'}`);
+        }
+
+        const text = await response.text();
+        return text ? JSON.parse(text) : [];
+      }
+
+      function buildPayload(row) {
+        const ngayBanGiao = adminDateParts(row.NgayBanGiao);
+        return {
+          raw: row,
+          idBienBanXe: cleanValue(row.ID_BienBanXe),
+          soBienBan: cleanValue(row.SoBienBan),
+          ngayBanGiao,
+          ngayBanGiaoText: formatAdministrativeDate(row.NgayBanGiao),
+          tenBenGiao: cleanValue(row.TenBenGiao),
+          daiDienBenGiao1: cleanValue(row.DaiDienBenGiao1),
+          chucVuBenGiao1: cleanValue(row.ChucVuBenGiao1),
+          daiDienBenGiao2: cleanValue(row.DaiDienBenGiao2),
+          chucVuBenGiao2: cleanValue(row.ChucVuBenGiao2),
+          hoTenLaiXe: cleanValue(row.HoTenLaiXe),
+          soCccd: cleanValue(row.SoCCCD),
+          soGplx: cleanValue(row.SoGPLX),
+          hanGplx: formatAdministrativeDate(row.HanGPLX),
+          bienSoXe: cleanValue(row.BienSoXe),
+          maDam: cleanValue(row.MaDam),
+          soKhung: cleanValue(row.SoKhung),
+          soMay: cleanValue(row.SoMay),
+          nhanHieuXe: cleanValue(row.NhanHieuXe),
+          namSanXuat: cleanValue(row.NamSanXuat),
+          trangThaiQuanLyXe: cleanValue(row.TrangThaiQuanLyXe),
+          trangThaiBienBan: cleanValue(row.TrangThaiBienBan)
+        };
+      }
+
+      function checkList(items) {
+        return `<div class="check-list">${items.map((item) => `<div>☐ ${escapeHtml(item)}</div>`).join('')}</div>`;
+      }
+
+      function renderSummary(payload) {
+        const items = [
+          ['Số biên bản', payload.soBienBan],
+          ['Ngày bàn giao', payload.ngayBanGiaoText],
+          ['Bên giao', payload.tenBenGiao],
+          ['Bên nhận', payload.hoTenLaiXe],
+          ['Biển số xe', payload.bienSoXe],
+          ['Mã đàm', payload.maDam],
+          ['Trạng thái xe', payload.trangThaiQuanLyXe],
+          ['Trạng thái biên bản', payload.trangThaiBienBan]
+        ];
+        summary.innerHTML = items.map(([label, value]) => `
+          <div class="summary-item">
+            <div class="summary-label">${escapeHtml(label)}</div>
+            <div class="summary-value">${escapeHtml(value || 'Chưa có')}</div>
+          </div>
+        `).join('');
+      }
+
+      function renderDocument(payload) {
+        page.innerHTML = `
+          <div class="national">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+          <div class="subtitle">Độc lập - Tự do - Hạnh phúc</div>
+          <div class="title">BIÊN BẢN BÀN GIAO XE</div>
+          <div class="row"><span class="label">Số biên bản:</span> ${escapeHtml(payload.soBienBan)}</div>
+          <div class="row">Hôm nay, ngày ${escapeHtml(payload.ngayBanGiao.day || '...')} tháng ${escapeHtml(payload.ngayBanGiao.month || '...')} năm ${escapeHtml(payload.ngayBanGiao.year || '...')}</div>
+          <div class="section-title">Chúng tôi gồm có:</div>
+          <div class="row"><span class="label">Bên giao:</span> ${escapeHtml(payload.tenBenGiao)}</div>
+          <div class="row">Đại diện: 1. Ông/Bà ${escapeHtml(payload.daiDienBenGiao1)} - ${escapeHtml(payload.chucVuBenGiao1)}</div>
+          <div class="row">2. Ông/Bà ${escapeHtml(payload.daiDienBenGiao2)} - ${escapeHtml(payload.chucVuBenGiao2)}</div>
+          <div class="row"><span class="label">Bên nhận:</span> Ông/Bà ${escapeHtml(payload.hoTenLaiXe)}</div>
+          <div class="grid">
+            <div>Số CCCD: ${escapeHtml(payload.soCccd)}</div>
+            <div>Số GPLX: ${escapeHtml(payload.soGplx)}</div>
+            <div>Hạn GPLX: ${escapeHtml(payload.hanGplx)}</div>
+          </div>
+          <div class="row">Cùng tiến hành bàn giao phương tiện và xác nhận các trang, thiết bị, giấy tờ kèm theo phương tiện như sau:</div>
+          <div class="section-title">I. Thông tin phương tiện</div>
+          <div class="grid">
+            <div>- Biển kiểm soát: ${escapeHtml(payload.bienSoXe)}</div>
+            <div>- Mã đàm: ${escapeHtml(payload.maDam)}</div>
+            <div>- Số khung: ${escapeHtml(payload.soKhung)}</div>
+            <div>- Số máy: ${escapeHtml(payload.soMay)}</div>
+            <div>- Nhãn hiệu: ${escapeHtml(payload.nhanHieuXe)}</div>
+            <div>- Năm sản xuất: ${escapeHtml(payload.namSanXuat)}</div>
+          </div>
+          <div class="section-title">II. Nhận diện thương hiệu</div>
+          ${checkList(identityItems)}
+          <div class="section-title">III. Trang, thiết bị, giấy tờ</div>
+          <div class="row"><span class="label">1. Thiết bị đồng hồ taximet</span></div>
+          <div class="grid">
+            <div>Loại đồng hồ: ☐ HP ☐ Penten X</div>
+            <div>Cài giá: ☐ 5 chỗ ☐ 7 chỗ ☐ 8 chỗ</div>
+            <div>Loa khách trên xe: ☐ Không nghe thấy ☐ Đúng, nghe rõ</div>
+            <div>Loa xuống xe: ☐ Không nghe thấy ☐ Đúng, nghe rõ</div>
+            <div>Niêm phong hộp đồng hồ: ☐ Đã có, không rách</div>
+            <div>Lời chào: ☐ Đã cài đặt đủ nội dung ☐ Chưa cài đặt</div>
+          </div>
+          <div class="row"><span class="label">2. Bộ đàm</span> - Số mã đàm: ${escapeHtml(payload.maDam)}</div>
+          <div class="row">☐ Đúng mã đàm ☐ Kênh 1 ☐ Kênh 3 ☐ Trung tâm xác nhận rõ xe</div>
+          <div class="row"><span class="label">3. Trang bị kèm theo</span></div>
+          ${checkList(equipmentItems)}
+          <div class="row"><span class="label">4. Giấy tờ xe và lái xe</span></div>
+          ${checkList(paperItems)}
+          <div class="signatures">
+            <div>ĐẠI DIỆN BÊN GIAO<div class="sign-note">(Ký và ghi rõ họ tên)</div></div>
+            <div>BAN THANH TRA<div class="sign-note">(Ký và ghi rõ họ tên)</div></div>
+            <div>ĐẠI DIỆN BÊN NHẬN<div class="sign-note">(Ký và ghi rõ họ tên)</div></div>
+          </div>
+        `;
+      }
+
+      function buildTemplateData(payload) {
+        return {
+          so_bien_ban: payload.soBienBan,
+          ngay_ban_giao: payload.ngayBanGiao.day,
+          thang_ban_giao: payload.ngayBanGiao.month,
+          nam_ban_giao: payload.ngayBanGiao.year,
+          ten_ben_giao: payload.tenBenGiao,
+          dai_dien_ben_giao_1: payload.daiDienBenGiao1,
+          chuc_vu_ben_giao_1: payload.chucVuBenGiao1,
+          dai_dien_ben_giao_2: payload.daiDienBenGiao2,
+          chuc_vu_ben_giao_2: payload.chucVuBenGiao2,
+          ho_ten_lai_xe: payload.hoTenLaiXe,
+          so_cccd: payload.soCccd,
+          so_gplx: payload.soGplx,
+          han_gplx: payload.hanGplx,
+          bien_so_xe: payload.bienSoXe,
+          ma_dam: payload.maDam,
+          so_khung: payload.soKhung,
+          so_may: payload.soMay,
+          nhan_hieu_xe: payload.nhanHieuXe,
+          nam_san_xuat: payload.namSanXuat
+        };
+      }
+
+      function showMessage(message) {
+        messageBox.hidden = false;
+        messageBox.textContent = message;
+        summary.hidden = true;
+        preview.hidden = true;
+        printButton.disabled = true;
+        exportWordButton.disabled = true;
+      }
+
+      async function loadData() {
+        currentPayload = null;
+        reloadButton.disabled = true;
+        printButton.disabled = true;
+        exportWordButton.disabled = true;
+        messageBox.hidden = true;
+        summary.hidden = true;
+        preview.hidden = true;
+        statusText.textContent = 'Đang tải biên bản bàn giao xe từ AppSheet...';
+
+        try {
+          if (!idBienBanXe) {
+            throw new Error('Thiếu tham số ID_BienBanXe trên URL.');
+          }
+
+          const selectorValue = escapeSelectorValue(idBienBanXe);
+          const rows = await appSheetFind('XE_BANGIAO', `Filter(XE_BANGIAO, [ID_BienBanXe] = "${selectorValue}")`);
+          const row = Array.isArray(rows) ? rows[0] : null;
+          if (!row) {
+            throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
+          }
+
+          currentPayload = buildPayload(row);
+          renderSummary(currentPayload);
+          renderDocument(currentPayload);
+
+          statusText.textContent = `Đã tải biên bản ${idBienBanXe}.`;
+          summary.hidden = false;
+          preview.hidden = false;
+          printButton.disabled = false;
+          exportWordButton.disabled = false;
+        } catch (error) {
+          statusText.textContent = 'Không tải được biên bản bàn giao xe.';
+          showMessage(error.message || 'Không tải được biên bản bàn giao xe.');
+        } finally {
+          reloadButton.disabled = false;
+        }
+      }
+
+      async function exportToWordTemplate() {
+        if (!currentPayload) return;
+
+        exportWordButton.disabled = true;
+        exportWordButton.textContent = 'Đang xuất...';
+
+        try {
+          const response = await fetch('/ban_giao_xe_template.docx');
+          if (!response.ok) {
+            throw new Error('Không thể tải template Word.');
+          }
+
+          const templateContent = await response.arrayBuffer();
+          const zip = new PizZip(templateContent);
+          const Docxtemplater = window.docxtemplater?.Docxtemplater || window.docxtemplater;
+          const doc = new Docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+            nullGetter: () => ''
+          });
+
+          doc.render(buildTemplateData(currentPayload));
+
+          const blob = doc.getZip().generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          });
+
+          saveAs(blob, `Ban_giao_xe_${currentPayload.soBienBan || currentPayload.idBienBanXe || 'new'}.docx`);
+        } catch (error) {
+          showMessage(error.message || 'Không xuất được file Word.');
+        } finally {
+          exportWordButton.disabled = !currentPayload;
+          exportWordButton.textContent = 'Xuất Word';
+        }
+      }
+
+      reloadButton.addEventListener('click', loadData);
+      printButton.addEventListener('click', () => window.print());
+      exportWordButton.addEventListener('click', exportToWordTemplate);
+      loadData();
+    </script>
+  </body>
+</html>
