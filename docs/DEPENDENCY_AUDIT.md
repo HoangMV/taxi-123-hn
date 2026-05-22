@@ -2,7 +2,7 @@
 
 ## Nguyên tắc
 
-- Không chạy `npm audit fix --force` nếu chưa kiểm tra tác động, vì lệnh này có thể hạ hoặc thay đổi mạnh `react-scripts`.
+- Không chạy `npm audit fix --force` nếu chưa kiểm tra tác động, vì lệnh này có thể thay đổi mạnh nền build hoặc thư viện nghiệp vụ.
 - Ưu tiên cập nhật dependency theo từng nhóm nhỏ, chạy `npm run build` sau mỗi nhóm.
 - Các thư viện xử lý file chỉ được dùng cho luồng cần thiết và nên tải bằng lazy-load.
 
@@ -16,8 +16,8 @@
 
 ## Excel và Word
 
-- `xlsx` chỉ dùng cho chức năng xuất file Excel từ dữ liệu AppSheet đã tải trong hệ thống.
-- Không dùng `xlsx` để import hoặc phân tích file Excel do người dùng tải lên.
+- `exceljs` chỉ dùng cho chức năng xuất file Excel từ dữ liệu AppSheet đã tải trong hệ thống.
+- Không dùng thư viện Excel để import hoặc phân tích file Excel do người dùng tải lên khi chưa rà soát riêng.
 - `docxtemplater`, `pizzip`, `file-saver` chỉ tải khi người dùng bấm xuất Word.
 - Nếu sau này có chức năng import file từ người dùng, cần đánh giá lại thư viện xử lý file trước khi triển khai.
 
@@ -30,11 +30,12 @@ npm run build
 npm audit --omit=dev
 ```
 
-Nếu `npm audit` báo lỗi ở dependency gián tiếp của `react-scripts`, cần ghi nhận và cân nhắc nâng cấp nền build thay vì ép sửa tự động.
+Nếu `npm audit` báo lỗi ở dependency gián tiếp của nền build hoặc thư viện xuất file, cần ghi nhận và cân nhắc thay thư viện thay vì ép sửa tự động.
 
 ## Trạng thái hiện tại
 
-- `npm run build` đã tách `xlsx`, `docxtemplater`, `pizzip`, `file-saver` khỏi bundle chính bằng dynamic import.
-- `npm audit --omit=dev` vẫn báo các cảnh báo từ chuỗi phụ thuộc của `react-scripts` và `xlsx`.
-- `xlsx` hiện chưa có bản vá npm chính thức cho cảnh báo audit, nên dự án chỉ dùng thư viện này cho luồng xuất Excel từ dữ liệu nội bộ.
+- Dự án đã chuyển từ `react-scripts` sang Vite để giảm phụ thuộc cũ.
+- Chức năng xuất Excel đã chuyển từ `xlsx` sang `exceljs`.
+- `docxtemplater`, `pizzip`, `file-saver` và `exceljs` chỉ tải khi người dùng bấm xuất file.
+- `npm audit` hiện không còn cảnh báo sau khi cập nhật dependency.
 - Không dùng chức năng import Excel từ người dùng khi chưa thay hoặc đánh giá lại thư viện xử lý file.

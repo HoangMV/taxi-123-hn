@@ -8,17 +8,38 @@
 
 ## Chạy dự án ở máy local
 
+Lần đầu tải dự án về máy:
+
 ```bash
 npm install
 copy .env.example .env
+```
+
+Sau đó mở file `.env` và điền đúng thông tin AppSheet.
+
+Khi chạy dự án ở máy local, cần mở **2 terminal** trong thư mục dự án.
+
+Terminal 1 chạy giao diện React:
+
+```bash
 npm start
 ```
 
-Chạy proxy AppSheet ở terminal khác:
+Terminal 2 chạy proxy AppSheet:
 
 ```bash
 npm run proxy
 ```
+
+Sau khi cả 2 terminal đều đang chạy, mở trình duyệt tại:
+
+```text
+http://127.0.0.1:3000
+```
+
+Không tắt terminal chạy `npm run proxy` khi đang dùng app. Nếu proxy không chạy, các màn đọc dữ liệu sẽ báo lỗi dạng `AppSheet 500` hoặc không tải được dữ liệu.
+
+Nếu `localhost:3000` mở nhầm sang app khác trên máy, hãy dùng `http://127.0.0.1:3000`.
 
 ## Biến môi trường
 

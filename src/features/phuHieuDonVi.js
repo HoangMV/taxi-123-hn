@@ -223,9 +223,12 @@ export function filterStats(statsData, filters) {
   });
 }
 
-export function exportStatsToWorkbook(XLSX, filteredStats, phLoaiTypes, summary) {
-  const workbook = XLSX.utils.book_new();
+export function buildStatsExcelWorkbook(ExcelJS, filteredStats, phLoaiTypes, summary) {
+  const Workbook = ExcelJS.Workbook || ExcelJS.default?.Workbook;
+  const workbook = new Workbook();
+  const worksheet = workbook.addWorksheet('Theo đơn vị');
   const today = new Date().toLocaleString('vi-VN');
+  const totalColumns = 9 + phLoaiTypes.length;
   const headers = [
     'STT',
     'Loại hình',
@@ -277,20 +280,69 @@ export function exportStatsToWorkbook(XLSX, filteredStats, phLoaiTypes, summary)
     ...phLoaiTypes.map((type) => summary.typeTotals[type] || 0)
   ]);
 
-  const worksheet = XLSX.utils.aoa_to_sheet(rows);
-  worksheet['!cols'] = [
-    { wch: 5 },
-    { wch: 18 },
-    { wch: 38 },
-    { wch: 40 },
-    { wch: 22 },
-    { wch: 15 },
-    { wch: 30 },
-    { wch: 14 },
-    { wch: 16 },
-    ...phLoaiTypes.map(() => ({ wch: 14 }))
+  worksheet.columns = [
+    { width: 8 },
+    { width: 18 },
+    { width: 38 },
+    { width: 40 },
+    { width: 22 },
+    { width: 16 },
+    { width: 30 },
+    { width: 15 },
+    { width: 18 },
+    ...phLoaiTypes.map(() => ({ width: 15 }))
   ];
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Theo don vi');
+  rows.forEach((row) => worksheet.addRow(row));
+
+  [1, 2, 3, 4].forEach((rowNumber) => {
+    worksheet.mergeCells(rowNumber, 1, rowNumber, totalColumns);
+  });
+
+  worksheet.getRow(1).height = 24;
+  worksheet.getCell('A1').font = { bold: true, size: 14 };
+  worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+
+  [2, 3, 4].forEach((rowNumber) => {
+    worksheet.getCell(rowNumber, 1).alignment = { horizontal: 'left', vertical: 'middle' };
+  });
+
+  const headerRow = worksheet.getRow(6);
+  headerRow.height = 34;
+  headerRow.eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFB91C1C' }
+    };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FFD9E2EC' } },
+      left: { style: 'thin', color: { argb: 'FFD9E2EC' } },
+      bottom: { style: 'thin', color: { argb: 'FFD9E2EC' } },
+      right: { style: 'thin', color: { argb: 'FFD9E2EC' } }
+    };
+  });
+
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber <= 6) return;
+
+    row.eachCell((cell, columnNumber) => {
+      cell.alignment = {
+        horizontal: columnNumber === 1 || columnNumber >= 8 ? 'center' : 'left',
+        vertical: 'middle',
+        wrapText: true
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFE5EAF0' } },
+        left: { style: 'thin', color: { argb: 'FFE5EAF0' } },
+        bottom: { style: 'thin', color: { argb: 'FFE5EAF0' } },
+        right: { style: 'thin', color: { argb: 'FFE5EAF0' } }
+      };
+    });
+  });
+
+  worksheet.views = [{ state: 'frozen', ySplit: 6 }];
   return workbook;
 }

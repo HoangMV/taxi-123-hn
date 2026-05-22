@@ -23,7 +23,7 @@ import {
   CACHE_KEY,
   CACHE_TTL_MS,
   calculateSummary,
-  exportStatsToWorkbook,
+  buildStatsExcelWorkbook,
   filterStats,
   sortStats
 } from '../features/phuHieuDonVi';
@@ -243,10 +243,19 @@ const ThongKePhuHieuDonViPage = () => {
 
     setExportingExcel(true);
     try {
-      const XLSX = await import('xlsx');
-      const workbook = exportStatsToWorkbook(XLSX, filteredStats, phLoaiTypes, summary);
+      const [ExcelJS, fileSaver] = await Promise.all([
+        import('exceljs'),
+        import('file-saver')
+      ]);
+      const workbook = buildStatsExcelWorkbook(ExcelJS, filteredStats, phLoaiTypes, summary);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
       const fileName = `ThongKePhuHieu_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
+      const saveAs = fileSaver.saveAs || fileSaver.default;
+      saveAs(blob, fileName);
+      toast.success('Đã xuất file Excel.');
     } catch (error) {
       toast.error(`Xuất Excel thất bại: ${error.message}`);
     } finally {
