@@ -12,6 +12,7 @@ export function parseDateValue(value) {
 export function getNguoiPhuTrachInfo(quyetDinh, nguoiPhuTrachList) {
   if (!quyetDinh || !Array.isArray(nguoiPhuTrachList)) return null;
   const nguoiKyId = String(quyetDinh.NguoiKy || '').trim();
+
   return nguoiPhuTrachList.find((item) => String(item.IDNguoi || '').trim() === nguoiKyId) || null;
 }
 
@@ -39,6 +40,12 @@ export function formatAdministrativeDate(value) {
   return { day, month, year };
 }
 
+export function formatAdministrativeDateString(value) {
+  const date = formatAdministrativeDate(value);
+  if (!date.day || !date.month || !date.year) return '';
+  return `${date.day}/${date.month}/${date.year}`;
+}
+
 export function buildCanCuList(refIds, canCuData) {
   if (!refIds) return [];
 
@@ -64,7 +71,7 @@ export function buildCanCuList(refIds, canCuData) {
     .map((id) => canCuData.find((item) => String(item.ID_CanCu || item.ID_CANCU || item.ID || '').trim() === String(id).trim()))
     .filter(Boolean)
     .map((item) => {
-      const ngayBanHanh = formatVietnameseDate(item.NgayBanHanh);
+      const ngayBanHanh = formatAdministrativeDateString(item.NgayBanHanh);
       const ngay = ngayBanHanh ? ` ngày ${ngayBanHanh}` : '';
       const soVanBan = item.SoVanBan || item.SoKyHieu || '';
       const so = soVanBan ? ` số ${soVanBan}` : '';

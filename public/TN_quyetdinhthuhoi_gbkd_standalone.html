@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Quyết định thu hồi GPKD</title>
     <script src="/runtime-config.js"></script>
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
       :root {
         --brand: #b91c1c;
@@ -12,6 +15,16 @@
         --muted: #667085;
         --line: #e4e7ec;
         --bg: #f6f7f9;
+      }
+
+      @page {
+        size: A4;
+        margin: 1.5cm 1.5cm 1.5cm 2.5cm;
+      }
+
+      @page landscape {
+        size: A4 landscape;
+        margin: 1cm 1.5cm 1cm 2cm;
       }
 
       * {
@@ -26,9 +39,9 @@
       }
 
       .shell {
-        width: min(1200px, 100%);
+        width: 100%;
         margin: 0 auto;
-        padding: 20px;
+        padding: 12px;
       }
 
       .toolbar {
@@ -102,11 +115,12 @@
 
       .preview {
         margin-top: 16px;
-        overflow: auto;
+        overflow-x: hidden;
+        overflow-y: visible;
         border: 1px solid var(--line);
         border-radius: 12px;
         background: #d8dde6;
-        padding: 16px;
+        padding: 8px;
       }
 
       .page {
@@ -126,6 +140,13 @@
         width: 31.7cm;
         min-height: 21cm;
         padding: 1cm 1.5cm 1cm 2cm;
+        page: landscape;
+      }
+
+      .preview .landscape {
+        transform: scale(min(1, calc((100vw - 40px) / 1198)));
+        transform-origin: top center;
+        margin-bottom: calc((21cm * min(1, calc((100vw - 40px) / 1198))) - 21cm + 16px);
       }
 
       .header {
@@ -186,6 +207,7 @@
 
       table {
         width: 100%;
+        table-layout: fixed;
         border-collapse: collapse;
         margin-top: 10px;
         font-size: 12pt;
@@ -208,6 +230,8 @@
         border: 1px solid #000;
         padding: 5px;
         vertical-align: top;
+        overflow-wrap: anywhere;
+        word-break: normal;
       }
 
       th {
@@ -258,7 +282,11 @@
       }
 
       @media print {
+        html,
         body {
+          width: auto !important;
+          height: auto !important;
+          overflow: visible !important;
           background: #fff;
         }
 
@@ -279,10 +307,29 @@
 
         .page {
           width: auto;
-          min-height: auto;
+          min-height: 0;
           margin: 0;
+          padding: 0;
           box-shadow: none;
+          border: 0;
           page-break-after: always;
+        }
+
+        .landscape {
+          width: auto;
+          min-height: 0;
+          padding: 0;
+          transform: none !important;
+          margin-bottom: 0 !important;
+          page: landscape;
+        }
+
+        .page-break {
+          display: none;
+        }
+
+        .page:last-child {
+          page-break-after: auto;
         }
       }
     </style>
@@ -300,6 +347,7 @@
         <div class="actions">
           <button class="secondary" id="reloadButton" type="button">Tải lại</button>
           <button id="printButton" type="button" disabled>In tài liệu</button>
+          <button id="exportWordButton" type="button" disabled>Xuất Word</button>
         </div>
       </section>
 
@@ -317,7 +365,9 @@
       const page = document.getElementById('documentPage');
       const reloadButton = document.getElementById('reloadButton');
       const printButton = document.getElementById('printButton');
+      const exportWordButton = document.getElementById('exportWordButton');
       const decisionId = new URLSearchParams(window.location.search).get('IDQuyetDinh') || '';
+      let currentPayload = null;
 
       function requireConfig() {
         if (!config.API_PROXY_URL) {
@@ -335,11 +385,15 @@
         }[char]));
       }
 
-      function formatDate(value) {
+      function formatAdministrativeDate(value) {
         if (!value) return '';
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return '';
-        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const day = String(date.getDate()).padStart(2, '0');
+        const monthValue = date.getMonth() + 1;
+        const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+        const year = String(date.getFullYear());
+        return `${day}/${month}/${year}`;
       }
 
       function adminDate(value) {
@@ -347,7 +401,7 @@
         if (Number.isNaN(date.getTime())) return { day: '', month: '', year: '' };
         return {
           day: String(date.getDate()).padStart(2, '0'),
-          month: String(date.getMonth() + 1).padStart(2, '0'),
+          month: date.getMonth() + 1 <= 2 ? String(date.getMonth() + 1).padStart(2, '0') : String(date.getMonth() + 1),
           year: String(date.getFullYear())
         };
       }
@@ -390,7 +444,7 @@
           .filter(Boolean)
           .map((item) => {
             const so = item.SoVanBan || item.SoKyHieu ? ` số ${item.SoVanBan || item.SoKyHieu}` : '';
-            const ngay = item.NgayBanHanh ? ` ngày ${formatDate(item.NgayBanHanh)}` : '';
+            const ngay = item.NgayBanHanh ? ` ngày ${formatAdministrativeDate(item.NgayBanHanh)}` : '';
             const coQuan = item.CQBanHanh || item.CoQuanBanHanh ? ` của ${item.CQBanHanh || item.CoQuanBanHanh}` : '';
             const ten = item.TenVanBanDayDu || item.TrichYeu ? ` ${item.TenVanBanDayDu || item.TrichYeu}` : '';
             return `${item.LoaiVanBan || 'Văn bản'}${so}${ngay}${coQuan}${ten}`;
@@ -399,6 +453,10 @@
 
       function buildReason(item) {
         return [item.LyDoThuHoiDuaQD, item.LyDoThuHoiKhac ? `(${item.LyDoThuHoiKhac})` : ''].filter(Boolean).join(' ');
+      }
+
+      function getNguoiKyName(info) {
+        return info?.TenNguoi || info?.HoTen || info?.NguoiPhuTrach || '';
       }
 
       function renderDocument(payload) {
@@ -410,15 +468,6 @@
         const canCuHtml = payload.canCuList.length
           ? payload.canCuList.map((item) => `<p><em>Căn cứ ${escapeHtml(item)};</em></p>`).join('')
           : '<p><em>Căn cứ các quy định pháp luật hiện hành;</em></p>';
-
-        const rows = payload.details.map((item, index) => `<tr>
-          <td class="center">${index + 1}</td>
-          <td>${escapeHtml(item['Tên đơn vị'] || item.TenDonVi || item.Ten_don_vi || '')}</td>
-          <td>${escapeHtml(item['Địa chỉ'] || item.DiaChi || '')}</td>
-          <td>${escapeHtml(item['Số ĐKKD'] || item.SoDKKD || '')}</td>
-          <td>${escapeHtml(item['Số GP KDVT'] || item.SoGPKDVT || item.SoGiayPhep || '')}</td>
-          <td>${escapeHtml(buildReason(item))}</td>
-        </tr>`).join('');
 
         page.innerHTML = `
           <div class="header">
@@ -458,7 +507,7 @@
             </div>
             <div class="signature">
               <div>${escapeHtml(payload.thamQuyen || '')}</div>
-              <div>${escapeHtml(payload.chucVu || 'GIÁM ĐỐC')}</div>
+              <div>${escapeHtml(payload.chucVu || '')}</div>
               <div class="signature-name">${escapeHtml(payload.nguoiKy || '')}</div>
             </div>
           </div>
@@ -488,7 +537,7 @@
                 <td>${escapeHtml(item['Địa chỉ sau sáp nhập'] || item['Địa chỉ'] || item.DiaChi || '')}</td>
                 <td>${escapeHtml(item['Số ĐKKD'] || item.SoDKKD || '')}</td>
                 <td>${escapeHtml(item['Số GP KDVT'] || item.SoGPKDVT || item.SoGiayPhep || '')}</td>
-                <td>${escapeHtml(item['Ngày cấp'] || item.NgayCap || '')}</td>
+                <td>${escapeHtml(formatAdministrativeDate(item['Ngày cấp'] || item.NgayCap || ''))}</td>
                 <td>${escapeHtml(item['Loại hình vận tải'] || item.LoaiHinhVanTai || '')}</td>
                 <td>${escapeHtml(buildReason(item))}</td>
               </tr>`).join('') || '<tr><td colspan="8" class="center">Không có chi tiết thu hồi.</td></tr>'}</tbody>
@@ -502,11 +551,14 @@
         messageBox.textContent = message;
         preview.hidden = true;
         printButton.disabled = true;
+        exportWordButton.disabled = true;
       }
 
       async function loadData() {
+        currentPayload = null;
         reloadButton.disabled = true;
         printButton.disabled = true;
+        exportWordButton.disabled = true;
         messageBox.hidden = true;
         statusText.textContent = 'Đang tải quyết định từ AppSheet...';
 
@@ -539,15 +591,24 @@
             quyetDinh,
             details: Array.isArray(details) ? details : [],
             tenTinh: Array.isArray(provinceData) && provinceData[0] ? provinceData[0].Tinh || '' : '',
-            canCuList: buildCanCu(quyetDinh.Ref_CanCu || quyetDinh.CanCuPhapLy || '', Array.isArray(canCuData) ? canCuData : []),
+            canCuList: buildCanCu(quyetDinh.Ref_CanCuPhapLy || '', Array.isArray(canCuData) ? canCuData : []),
             nguoiKy,
             thamQuyen: signer?.ThamQuyen || '',
             chucVu: signer?.ChucVu || ''
           });
 
+          currentPayload = {
+            quyetDinh,
+            details: Array.isArray(details) ? details : [],
+            tenTinh: Array.isArray(provinceData) && provinceData[0] ? provinceData[0].Tinh || '' : '',
+            canCuList: buildCanCu(quyetDinh.Ref_CanCuPhapLy || '', Array.isArray(canCuData) ? canCuData : []),
+            signer
+          };
+
           statusText.textContent = `Đã tải quyết định ${decisionId}.`;
           preview.hidden = false;
           printButton.disabled = false;
+          exportWordButton.disabled = false;
         } catch (error) {
           statusText.textContent = 'Không tải được quyết định.';
           showMessage(error.message || 'Không tải được quyết định.');
@@ -556,8 +617,73 @@
         }
       }
 
+      async function exportToWordTemplate() {
+        if (!currentPayload) return;
+
+        exportWordButton.disabled = true;
+        exportWordButton.textContent = 'Đang xuất...';
+
+        try {
+          const response = await fetch('/quyet_dinh_thu_hoi_gpkd_template.docx');
+          if (!response.ok) {
+            throw new Error('Không thể tải template Word.');
+          }
+
+          const templateContent = await response.arrayBuffer();
+          const zip = new PizZip(templateContent);
+          const Docxtemplater = window.docxtemplater?.Docxtemplater || window.docxtemplater;
+          const doc = new Docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+            nullGetter: () => ''
+          });
+
+          const qd = currentPayload.quyetDinh;
+          const signedDate = adminDate(qd.NgayKy);
+          const donViList = currentPayload.details.map((item, index) => ({
+            stt: String(index + 1),
+            ten_don_vi: item['Tên đơn vị'] || '',
+            dia_chi: item['Địa chỉ sau sáp nhập'] || '',
+            so_dkkd: item['Số ĐKKD'] || '',
+            so_gp_kdvt: item['Số GP KDVT'] || '',
+            ngay_cap: formatAdministrativeDate(item['Ngày cấp']),
+            loai_hinh_van_tai: item['Loại hình vận tải'] || '',
+            ly_do_thu_hoi: [item.LyDoThuHoiDuaQD, item.LyDoThuHoiKhac ? `(${item.LyDoThuHoiKhac})` : ''].filter(Boolean).join('\n'),
+            can_cu_thu_hoi: item.CanCuThuHoiDuaQD || ''
+          }));
+
+          doc.render({
+            tinh: currentPayload.tenTinh,
+            tinh_upper: String(currentPayload.tenTinh || '').toUpperCase(),
+            ngayKy: signedDate.day,
+            thangKy: signedDate.month,
+            nam: signedDate.year,
+            so_don_vi: currentPayload.details.length,
+            can_cu_list: currentPayload.canCuList.map((value) => ({ noi_dung: value })),
+            tham_quyen_ky: currentPayload.signer?.ThamQuyen || '',
+            chuc_vu_ky: currentPayload.signer?.ChucVu || '',
+            can_cu_phap_ly: currentPayload.canCuList.map((value) => `Căn cứ ${value}`).join('\n'),
+            nguoi_ky: getNguoiKyName(currentPayload.signer),
+            don_vi_list: donViList
+          });
+
+          const blob = doc.getZip().generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          });
+
+          saveAs(blob, `Quyet_dinh_thu_hoi_GPKD_${qd.SoQuyetDinh || 'new'}.docx`);
+        } catch (error) {
+          showMessage(error.message || 'Không xuất được file Word.');
+        } finally {
+          exportWordButton.disabled = !currentPayload;
+          exportWordButton.textContent = 'Xuất Word';
+        }
+      }
+
       reloadButton.addEventListener('click', loadData);
       printButton.addEventListener('click', () => window.print());
+      exportWordButton.addEventListener('click', exportToWordTemplate);
       loadData();
     </script>
   </body>

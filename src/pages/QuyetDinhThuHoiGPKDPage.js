@@ -6,11 +6,13 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import appSheetService from '../services/appSheetService';
+import config from '../config/config';
 import {
   buildCanCuList,
   buildLyDoThuHoi,
   fetchQuyetDinhThuHoiData,
   formatAdministrativeDate,
+  formatAdministrativeDateString,
   getDecisionIdFromSearch,
   getNguoiKyName,
   normalizeQuyetDinhWordLayout
@@ -57,12 +59,62 @@ const documentStyles = `
   .qd-preview-shell { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-bottom: 1rem; }
   .qd-preview-shell .qd-document { width: max-content; min-width: 100%; }
   @media print {
+    html, body, #root {
+      width: auto !important;
+      height: auto !important;
+      overflow: visible !important;
+      background: #fff !important;
+    }
+    .app-print-root,
+    .app-print-frame,
+    .app-print-content,
+    .app-print-main {
+      display: block !important;
+      width: auto !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      background: #fff !important;
+    }
     aside, header { display: none !important; }
     main { padding: 0 !important; }
     .qd-actions { display: none !important; }
-    .qd-preview-shell { overflow: visible; padding: 0; }
-    .qd-preview-shell .qd-document { width: auto; min-width: 0; }
-    .qd-page { margin: 0; padding: 0; box-shadow: none !important; border: none; }
+    .qd-preview-shell {
+      display: block !important;
+      max-width: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      background: #fff !important;
+    }
+    .qd-preview-shell .qd-document {
+      display: block !important;
+      width: auto !important;
+      min-width: 0 !important;
+    }
+    .qd-page {
+      box-sizing: border-box !important;
+      width: auto !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      border: none !important;
+      break-after: page;
+      page-break-after: always;
+    }
+    .qd-landscape-page {
+      width: auto !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+      page: landscape;
+    }
+    .qd-page-break {
+      display: none !important;
+    }
+    .qd-document > .qd-page:last-child {
+      break-after: auto;
+      page-break-after: auto;
+    }
   }
 `;
 
@@ -189,7 +241,7 @@ const QuyetDinhThuHoiGPKDPage = () => {
         dia_chi: item['Địa chỉ sau sáp nhập'] || '',
         so_dkkd: item['Số ĐKKD'] || '',
         so_gp_kdvt: item['Số GP KDVT'] || '',
-        ngay_cap: item['Ngày cấp'] || '',
+        ngay_cap: formatAdministrativeDateString(item['Ngày cấp']),
         loai_hinh_van_tai: item['Loại hình vận tải'] || '',
         ly_do_thu_hoi: buildLyDoThuHoi(item).join('\n'),
         can_cu_thu_hoi: item.CanCuThuHoiDuaQD || ''
@@ -230,41 +282,45 @@ const QuyetDinhThuHoiGPKDPage = () => {
   return (
     <div className="space-y-6">
       <style>{documentStyles}</style>
-      <Card className="qd-actions overflow-hidden bg-gradient-to-r from-slate-900 to-slate-700 text-white">
-        <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <CardTitle className="flex items-center gap-3 text-xl text-white sm:text-2xl">
-                <FileText className="h-7 w-7 text-amber-300" />
-                Quyết định thu hồi GPKD
-              </CardTitle>
-              <CardDescription className="mt-2 text-slate-200">
-                Nhập ID quyết định để tải dữ liệu, URL sẽ tự cập nhật tham số `IDQuyetDinh`.
-              </CardDescription>
-              <form className="mt-4 grid gap-3 sm:grid-cols-[minmax(220px,420px)_auto]" onSubmit={submitDecisionId}>
-                <Input
-                  aria-label="ID quyết định"
-                  className="border-white/20 bg-white/95"
-                  placeholder="Nhập IDQuyetDinh"
-                  value={decisionIdInput}
-                  onChange={(event) => setDecisionIdInput(event.target.value)}
-                />
-                <Button type="submit" variant="secondary" className="w-full sm:w-auto" disabled={loading}>
-                  <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                  Tải theo ID
-                </Button>
-              </form>
+      <Card className="qd-actions overflow-hidden rounded-2xl border-slate-200 bg-white shadow-sm">
+        <CardHeader className="p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex min-w-[280px] flex-1 items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                <img src={config.LOGO_URL} alt="TAXI 123_HN" className="h-full w-full object-cover" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <CardTitle className="flex items-center gap-2 text-xl text-slate-950 sm:text-2xl">
+                  Quyết định thu hồi GPKD
+                </CardTitle>
+                <CardDescription className="mt-1 text-slate-500">
+                  {decisionId ? `Đã tải quyết định ${decisionId}.` : 'Nhập ID quyết định để tải dữ liệu.'}
+                </CardDescription>
+                <form className="mt-3 grid max-w-2xl gap-3 sm:grid-cols-[minmax(220px,1fr)_auto]" onSubmit={submitDecisionId}>
+                  <Input
+                    aria-label="ID quyết định"
+                    className="h-10 rounded-xl"
+                    placeholder="Nhập IDQuyetDinh"
+                    value={decisionIdInput}
+                    onChange={(event) => setDecisionIdInput(event.target.value)}
+                  />
+                  <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={loading}>
+                    <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    Tải theo ID
+                  </Button>
+                </form>
+              </div>
             </div>
-            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3 xl:grid-cols-4">
               <Button
-                variant="secondary"
+                variant="outline"
                 className="w-full"
                 onClick={openStandaloneHtml}
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Mở bản HTML
               </Button>
-              <Button variant="secondary" className="w-full" onClick={() => window.print()} disabled={!payload}>
+              <Button variant="outline" className="w-full" onClick={() => window.print()} disabled={!payload}>
                 <Printer className="mr-2 h-4 w-4" />
                 In tài liệu
               </Button>
@@ -272,7 +328,7 @@ const QuyetDinhThuHoiGPKDPage = () => {
                 {exporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                 Xuất Word
               </Button>
-              <Button variant="secondary" className="w-full" onClick={loadData} disabled={loading || !decisionId}>
+              <Button variant="outline" className="w-full" onClick={loadData} disabled={loading || !decisionId}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                 Tải lại dữ liệu
               </Button>
@@ -426,7 +482,7 @@ const QuyetDinhThuHoiGPKDPage = () => {
                       <td className="qd-text-left">{item['Địa chỉ sau sáp nhập'] || ''}</td>
                       <td>{item['Số ĐKKD'] || ''}</td>
                       <td>{item['Số GP KDVT'] || ''}</td>
-                      <td>{item['Ngày cấp'] || ''}</td>
+                      <td>{formatAdministrativeDateString(item['Ngày cấp'])}</td>
                       <td>{item['Loại hình vận tải'] || ''}</td>
                       <td className="qd-text-left">{buildLyDoThuHoi(item).join(' ')}</td>
                       <td className="qd-text-left">{item.CanCuThuHoiDuaQD || ''}</td>

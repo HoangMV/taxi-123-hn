@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quyết Định Thu Hồi Giấy Phép Kinh Doanh Vận Tải</title>
+    <!-- Thêm các thư viện cần thiết -->
+    <script src="https://unpkg.com/html-docx-js/dist/html-docx.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm 1.5cm 1.5cm 2.5cm;
+        }
+
+        @page landscape {
+            size: A4 landscape;
+            margin: 1cm 1.5cm 1cm 2cm;
+        }
+
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 14pt;
+            line-height: 1.3;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page {
+            box-sizing: border-box;
+            padding: 0;
+            position: relative;
+            width: 21cm;
+            height: 29.7cm;
+            margin: 0 auto;
+            background-color: white;
+        }
+
+        .landscape-page {
+            width: 31.7cm;
+            height: 21cm;
+            page: landscape;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0;
+            align-items: flex-start;
+        }
+
+        .header-left {
+            text-align: center;
+            width: 40%;
+        }
+
+        .header-right {
+            text-align: center;
+            width: 60%;
+            font-weight: bold;
+        }
+
+        .document-number {
+            margin-top: 10px;
+        }
+
+        .title {
+            text-align: center;
+            font-weight: bold;
+            margin: 20px 0;
+            /* Để căn chỉnh đúng kích thước nội dung */
+            position: relative;
+            font-weight: bold;
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            /* Đặt điểm bắt đầu ở giữa */
+            bottom: -5px;
+            /* Khoảng cách từ chữ đến đường ngang */
+            transform: translateX(-50%);
+            /* Dịch chuyển để căn giữa */
+            width: 30%;
+            /* Độ dài của đường ngang (50% chiều rộng của nội dung) */
+            height: 1.5px;
+            /* Độ dày của đường ngang */
+            background-color: black;
+            /* Màu sắc của đường ngang */
+        }
+
+        .underline-title,
+        .underline-title-full {
+            display: inline-block;
+            /* Để căn chỉnh đúng kích thước nội dung */
+            position: relative;
+            font-weight: bold;
+        }
+
+        .underline-title::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            /* Đặt điểm bắt đầu ở giữa */
+            bottom: -5px;
+            /* Khoảng cách từ chữ đến đường ngang */
+            transform: translateX(-50%);
+            /* Dịch chuyển để căn giữa */
+            width: 50%;
+            /* Độ dài của đường ngang (50% chiều rộng của nội dung) */
+            height: 1.5px;
+            /* Độ dày của đường ngang */
+            background-color: black;
+            /* Màu sắc của đường ngang */
+        }
+
+        .underline-title-full::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            /* Đặt điểm bắt đầu ở giữa */
+            bottom: -5px;
+            /* Khoảng cách từ chữ đến đường ngang */
+            transform: translateX(-50%);
+            /* Dịch chuyển để căn giữa */
+            width: 100%;
+            /* Độ dài của đường ngang (50% chiều rộng của nội dung) */
+            height: 1.5px;
+            /* Độ dày của đường ngang */
+            background-color: black;
+            /* Màu sắc của đường ngang */
+        }
+
+        .decision-title {
+            text-align: center;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .italic-text {
+            font-style: italic;
+            text-align: justify;
+            margin: 10px 0;
+        }
+
+        .decision-section {
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .article {
+            text-indent: 30px;
+            margin: 10px 0;
+        }
+
+        .article-content {
+            margin: 0;
+            text-align: justify;
+            font-weight: normal;
+        }
+
+        .closing-paragraph {
+            margin: 10px 0;
+            text-align: justify;
+            text-indent: 30px;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .footer-left {
+            width: 60%;
+        }
+
+        .footer-right {
+            width: 40%;
+            text-align: center;
+        }
+
+        .signature-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .signature-name {
+            font-weight: bold;
+            margin-top: 100px;
+        }
+
+        .recipient-list {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 5px;
+        }
+
+        .recipient-item {
+            margin: 1px 0;
+        }
+
+        .print-button {
+            position: fixed;
+            top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1000;
+        }
+
+        .print-button:hover {
+            background-color: #45a049;
+        }
+
+        @media print {
+            .print-button {
+                display: none;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            .page {
+                margin: 0;
+                padding: 0;
+                border: none;
+            }
+
+            .page-break {
+                page-break-after: always;
+            }
+        }
+
+        /* Specific text alignment fixes to match the image */
+        .text-block {
+            text-align: justify;
+            text-indent: 30px;
+        }
+
+        /* Table styles for the second page */
+        .table-container {
+            width: 100%;
+            margin: 20px auto;
+        }
+
+        .table-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 16pt;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 12pt;
+        }
+
+        th {
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        #loading-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            z-index: 2000;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Print Button -->
+    <button class="print-button" onclick="window.print()" style="right: 150px;">In Tài Liệu</button>
+    <button class="print-button" onclick="exportToWordTemplate()" style="right: 20px;">Xuất Word</button>
+
+    <!-- Loading Message -->
+    <div id="loading-message">Đang tải dữ liệu...</div>
+
+    <!-- First page in portrait orientation -->
+    <div class="page">
+        <div class="document-container">
+            <div class="header">
+                <div class="header-left">
+                    <div style="margin-bottom: 5px;">UBND TỈNH <span id="tinh-header"></span></div>
+                    <div class="underline-title"><strong>SỞ XÂY DỰNG</strong></div>
+                    <div class="document-number">Số: <span>______</span>/QĐ-SXD</div>
+                </div>
+                <div class="header-right">
+                    <div style="margin-bottom: 5px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                    <div class="underline-title-full"><span class="underline-text">Độc lập – Tự do – Hạnh phúc</span>
+                    </div>
+                    <div style="font-style: italic; font-weight: normal; margin-top: 10px; text-align: center;"
+                        id="ngay-thang"><span id="tinh-footer"></span>, ngày &nbsp;&nbsp;&nbsp; tháng
+                        &nbsp;&nbsp;&nbsp; <span>năm 2025</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="title">
+                QUYẾT ĐỊNH<br>
+                Về việc thu hồi Giấy phép kinh doanh vận tải bằng xe ô tô
+            </div>
+
+            <div class="decision-title">
+                GIÁM ĐỐC SỞ XÂY DỰNG TỈNH <span id="tinh-content"></span>
+            </div>
+
+            <div class="text-block italic-text" id="can-cu-phap-ly">
+                Căn cứ
+            </div>
+
+            <div class="text-block italic-text">
+                Căn cứ Văn bản thông báo ngừng hoạt động kinh doanh vận tải bằng xe ô tô của đơn vị vận tải (chi tiết
+                tại Phụ lục đính kèm);
+            </div>
+
+            <div class="text-block italic-text">
+                Theo đề nghị của Trưởng phòng Vận tải và An toàn giao thông.
+            </div>
+
+            <div class="decision-section">
+                QUYẾT ĐỊNH:
+            </div>
+
+            <div class="article">
+                <strong>Điều 1.</strong> Thu hồi Giấy phép kinh doanh vận tải bằng xe ô tô không thời hạn của <span
+                    id="so-don-vi">10</span> đơn vị
+                <span style="font-style: italic; font-weight: normal;">(có danh sách kèm theo)</span>.
+            </div>
+
+            <div class="article">
+                <strong>Điều 2.</strong> Trong thời hạn 10 ngày kể từ ngày ký Quyết định này, các đơn vị có tên tại Điều
+                1 phải nộp lại Giấy phép kinh doanh về Sở Xây dựng tỉnh <span id="tinh-content-2"></span> đồng
+                thời dừng hoạt động kinh doanh
+                vận tải theo quyết định thu hồi.
+            </div>
+
+            <div class="article">
+                <strong>Điều 3.</strong> Quyết định này có hiệu lực kể từ ngày ký.
+            </div>
+
+            <div class="closing-paragraph">
+                Các Ông (Bà): Chánh Văn phòng Sở, Trưởng phòng Vận tải và An toàn giao thông, Chánh Thanh tra Sở, Thủ
+                trưởng các đơn vị bị thu hồi Giấy phép và các đơn vị liên quan chịu trách nhiệm thi hành Quyết định
+                này./.
+            </div>
+
+            <div class="footer">
+                <div class="footer-left">
+                    <div><strong>Nơi nhận:</strong></div>
+                    <div class="recipient-item">- Như Điều 3;</div>
+                    <div class="recipient-item">- UBND tỉnh (b/c);</div>
+                    <div class="recipient-item">- Công an tỉnh (p/h);</div>
+                    <div class="recipient-item">- Cục Thuế tỉnh (p/h);</div>
+                    <div class="recipient-item">- UBND các huyện, thị xã, TP; UBND các xã,</div>
+                    <div class="recipient-item">&nbsp;&nbsp;phường, thị trấn nơi đơn vị đặt trụ sở (p/h);</div>
+                    <div class="recipient-item">- Giám đốc Sở (b/c);</div>
+                    <div class="recipient-item">- Văn phòng Sở (đăng Website);</div>
+                    <div class="recipient-item">- Thanh tra Sở;</div>
+                    <div class="recipient-item">- Lưu: VT, VTATGT.</div>
+                </div>
+                <div class="footer-right">
+                    <div class="signature-title" id="tham-quyen-ky"></div>
+                    <div class="signature-title" id="chuc-vu-ky"></div>
+                    <div style="margin-top: 195px;"></div>
+                    <div class="signature-name" id="nguoi-ky"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page break between pages -->
+    <div class="page-break"></div>
+
+    <!-- Second page in landscape orientation -->
+    <div class="page landscape-page">
+        <div class="landscape-container">
+            <div class="table-container">
+                <div class="table-title">
+                    DANH SÁCH CÁC ĐƠN VỊ BỊ THU HỒI GIẤY PHÉP KINH DOANH VẬN TẢI BẰNG XE Ô TÔ
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">STT</th>
+                            <th style="width: 15%;">Tên đơn vị</th>
+                            <th style="width: 15%;">Địa chỉ</th>
+                            <th style="width: 8%;">Số ĐKKD</th>
+                            <th style="width: 12%;">Số GP KĐVT</th>
+                            <th style="width: 8%;">Ngày cấp</th>
+                            <th style="width: 10%;">Loại hình vận tải</th>
+                            <th style="width: 14%;">Lý do thu hồi</th>
+                            <th style="width: 13%;">Căn cứ thu hồi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Table rows will be dynamically populated from GPKD_THUHOI_CHITIET -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants for AppSheet connection
+        const appId = '085eef9b-92f5-4f86-9eb7-b8324e02fc2b';
+        const accessKey = 'V2-AGscv-ApGpI-R0L7E-JCxeh-ms3pa-2WqWn-0H4ZG-datL7';
+        const region = 'www';
+
+        // Biến toàn cục để lưu dữ liệu
+        let globalTinhData = null;
+        let globalQuyetDinhData = null;
+        let globalChiTietData = null;
+        let globalCanCuData = [];
+        let globalNguoiPhuTrachInfo = null;
+
+        // Function to get ID from URL parameter
+        function getQuyetDinhIDFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('IDQuyetDinh');
+        }
+
+        // Generic function to make API calls
+        async function callAPI(tableName, selector) {
+            const response = await fetch(`https://${region}.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`, {
+                method: 'POST',
+                headers: {
+                    'ApplicationAccessKey': accessKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    Action: 'Find',
+                    Properties: {
+                        Selector: selector
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status} for table: ${tableName}`);
+            }
+
+            return await response.json();
+        }
+
+        function parseDateValue(value) {
+            if (!value) return null;
+            const parsedDate = new Date(value);
+            return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+        }
+
+        function getNguoiPhuTrachInfo(quyetDinh, nguoiPhuTrachList) {
+            if (!quyetDinh || !Array.isArray(nguoiPhuTrachList) || nguoiPhuTrachList.length === 0) {
+                return null;
+            }
+
+            const nguoiKyId = String(quyetDinh.NguoiKy || '').trim();
+            if (!nguoiKyId) {
+                return null;
+            }
+
+            return nguoiPhuTrachList.find(item =>
+                String(item.IDNguoi || '').trim() === nguoiKyId
+            ) || null;
+        }
+
+        function getNguoiKyName(nguoiPhuTrachInfo) {
+            return String(nguoiPhuTrachInfo?.HoTen || '').trim();
+        }
+
+        // Main function to fetch data
+        async function fetchData() {
+            const idQuyetDinh = getQuyetDinhIDFromURL();
+            console.log("ID from URL:", idQuyetDinh);
+
+            if (!idQuyetDinh) {
+                hideLoadingMessage();
+                alert('Không tìm thấy IDQuyetDinh trong URL.');
+                return;
+            }
+
+            try {
+                // Prepare API calls
+                const apiCalls = [
+                    // 1. Fetch QUYETDINH_THUHOI_GPKD data for page 1
+                    callAPI('QUYETDINH_THUHOI_GPKD', `Filter(QUYETDINH_THUHOI_GPKD, [ID_QD] = "${idQuyetDinh}")`),
+
+                    // 2. Fetch GPKD_THUHOI_CHITIET data for page 2
+                    callAPI('GPKD_THUHOI_CHITIET', `Filter(GPKD_THUHOI_CHITIET, [Ref_QDThuHoi] = "${idQuyetDinh}")`),
+
+                    // 3. Get ThongTin data (for tinh)
+                    callAPI('ThongTin', 'Filter(ThongTin, true)'),
+
+                    // 4. Fetch toàn bộ CANCU_PHAPLY
+                    callAPI('CANCU_PHAPLY', 'Filter(CANCU_PHAPLY, true)')
+                ];
+
+                // Execute API calls
+                console.log("Bắt đầu gọi API...");
+                let [quyetDinhData, chitietData, tinhResult, canCuData] = await Promise.all(apiCalls);
+
+                console.log("QuyetDinh data:", quyetDinhData);
+                console.log("ChiTiet data:", chitietData);
+                console.log("Tinh data:", tinhResult);
+                console.log("CanCu data:", canCuData);
+                console.log("Ref_CanCuPhapLy:", quyetDinhData?.[0]?.['Ref_CanCuPhapLy']);
+
+                let nguoiPhuTrachInfo = null;
+                const nguoiKyId = String(quyetDinhData?.[0]?.NguoiKy || '').trim();
+                if (nguoiKyId) {
+                    const nguoiPhuTrachData = await callAPI(
+                        'NguoiPhuTrach',
+                        `Filter(NguoiPhuTrach, [IDNguoi] = "${nguoiKyId}")`
+                    );
+                    console.log("NguoiPhuTrach data:", nguoiPhuTrachData);
+                    nguoiPhuTrachInfo = getNguoiPhuTrachInfo(quyetDinhData[0], nguoiPhuTrachData);
+                }
+
+                // Store data globally
+                globalQuyetDinhData = quyetDinhData;
+                globalChiTietData = chitietData;
+                globalTinhData = tinhResult;
+                globalCanCuData = canCuData || [];
+                globalNguoiPhuTrachInfo = nguoiPhuTrachInfo;
+
+                if (!quyetDinhData || quyetDinhData.length === 0) {
+                    hideLoadingMessage();
+                    alert('Không tìm thấy dữ liệu quyết định với ID: ' + idQuyetDinh);
+                    return;
+                }
+
+                if (!chitietData || chitietData.length === 0) {
+                    hideLoadingMessage();
+                    alert('Không tìm thấy dữ liệu chi tiết cho ID quyết định: ' + idQuyetDinh);
+                    return;
+                }
+
+                const mocTinhHieuLuc = parseDateValue(quyetDinhData[0]?.NgayKy) || new Date();
+                tinhResult = (tinhResult || []).filter(item => {
+                    const ngayHieuLuc = parseDateValue(item.Ngay_hieu_luc);
+                    return !ngayHieuLuc || ngayHieuLuc <= mocTinhHieuLuc;
+                });
+                globalTinhData = tinhResult;
+                console.log("Tinh data by NgayKy:", tinhResult);
+
+                // Populate page 1 with data including tinh data
+                populateQuyetDinhData(quyetDinhData[0], tinhResult, canCuData || [], nguoiPhuTrachInfo);
+
+                // Populate page 2 with data
+                populateChiTietData(chitietData);
+
+                // Update number of companies in Article 1
+                document.getElementById('so-don-vi').textContent = chitietData.length;
+
+                // Hide loading message
+                hideLoadingMessage();
+
+            } catch (error) {
+                console.error('Lỗi:', error);
+                hideLoadingMessage();
+                alert('Đã xảy ra lỗi khi lấy dữ liệu: ' + error.message);
+            }
+        }
+
+        // Ghép chuỗi căn cứ pháp lý từ bảng CANCU_PHAPLY
+        function buildCanCuList(refIds, canCuData) {
+            if (!refIds || !canCuData || canCuData.length === 0) return [];
+            let ids;
+            if (Array.isArray(refIds)) {
+                ids = refIds.map(s => String(s).trim());
+            } else {
+                const str = String(refIds).trim();
+                try {
+                    const parsed = JSON.parse(str);
+                    ids = Array.isArray(parsed) ? parsed.map(s => String(s).trim()) : [String(parsed).trim()];
+                } catch {
+                    ids = str.split(',').map(s => s.trim());
+                }
+            }
+            ids = ids.filter(Boolean);
+            return ids
+                .map(id => canCuData.find(r => String(r.ID_CanCu).trim() === String(id).trim()))
+                .filter(Boolean)
+                .map(r => {
+                    const ngay = r.NgayBanHanh
+                        ? new Date(r.NgayBanHanh).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                        : '';
+                    return `${r.LoaiVanBan} số ${r.SoVanBan} ngày ${ngay} của ${r.CQBanHanh} ${r.TenVanBanDayDu};`;
+                });
+        }
+
+        // Populate QUYETDINH_THUHOI_GPKD data for page 1 with tinh data
+        function populateQuyetDinhData(data, tinhData, canCuData, nguoiPhuTrachInfo) {
+            // Xử lý tên tỉnh
+            let tenTinh = ''; // Default value
+            if (tinhData && tinhData.length > 0) {
+                const sortedTinhData = tinhData.sort((a, b) =>
+                    new Date(b.Ngay_hieu_luc) - new Date(a.Ngay_hieu_luc)
+                );
+                tenTinh = sortedTinhData[0].Tinh || '';
+            }
+
+            // Update all tinh references
+            const tinhElements = {
+                'tinh-header': tenTinh.toUpperCase(),
+                'tinh-content': tenTinh.toUpperCase(),
+                'tinh-content-2': tenTinh,
+                'tinh-content-3': tenTinh
+            };
+            Object.entries(tinhElements).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            });
+
+            // Format date (DD/MM/YYYY) with administrative rules
+            // Format date (DD/MM/YYYY) with administrative rules
+            if (data.NgayKy) {
+                const date = new Date(data.NgayKy);
+                const day = date.getDate().toString().padStart(2, '0'); // Always pad day
+                const month = date.getMonth() + 1;
+                // Only pad months 1 and 2 with zero
+                const formattedMonth = month <= 2 ?
+                    month.toString().padStart(2, '0') :
+                    month.toString();
+                const year = date.getFullYear();
+
+                // Cập nhật ngày tháng
+                document.getElementById('ngay-thang').innerHTML =
+                    `<span id="tinh-footer">${tenTinh}</span>, ngày ${day} tháng ${formattedMonth} năm ${year}`;
+            } else {
+                // Nếu không có NgayKy, chỉ cập nhật tên tỉnh trong phần tử hiện tại
+                document.getElementById('tinh-footer').textContent = tenTinh;
+            }
+
+            // Update signature
+            document.getElementById('nguoi-ky').textContent = getNguoiKyName(nguoiPhuTrachInfo);
+            document.getElementById('tham-quyen-ky').textContent =
+                nguoiPhuTrachInfo?.ThamQuyen || '';
+            document.getElementById('chuc-vu-ky').textContent =
+                nguoiPhuTrachInfo?.ChucVu || '';
+
+            // Update Căn cứ pháp lý
+            const canCuEl = document.getElementById('can-cu-phap-ly');
+            const canCuItems = buildCanCuList(data['Ref_CanCuPhapLy'], canCuData);
+            if (canCuItems.length) {
+                canCuEl.innerHTML = canCuItems
+                    .map(item => `<p style="margin:0 0 4px 0;text-indent:30px;">Căn cứ ${item}</p>`)
+                    .join('');
+            }
+        }
+
+        // Populate GPKD_THUHOI_CHITIET data for page 2
+        function populateChiTietData(data) {
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+
+            data.forEach((item, index) => {
+                const row = document.createElement('tr');
+
+                // Determine which reason to use
+                let lyDoThuHoi = [];
+                if (item.LyDoThuHoiDuaQD && item.LyDoThuHoiDuaQD.trim() !== '') {
+                    lyDoThuHoi.push(`${item.LyDoThuHoiDuaQD}`);
+                }
+                if (item.LyDoThuHoiKhac && item.LyDoThuHoiKhac.trim() !== '') {
+                    lyDoThuHoi.push(`(${item.LyDoThuHoiKhac})`);
+                }
+
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td class="text-left">${item['Tên đơn vị'] || ''}</td>
+                    <td class="text-left">${item['Địa chỉ sau sáp nhập'] || ''}</td>
+                    <td>${item['Số ĐKKD'] || ''}</td>
+                    <td>${item['Số GP KDVT'] || ''}</td>
+                    <td>${item['Ngày cấp'] || ''}</td>
+                    <td>${item['Loại hình vận tải'] || ''}</td>
+                    <td class="text-left">${lyDoThuHoi.join('<br>') || ''}</td>
+                    <td class="text-left">${item.CanCuThuHoiDuaQD || ''}</td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Hide loading message
+        function hideLoadingMessage() {
+            document.getElementById('loading-message').classList.add('hidden');
+        }
+
+        // Function to export to Word using template
+        async function exportToWordTemplate() {
+            try {
+                document.getElementById('loading-message').classList.remove('hidden');
+
+                // Check if we have data
+                if (!globalQuyetDinhData || !globalChiTietData || !globalTinhData) {
+                    alert('Dữ liệu chưa được tải. Vui lòng đợi dữ liệu tải xong.');
+                    document.getElementById('loading-message').classList.add('hidden');
+                    return;
+                }
+
+                // Chuẩn bị dữ liệu cho template Word
+                const quyetDinh = globalQuyetDinhData[0];
+
+                // Xử lý tên tỉnh cho Word export
+                let tenTinh = '';
+                if (globalTinhData && globalTinhData.length > 0) {
+                    const sortedTinhData = globalTinhData.sort((a, b) =>
+                        new Date(b.Ngay_hieu_luc) - new Date(a.Ngay_hieu_luc)
+                    );
+                    tenTinh = sortedTinhData[0].Tinh || '';
+                }
+
+                // Format ngày tháng with administrative rules
+                let ngayKy = '';
+                let thangKy = '';
+                let namKy = '';
+
+                if (quyetDinh.NgayKy) {
+                    const date = new Date(quyetDinh.NgayKy);
+                    ngayKy = date.getDate().toString().padStart(2, '0'); // Always pad day
+                    const month = date.getMonth() + 1;
+                    // Only pad months 1 and 2 with zero
+                    thangKy = month <= 2 ?
+                        month.toString().padStart(2, '0') :
+                        month.toString();
+                    namKy = date.getFullYear();
+                }
+
+                // Chuẩn bị danh sách đơn vị bị thu hồi cho template
+                const donViList = globalChiTietData.map((item, index) => {
+                    // Xác định lý do thu hồi
+                    let lyDoThuHoi = [];
+                    if (item.LyDoThuHoiDuaQD && item.LyDoThuHoiDuaQD.trim() !== '') {
+                        lyDoThuHoi.push(`${item.LyDoThuHoiDuaQD}`);
+                    }
+                    if (item.LyDoThuHoiKhac && item.LyDoThuHoiKhac.trim() !== '') {
+                        lyDoThuHoi.push(`(${item.LyDoThuHoiKhac})`);
+                    }
+
+
+                    // Định dạng ngày cấp
+                    let ngayCap = '';
+                    if (item['Ngày cấp']) {
+                        const ngayCapDate = new Date(item['Ngày cấp']);
+                        const day = ngayCapDate.getDate().toString().padStart(2, '0');
+                        const month = ngayCapDate.getMonth() + 1;
+                        const formattedMonth = month <= 2 ?
+                            month.toString().padStart(2, '0') :
+                            month.toString();
+                        ngayCap = `${day}/${formattedMonth}/${ngayCapDate.getFullYear()}`;
+                    }
+
+                    return {
+                        stt: (index + 1).toString(),
+                        ten_don_vi: item['Tên đơn vị'] || '',
+                        dia_chi: item['Địa chỉ sau sáp nhập'] || '',
+                        so_dkkd: item['Số ĐKKD'] || '',
+                        so_gp_kdvt: item['Số GP KDVT'] || '',
+                        ngay_cap: ngayCap,
+                        loai_hinh_van_tai: item['Loại hình vận tải'] || '',
+                        ly_do_thu_hoi: lyDoThuHoi.join('\n') || '',
+                        can_cu_thu_hoi: item.CanCuThuHoiDuaQD || ''
+                    };
+                });
+
+                // Tải template Word
+                const response = await fetch('https://hoangquy1986.github.io/SMART-TRANSPORT-TN_V1.0/templates_TN_V1.0/quyet_dinh_thu_hoi_gpkd_template.docx');
+                // const response = await fetch('/templates_BG_V1.1/quyet_dinh_thu_hoi_gpkd_template.docx');
+                if (!response.ok) {
+                    throw new Error('Không thể tải template Word');
+                }
+                const templateContent = await response.arrayBuffer();
+
+                // Tạo PizZip và docxtemplater
+                const zip = new PizZip(templateContent);
+                const doc = new window.docxtemplater(zip, {
+                    paragraphLoop: true,
+                    linebreaks: true,
+                    nullGetter: () => ''
+                });
+
+                // Đặt dữ liệu vào template
+                const canCuItems = buildCanCuList(quyetDinh['Ref_CanCuPhapLy'], globalCanCuData);
+                const data = {
+                    tinh: tenTinh,
+                    tinh_upper: tenTinh.toUpperCase(),
+                    ngayKy: ngayKy,
+                    thangKy: thangKy,
+                    nam: namKy,
+                    so_don_vi: globalChiTietData.length,
+                    can_cu_list: canCuItems.map(v => ({ noi_dung: v })),
+                    tham_quyen_ky: globalNguoiPhuTrachInfo?.ThamQuyen || '',
+                    chuc_vu_ky: globalNguoiPhuTrachInfo?.ChucVu || '',
+                    can_cu_phap_ly: canCuItems.map(v => `Căn cứ ${v}`).join('\n'),
+                    nguoi_ky: getNguoiKyName(globalNguoiPhuTrachInfo),
+                    don_vi_list: donViList
+                };
+
+                // Render template
+                doc.setData(data);
+                doc.render();
+
+                // Tạo và tải file
+                const blob = doc.getZip().generate({
+                    type: "blob",
+                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                });
+
+                const fileName = `Quyết định thu hồi GPKD số ${quyetDinh.SoQuyetDinh || 'new'}.docx`;
+                saveAs(blob, fileName);
+
+            } catch (error) {
+                console.error('Lỗi khi xuất file Word:', error);
+                if (error.properties && error.properties.errors) {
+                    console.log('Template Error details:', error.properties.errors);
+                }
+                alert('Có lỗi khi xuất file Word: ' + error.message);
+            } finally {
+                document.getElementById('loading-message').classList.add('hidden');
+            }
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', fetchData);
+
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        }, false);
+
+        document.onkeydown = function (e) {
+            if (e.keyCode == 123) {
+                return false;
+            }
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
+                return false;
+            }
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
+                return false;
+            }
+            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
+                return false;
+            }
+        };
+    </script>
+</body>
+
+</html>

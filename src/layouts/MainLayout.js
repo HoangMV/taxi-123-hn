@@ -46,16 +46,15 @@ const MainLayout = ({ children }) => {
                   } ${isMobile ? 'min-h-[72px]' : ''}`}
               >
                 {active && <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-red-600" />}
-                <div className={`flex items-start ${collapsed ? 'justify-center' : 'gap-3'}`}>
+                <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
                   <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 ${collapsed ? '' : 'mt-0.5'
-                      } ${active ? 'bg-white text-red-700 shadow-sm' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-800'
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 ${active ? 'bg-white text-red-700 shadow-sm' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-800'
                       }`}
                   >
                     <Icon className="h-5 w-5" />
                   </span>
                   {!collapsed && <div className="min-w-0">
-                    <div className="font-medium">{item.text}</div>
+                    <div className="font-medium leading-5">{item.text}</div>
                   </div>}
                 </div>
               </button>
@@ -67,11 +66,11 @@ const MainLayout = ({ children }) => {
 
   const renderBrand = (compact = false) => (
     <div className={`flex items-center ${compact ? 'justify-center gap-0' : 'gap-3'}`}>
-      <div className={`${compact ? 'h-11 w-11' : 'h-12 w-12'} flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-slate-200`}>
+      <div className={`${compact ? 'h-10 w-10' : 'h-10 w-10'} flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-slate-200`}>
         <img src={config.LOGO_URL} alt="Logo TAXI 123_HN" className="h-full w-full object-cover" />
       </div>
       {!compact && <div>
-        <h1 className={`${compact ? 'text-lg' : 'text-xl'} font-semibold text-slate-950`}>TAXI 123_HN</h1>
+        <h1 className="text-lg font-semibold text-slate-950">TAXI 123_HN</h1>
       </div>}
     </div>
   );
@@ -83,7 +82,7 @@ const MainLayout = ({ children }) => {
   );
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-100">
+    <div className="app-print-root h-screen overflow-hidden bg-slate-100">
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
@@ -110,13 +109,13 @@ const MainLayout = ({ children }) => {
         </div>
       )}
 
-      <div className="flex h-screen overflow-hidden">
+      <div className="app-print-frame flex h-screen overflow-hidden">
         <aside
           className={`hidden h-screen shrink-0 border-r border-slate-200 bg-white text-slate-900 shadow-sm transition-[width] duration-300 ease-out lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-72'
             }`}
         >
-          <div className={`border-b border-slate-200 py-5 transition-all duration-300 ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
-            <div className="flex items-center justify-between gap-3">
+          <div className={`flex h-[76px] items-center border-b border-slate-200 transition-all duration-300 ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
+            <div className="flex w-full items-center justify-between gap-3">
               {renderBrand(sidebarCollapsed)}
               {!sidebarCollapsed && (
                 <button
@@ -146,9 +145,9 @@ const MainLayout = ({ children }) => {
           </nav>
         </aside>
 
-        <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-          <header className="z-30 shrink-0 border-b border-slate-200 bg-white/95 backdrop-blur">
-            <div className="flex min-w-0 items-center justify-between gap-3 px-4 py-4 lg:px-8">
+        <div className="app-print-content flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+          <header className="z-30 h-[76px] shrink-0 border-b border-slate-200 bg-white/95 backdrop-blur">
+            <div className="flex h-full min-w-0 items-center justify-between gap-3 px-4 lg:px-8">
               <div className="flex min-w-0 items-center gap-3">
                 <button
                   type="button"
@@ -164,7 +163,7 @@ const MainLayout = ({ children }) => {
             </div>
           </header>
 
-          <main className="scrollbar-enterprise min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 lg:px-8">{children}</main>
+          <main className="app-print-main scrollbar-enterprise min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 lg:px-8">{children}</main>
         </div>
       </div>
     </div>
