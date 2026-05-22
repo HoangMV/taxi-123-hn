@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, ExternalLink, FileText, Printer, RefreshCw } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Input } from '../components/ui/input';
 import appSheetService from '../services/appSheetService';
 import {
   buildCanCuList,
@@ -15,8 +16,7 @@ import {
   normalizeQuyetDinhWordLayout
 } from '../features/quyetDinhThuHoiGPKD';
 
-const TEMPLATE_URL =
-  'https://hoangquy1986.github.io/SMART-TRANSPORT-TN_V1.0/templates_TN_V1.0/quyet_dinh_thu_hoi_gpkd_template.docx';
+const TEMPLATE_URL = '/quyet_dinh_thu_hoi_gpkd_template.docx';
 
 const documentStyles = `
   @page { size: A4; margin: 1.5cm 1.5cm 1.5cm 2.5cm; }
@@ -89,17 +89,51 @@ function getFriendlyDecisionError(error) {
 
 const QuyetDinhThuHoiGPKDPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const decisionId = useMemo(() => getDecisionIdFromSearch(location.search), [location.search]);
+  const [decisionIdInput, setDecisionIdInput] = useState(decisionId);
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    setDecisionIdInput(decisionId);
+  }, [decisionId]);
+
+  useEffect(() => {
     loadData();
     // decisionId thay đổi thì cần nạp lại đúng quyết định
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decisionId]);
+
+  function submitDecisionId(event) {
+    event.preventDefault();
+    const nextDecisionId = decisionIdInput.trim();
+
+    if (!nextDecisionId) {
+      toast.warning('Vui lòng nhập ID quyết định trước khi tải dữ liệu.');
+      return;
+    }
+
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.set('IDQuyetDinh', nextDecisionId);
+    navigate({
+      pathname: location.pathname,
+      search: `?${searchParams.toString()}`
+    });
+  }
+
+  function openStandaloneHtml() {
+    const nextDecisionId = (decisionId || decisionIdInput).trim();
+
+    if (!nextDecisionId) {
+      toast.warning('Vui lòng nhập ID quyết định trước khi mở bản HTML.');
+      return;
+    }
+
+    window.open(`/TN_quyetdinhthuhoi_gbkd_standalone.html?IDQuyetDinh=${encodeURIComponent(nextDecisionId)}`, '_blank');
+  }
 
   async function loadData() {
     if (!decisionId) {
@@ -161,7 +195,7 @@ const QuyetDinhThuHoiGPKDPage = () => {
         can_cu_thu_hoi: item.CanCuThuHoiDuaQD || ''
       }));
 
-      doc.setData({
+      doc.render({
         tinh: payload.tenTinh,
         tinh_upper: String(payload.tenTinh || '').toUpperCase(),
         ngayKy: signedDate.day,
@@ -176,7 +210,6 @@ const QuyetDinhThuHoiGPKDPage = () => {
         don_vi_list: donViList
       });
 
-      doc.render();
       const normalizedZip = normalizeQuyetDinhWordLayout(doc.getZip());
       const blob = normalizedZip.generate({
         type: 'blob',
@@ -200,20 +233,33 @@ const QuyetDinhThuHoiGPKDPage = () => {
       <Card className="qd-actions overflow-hidden bg-gradient-to-r from-slate-900 to-slate-700 text-white">
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <CardTitle className="flex items-center gap-3 text-xl text-white sm:text-2xl">
                 <FileText className="h-7 w-7 text-amber-300" />
                 Quyết định thu hồi GPKD
               </CardTitle>
               <CardDescription className="mt-2 text-slate-200">
-                Bản React page, dùng AppSheet theo cấu hình project. Tham số bắt buộc: `?IDQuyetDinh=...`
+                Nhập ID quyết định để tải dữ liệu, URL sẽ tự cập nhật tham số `IDQuyetDinh`.
               </CardDescription>
+              <form className="mt-4 grid gap-3 sm:grid-cols-[minmax(220px,420px)_auto]" onSubmit={submitDecisionId}>
+                <Input
+                  aria-label="ID quyết định"
+                  className="border-white/20 bg-white/95"
+                  placeholder="Nhập IDQuyetDinh"
+                  value={decisionIdInput}
+                  onChange={(event) => setDecisionIdInput(event.target.value)}
+                />
+                <Button type="submit" variant="secondary" className="w-full sm:w-auto" disabled={loading}>
+                  <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Tải theo ID
+                </Button>
+              </form>
             </div>
             <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2 xl:grid-cols-4">
               <Button
                 variant="secondary"
                 className="w-full"
-                onClick={() => window.open(`/TN_quyetdinhthuhoi_gbkd_standalone.html?IDQuyetDinh=${decisionId}`, '_blank')}
+                onClick={openStandaloneHtml}
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Mở bản HTML
@@ -238,8 +284,8 @@ const QuyetDinhThuHoiGPKDPage = () => {
       {!decisionId && (
         <Card className="qd-actions">
           <CardHeader>
-            <CardTitle>Thiếu tham số đầu vào</CardTitle>
-            <CardDescription>Hãy mở trang này với URL dạng `?IDQuyetDinh=...` để nạp đúng quyết định.</CardDescription>
+            <CardTitle>Nhập ID quyết định để bắt đầu</CardTitle>
+            <CardDescription>Điền ID vào ô phía trên rồi bấm “Tải theo ID”. Trang sẽ tự thêm `IDQuyetDinh` vào URL để bạn mở lại hoặc chia sẻ tiện hơn.</CardDescription>
           </CardHeader>
         </Card>
       )}
