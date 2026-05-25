@@ -14,8 +14,40 @@ function escapeSelectorValue(value) {
   return String(value || '').replace(/"/g, '\\"');
 }
 
-export function buildBanGiaoXePayload(row) {
+function getNhanSuDisplayName(nhanSu) {
+  if (!nhanSu) return '';
+  return cleanValue(nhanSu.HoTen) || cleanValue(nhanSu.Display) || cleanValue(nhanSu.ID_NhanSu);
+}
+
+function buildNhanSuSelector(ids) {
+  const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
+  if (uniqueIds.length === 0) return '';
+
+  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
+  return `Filter(NHANSU, IN([ID_NhanSu], LIST(${listValues})))`;
+}
+
+async function fetchNhanSuByIds(appSheetService, ids) {
+  const selector = buildNhanSuSelector(ids);
+  if (!selector) return new Map();
+
+  const rows = await appSheetService.find('NHANSU', selector);
+  return new Map(
+    (Array.isArray(rows) ? rows : [])
+      .map((row) => [cleanValue(row?.ID_NhanSu), row])
+      .filter(([id]) => id)
+  );
+}
+
+export function buildBanGiaoXePayload(row, relatedData = {}) {
   const ngayBanGiao = formatAdministrativeDate(row?.NgayBanGiao);
+  const nhanSuById = relatedData.nhanSuById || new Map();
+  const daiDienBenGiao1Id = cleanValue(row?.DaiDienBenGiao1);
+  const daiDienBenGiao2Id = cleanValue(row?.DaiDienBenGiao2);
+  const laiXeId = cleanValue(row?.Ref_LaiXe);
+  const daiDienBenGiao1 = nhanSuById.get(daiDienBenGiao1Id);
+  const daiDienBenGiao2 = nhanSuById.get(daiDienBenGiao2Id);
+  const laiXe = nhanSuById.get(laiXeId);
 
   return {
     raw: row,
@@ -24,14 +56,17 @@ export function buildBanGiaoXePayload(row) {
     ngayBanGiao,
     ngayBanGiaoText: formatAdministrativeDateString(row?.NgayBanGiao),
     tenBenGiao: cleanValue(row?.TenBenGiao),
-    daiDienBenGiao1: cleanValue(row?.DaiDienBenGiao1),
+    daiDienBenGiao1Id,
+    daiDienBenGiao1: getNhanSuDisplayName(daiDienBenGiao1) || daiDienBenGiao1Id,
     chucVuBenGiao1: cleanValue(row?.ChucVuBenGiao1),
-    daiDienBenGiao2: cleanValue(row?.DaiDienBenGiao2),
+    daiDienBenGiao2Id,
+    daiDienBenGiao2: getNhanSuDisplayName(daiDienBenGiao2) || daiDienBenGiao2Id,
     chucVuBenGiao2: cleanValue(row?.ChucVuBenGiao2),
-    hoTenLaiXe: cleanValue(row?.HoTenLaiXe),
-    soCccd: cleanValue(row?.SoCCCD),
-    soGplx: cleanValue(row?.SoGPLX),
-    hanGplx: formatAdministrativeDateString(row?.HanGPLX),
+    laiXeId,
+    hoTenLaiXe: getNhanSuDisplayName(laiXe) || cleanValue(row?.HoTenLaiXe),
+    soCccd: cleanValue(laiXe?.CCCD) || cleanValue(row?.SoCCCD),
+    soGplx: cleanValue(laiXe?.SoGPLX) || cleanValue(row?.SoGPLX),
+    hanGplx: formatAdministrativeDateString(laiXe?.HanGPLX || row?.HanGPLX),
     bienSoXe: cleanValue(row?.BienSoXe),
     maDam: cleanValue(row?.MaDam),
     soKhung: cleanValue(row?.SoKhung),
@@ -80,5 +115,11 @@ export async function fetchBanGiaoXeData(appSheetService, idBienBanXe) {
     throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
   }
 
-  return buildBanGiaoXePayload(row);
+  const nhanSuById = await fetchNhanSuByIds(appSheetService, [
+    row.DaiDienBenGiao1,
+    row.DaiDienBenGiao2,
+    row.Ref_LaiXe
+  ]);
+
+  return buildBanGiaoXePayload(row, { nhanSuById });
 }

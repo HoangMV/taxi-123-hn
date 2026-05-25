@@ -20,9 +20,9 @@ const MainLayout = ({ children }) => {
 
   const renderMenuItems = (isMobile = false, collapsed = false) =>
     menuSections.map((section) => (
-      <div key={section.id} className="space-y-2">
-        {!collapsed && <p className="px-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{section.title}</p>}
-        <div className="space-y-1.5">
+      <div key={section.id} className="space-y-1.5">
+        {!collapsed && <p className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400/90">{section.title}</p>}
+        <div className="space-y-1">
           {section.items.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.path;
@@ -39,23 +39,21 @@ const MainLayout = ({ children }) => {
                   }
                 }}
                 title={collapsed ? item.text : undefined}
-                className={`group relative w-full rounded-2xl text-left transition-all duration-200 ease-out ${collapsed ? 'flex h-11 items-center justify-center px-0' : 'px-3.5 py-2.5'
+                className={`group relative w-full rounded-xl text-left transition-all duration-200 ease-out ${collapsed ? 'flex h-10 items-center justify-center px-0' : 'px-3 py-2'
                   } ${active
-                    ? 'bg-red-50 text-red-800 shadow-sm ring-1 ring-red-100'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
-                  } ${isMobile ? 'min-h-[72px]' : ''}`}
+                    ? 'bg-red-50 text-red-800 font-medium'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  } ${isMobile ? 'min-h-[56px]' : ''}`}
               >
-                {active && <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-red-600" />}
+                {active && <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-red-600" />}
                 <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
                   <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 ${active ? 'bg-white text-red-700 shadow-sm' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-800'
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${active ? 'bg-red-100 text-red-700 shadow-sm' : 'text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600'
                       }`}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-4.5 w-4.5" />
                   </span>
-                  {!collapsed && <div className="min-w-0">
-                    <div className="font-medium leading-5">{item.text}</div>
-                  </div>}
+                  {!collapsed && <span className="text-[14px] leading-5 font-medium whitespace-nowrap">{item.text}</span>}
                 </div>
               </button>
             );
@@ -111,7 +109,7 @@ const MainLayout = ({ children }) => {
 
       <div className="app-print-frame flex h-screen overflow-hidden">
         <aside
-          className={`hidden h-screen shrink-0 border-r border-slate-200 bg-white text-slate-900 shadow-sm transition-[width] duration-300 ease-out lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-72'
+          className={`hidden h-screen shrink-0 border-r border-slate-200 bg-white text-slate-900 shadow-sm transition-[width] duration-300 ease-out lg:flex lg:flex-col ${sidebarCollapsed ? 'w-20' : 'w-64'
             }`}
         >
           <div className={`flex h-[76px] items-center border-b border-slate-200 transition-all duration-300 ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
@@ -130,7 +128,7 @@ const MainLayout = ({ children }) => {
             </div>
           </div>
 
-          <nav className={`scrollbar-sidebar flex-1 space-y-5 overflow-y-auto py-5 transition-all duration-300 ${sidebarCollapsed ? 'px-3' : 'px-4'}`}>
+          <nav className={`scrollbar-sidebar flex-1 space-y-4 overflow-y-auto py-4 transition-all duration-300 ${sidebarCollapsed ? 'px-3' : 'px-3.5'}`}>
             {sidebarCollapsed && (
               <button
                 type="button"
