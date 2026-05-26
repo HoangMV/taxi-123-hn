@@ -39,6 +39,80 @@ async function fetchNhanSuByIds(appSheetService, ids) {
   );
 }
 
+function buildNhanSuMap(rows) {
+  return new Map(
+    (Array.isArray(rows) ? rows : [])
+      .map((row) => [cleanValue(row?.ID_NhanSu), row])
+      .filter(([id]) => id)
+  );
+}
+
+async function fetchBanGiaoXeBundle(idBienBanXe, options = {}) {
+  const params = new URLSearchParams({
+    ID_BienBanXe: idBienBanXe
+  });
+  if (options.includeRelated === false) {
+    params.set('includeRelated', '0');
+  }
+
+  const response = await fetch(`/api/ban-giao-xe?${params.toString()}`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json'
+    }
+  });
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
+  if (!response.ok) {
+    throw new Error(data.error || `Không tải được dữ liệu bàn giao xe (${response.status}).`);
+  }
+
+  return data;
+}
+
+export async function fetchBanGiaoXeRow(appSheetService, idBienBanXe) {
+  if (!idBienBanXe) {
+    throw new Error('Thiếu tham số ID_BienBanXe trên URL.');
+  }
+
+  try {
+    const bundle = await fetchBanGiaoXeBundle(idBienBanXe, { includeRelated: false });
+    const row = bundle.row || null;
+
+    if (!row) {
+      throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
+    }
+
+    return row;
+  } catch (error) {
+    if (!appSheetService) throw error;
+  }
+
+  const selectorValue = escapeSelectorValue(idBienBanXe);
+  const rows = await appSheetService.find('XE_BANGIAO', `Filter(XE_BANGIAO, [ID_BienBanXe] = "${selectorValue}")`);
+  const row = Array.isArray(rows) ? rows[0] : null;
+
+  if (!row) {
+    throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
+  }
+
+  return row;
+}
+
+export function getBanGiaoXeNhanSuIds(row) {
+  return [row?.DaiDienBenGiao1, row?.DaiDienBenGiao2, row?.Ref_LaiXe];
+}
+
+export function buildBanGiaoXeNhanSuMap(rows) {
+  return buildNhanSuMap(rows);
+}
+
+export async function fetchBanGiaoXeNhanSu(appSheetService, row) {
+  if (!appSheetService) return new Map();
+  return fetchNhanSuByIds(appSheetService, getBanGiaoXeNhanSuIds(row));
+}
+
 export function buildBanGiaoXePayload(row, relatedData = {}) {
   const ngayBanGiao = formatAdministrativeDate(row?.NgayBanGiao);
   const nhanSuById = relatedData.nhanSuById || new Map();
@@ -73,8 +147,7 @@ export function buildBanGiaoXePayload(row, relatedData = {}) {
     soMay: cleanValue(row?.SoMay),
     nhanHieuXe: cleanValue(row?.NhanHieuXe),
     namSanXuat: cleanValue(row?.NamSanXuat),
-    trangThaiQuanLyXe: cleanValue(row?.TrangThaiQuanLyXe),
-    trangThaiBienBan: cleanValue(row?.TrangThaiBienBan)
+    trangThaiQuanLyXe: cleanValue(row?.TrangThaiQuanLyXe)
   };
 }
 
@@ -107,19 +180,23 @@ export async function fetchBanGiaoXeData(appSheetService, idBienBanXe) {
     throw new Error('Thiếu tham số ID_BienBanXe trên URL.');
   }
 
-  const selectorValue = escapeSelectorValue(idBienBanXe);
-  const rows = await appSheetService.find('XE_BANGIAO', `Filter(XE_BANGIAO, [ID_BienBanXe] = "${selectorValue}")`);
-  const row = Array.isArray(rows) ? rows[0] : null;
+  try {
+    const bundle = await fetchBanGiaoXeBundle(idBienBanXe);
+    const row = bundle.row || null;
 
-  if (!row) {
-    throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
+    if (!row) {
+      throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
+    }
+
+    return buildBanGiaoXePayload(row, {
+      nhanSuById: buildNhanSuMap(bundle.related?.NHANSU)
+    });
+  } catch (error) {
+    if (!appSheetService) throw error;
   }
 
-  const nhanSuById = await fetchNhanSuByIds(appSheetService, [
-    row.DaiDienBenGiao1,
-    row.DaiDienBenGiao2,
-    row.Ref_LaiXe
-  ]);
+  const row = await fetchBanGiaoXeRow(appSheetService, idBienBanXe);
+  const nhanSuById = await fetchBanGiaoXeNhanSu(appSheetService, row);
 
   return buildBanGiaoXePayload(row, { nhanSuById });
 }

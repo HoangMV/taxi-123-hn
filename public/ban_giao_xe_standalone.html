@@ -423,6 +423,38 @@
         );
       }
 
+      function buildNhanSuMap(rows) {
+        return new Map(
+          (Array.isArray(rows) ? rows : [])
+            .map((item) => [cleanValue(item.ID_NhanSu), item])
+            .filter(([id]) => id)
+        );
+      }
+
+      async function fetchBanGiaoXeBundle(id, options = {}) {
+        const params = new URLSearchParams({
+          ID_BienBanXe: id
+        });
+        if (options.includeRelated === false) {
+          params.set('includeRelated', '0');
+        }
+
+        const response = await fetch(`/api/ban-giao-xe?${params.toString()}`, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json'
+          }
+        });
+
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : {};
+        if (!response.ok) {
+          throw new Error(data.error || `Không tải được dữ liệu bàn giao xe (${response.status}).`);
+        }
+
+        return data;
+      }
+
       function buildPayload(row, relatedData = {}) {
         const ngayBanGiao = adminDateParts(row.NgayBanGiao);
         const nhanSuById = relatedData.nhanSuById || new Map();
@@ -457,8 +489,7 @@
           soMay: cleanValue(row.SoMay),
           nhanHieuXe: cleanValue(row.NhanHieuXe),
           namSanXuat: cleanValue(row.NamSanXuat),
-          trangThaiQuanLyXe: cleanValue(row.TrangThaiQuanLyXe),
-          trangThaiBienBan: cleanValue(row.TrangThaiBienBan)
+          trangThaiQuanLyXe: cleanValue(row.TrangThaiQuanLyXe)
         };
       }
 
@@ -466,16 +497,16 @@
         return `<div class="check-list">${items.map((item) => `<div>☐ ${escapeHtml(item)}</div>`).join('')}</div>`;
       }
 
-      function renderSummary(payload) {
+      function renderSummary(payload, nhanSuStatus = 'Đã tải') {
         const items = [
           ['Số biên bản', payload.soBienBan],
           ['Ngày bàn giao', payload.ngayBanGiaoText],
+          ['Nhân sự', nhanSuStatus],
           ['Bên giao', payload.tenBenGiao],
           ['Bên nhận', payload.hoTenLaiXe],
           ['Biển số xe', payload.bienSoXe],
           ['Mã đàm', payload.maDam],
-          ['Trạng thái xe', payload.trangThaiQuanLyXe],
-          ['Trạng thái biên bản', payload.trangThaiBienBan]
+          ['Trạng thái xe', payload.trangThaiQuanLyXe]
         ];
         summary.innerHTML = items.map(([label, value]) => `
           <div class="summary-item">
@@ -586,28 +617,46 @@
             throw new Error('Thiếu tham số ID_BienBanXe trên URL.');
           }
 
-          const selectorValue = escapeSelectorValue(idBienBanXe);
-          const rows = await appSheetFind('XE_BANGIAO', `Filter(XE_BANGIAO, [ID_BienBanXe] = "${selectorValue}")`);
-          const row = Array.isArray(rows) ? rows[0] : null;
+          let row;
+          try {
+            const bundle = await fetchBanGiaoXeBundle(idBienBanXe, { includeRelated: false });
+            row = bundle.row || null;
+          } catch {
+            const selectorValue = escapeSelectorValue(idBienBanXe);
+            const rows = await appSheetFind('XE_BANGIAO', `Filter(XE_BANGIAO, [ID_BienBanXe] = "${selectorValue}")`);
+            row = Array.isArray(rows) ? rows[0] : null;
+          }
+
           if (!row) {
             throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
           }
 
-          const nhanSuById = await fetchNhanSuByIds([
-            row.DaiDienBenGiao1,
-            row.DaiDienBenGiao2,
-            row.Ref_LaiXe
-          ]);
-
-          currentPayload = buildPayload(row, { nhanSuById });
-          renderSummary(currentPayload);
+          currentPayload = buildPayload(row);
+          renderSummary(currentPayload, 'Đang tải tên nhân sự...');
           renderDocument(currentPayload);
 
-          statusText.textContent = `Đã tải biên bản ${idBienBanXe}.`;
+          statusText.textContent = `Đã tải biên bản ${idBienBanXe}. Đang tải thông tin nhân sự...`;
           summary.hidden = false;
           preview.hidden = false;
           printButton.disabled = false;
-          exportWordButton.disabled = false;
+          reloadButton.disabled = false;
+
+          try {
+            const nhanSuById = await fetchNhanSuByIds([
+              row.DaiDienBenGiao1,
+              row.DaiDienBenGiao2,
+              row.Ref_LaiXe
+            ]);
+            currentPayload = buildPayload(row, { nhanSuById });
+            renderSummary(currentPayload);
+            renderDocument(currentPayload);
+            statusText.textContent = `Đã tải biên bản ${idBienBanXe}.`;
+            exportWordButton.disabled = false;
+          } catch (relatedError) {
+            statusText.textContent = 'Đã tải biên bản, nhưng chưa tải được thông tin nhân sự.';
+            exportWordButton.disabled = true;
+            console.error(relatedError);
+          }
         } catch (error) {
           statusText.textContent = 'Không tải được biên bản bàn giao xe.';
           showMessage(error.message || 'Không tải được biên bản bàn giao xe.');

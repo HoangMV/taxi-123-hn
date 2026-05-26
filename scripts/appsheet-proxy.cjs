@@ -38,6 +38,20 @@ function sendJson(response, statusCode, data) {
   response.end(JSON.stringify(data));
 }
 
+function cleanValue(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+function escapeSelectorValue(value) {
+  return String(value || '').replace(/"/g, '\\"');
+}
+
+function getUniqueIds(ids) {
+  const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
+  return uniqueIds;
+}
+
 function readJson(request) {
   return new Promise((resolve, reject) => {
     let raw = '';
@@ -90,6 +104,54 @@ function resolveStaticPath(urlPath) {
   return fs.existsSync(fallbackPath) ? fallbackPath : null;
 }
 
+async function findAppSheetRows({ tableName, selector }) {
+  const payload = selector
+    ? {
+        Properties: {
+          Selector: selector
+        }
+      }
+    : {};
+
+  const appSheetResponse = await fetch(`https://${region}.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(tableName)}/Action`, {
+    method: 'POST',
+    headers: {
+      ApplicationAccessKey: accessKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      Action: 'Find',
+      ...payload
+    })
+  });
+
+  const text = await appSheetResponse.text();
+  if (!appSheetResponse.ok) {
+    throw new Error(`AppSheet ${appSheetResponse.status}: ${text || 'Yêu cầu thất bại.'}`);
+  }
+
+  const rows = text ? JSON.parse(text) : [];
+  return Array.isArray(rows) ? rows : [];
+}
+
+function buildNhanSuSelector(ids) {
+  const uniqueIds = getUniqueIds(ids);
+  if (uniqueIds.length === 0) return '';
+
+  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
+  return `Filter(NHANSU, IN([ID_NhanSu], LIST(${listValues})))`;
+}
+
+async function findNhanSuByIds(ids) {
+  const selector = buildNhanSuSelector(ids);
+  if (!selector) return [];
+
+  return findAppSheetRows({
+    tableName: 'NHANSU',
+    selector
+  });
+}
+
 async function handleAppSheetProxy(request, response) {
   if (!appId || !accessKey || !region) {
     sendJson(response, 500, {
@@ -134,6 +196,74 @@ async function handleAppSheetProxy(request, response) {
   }
 }
 
+async function handleBanGiaoXeBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idBienBanXe = cleanValue(
+      url.searchParams.get('ID_BienBanXe') ||
+      url.searchParams.get('idBienBanXe') ||
+      body.ID_BienBanXe ||
+      body.idBienBanXe
+    );
+    const includeRelated = cleanValue(
+      url.searchParams.get('includeRelated') ||
+      body.includeRelated ||
+      '1'
+    ) !== '0';
+
+    if (!idBienBanXe) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_BienBanXe.' });
+      return;
+    }
+
+    const selectorValue = escapeSelectorValue(idBienBanXe);
+    const rows = await findAppSheetRows({
+      tableName: 'XE_BANGIAO',
+      selector: `Filter(XE_BANGIAO, [ID_BienBanXe] = "${selectorValue}")`
+    });
+    const row = rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, {
+        row,
+        related: {}
+      });
+      return;
+    }
+
+    const nhanSuRows = await findNhanSuByIds([
+      row.DaiDienBenGiao1,
+      row.DaiDienBenGiao2,
+      row.Ref_LaiXe
+    ]);
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        NHANSU: nhanSuRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu bàn giao xe.'
+    });
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
 
@@ -143,6 +273,15 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleAppSheetProxy(request, response);
+    return;
+  }
+
+  if (url.pathname === '/api/ban-giao-xe') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleBanGiaoXeBundle(request, response, url);
     return;
   }
 

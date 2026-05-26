@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Car, ExternalLink, FileText, Printer, RefreshCw } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -7,7 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Input } from '../components/ui/input';
 import {
   buildBanGiaoXeTemplateData,
-  fetchBanGiaoXeData,
+  buildBanGiaoXePayload,
+  fetchBanGiaoXeNhanSu,
+  fetchBanGiaoXeRow,
   getBanGiaoXeIdFromSearch
 } from '../features/banGiaoXe';
 import config from '../config/config';
@@ -82,8 +84,10 @@ const BanGiaoXePage = () => {
   const [idInput, setIdInput] = useState(idBienBanXe);
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingNhanSu, setLoadingNhanSu] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const loadRequestIdRef = useRef(0);
 
   useEffect(() => {
     setIdInput(idBienBanXe);
@@ -113,25 +117,50 @@ const BanGiaoXePage = () => {
   }
 
   async function loadData() {
+    const requestId = loadRequestIdRef.current + 1;
+    loadRequestIdRef.current = requestId;
+
     if (!idBienBanXe) {
       setPayload(null);
       setErrorMessage('');
       setLoading(false);
+      setLoadingNhanSu(false);
       return;
     }
 
     setLoading(true);
+    setLoadingNhanSu(false);
     try {
       setErrorMessage('');
-      const nextPayload = await fetchBanGiaoXeData(appSheetService, idBienBanXe);
-      setPayload(nextPayload);
+      const row = await fetchBanGiaoXeRow(appSheetService, idBienBanXe);
+      if (loadRequestIdRef.current !== requestId) return;
+
+      setPayload(buildBanGiaoXePayload(row));
+      setLoading(false);
+      setLoadingNhanSu(true);
+
+      try {
+        const nhanSuById = await fetchBanGiaoXeNhanSu(appSheetService, row);
+        if (loadRequestIdRef.current !== requestId) return;
+        setPayload(buildBanGiaoXePayload(row, { nhanSuById }));
+      } catch (relatedError) {
+        if (loadRequestIdRef.current !== requestId) return;
+        toast.warning(`Đã tải biên bản nhưng chưa tải được thông tin nhân sự: ${getFriendlyError(relatedError)}`);
+      } finally {
+        if (loadRequestIdRef.current === requestId) {
+          setLoadingNhanSu(false);
+        }
+      }
     } catch (error) {
+      if (loadRequestIdRef.current !== requestId) return;
       const message = getFriendlyError(error);
       toast.error(message);
       setErrorMessage(message);
       setPayload(null);
     } finally {
-      setLoading(false);
+      if (loadRequestIdRef.current === requestId) {
+        setLoading(false);
+      }
     }
   }
 
@@ -227,7 +256,7 @@ const BanGiaoXePage = () => {
                 <Printer className="mr-2 h-4 w-4" />
                 In tài liệu
               </Button>
-              <Button className="w-full" onClick={exportToWordTemplate} disabled={exporting || !payload}>
+              <Button className="w-full" onClick={exportToWordTemplate} disabled={exporting || loadingNhanSu || !payload}>
                 {exporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                 Xuất Word
               </Button>
@@ -285,12 +314,12 @@ const BanGiaoXePage = () => {
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <InfoItem label="Số biên bản" value={payload.soBienBan} />
               <InfoItem label="Ngày bàn giao" value={payload.ngayBanGiaoText} />
-              <InfoItem label="Trạng thái xe" value={payload.trangThaiQuanLyXe} />
-              <InfoItem label="Trạng thái biên bản" value={payload.trangThaiBienBan} />
+              <InfoItem label="Nhân sự" value={loadingNhanSu ? 'Đang tải tên nhân sự...' : 'Đã tải'} />
               <InfoItem label="Bên giao" value={payload.tenBenGiao} />
               <InfoItem label="Bên nhận" value={payload.hoTenLaiXe} />
               <InfoItem label="Biển số xe" value={payload.bienSoXe} />
               <InfoItem label="Mã đàm" value={payload.maDam} />
+              <InfoItem label="Trạng thái xe" value={payload.trangThaiQuanLyXe} />
             </CardContent>
           </Card>
 
