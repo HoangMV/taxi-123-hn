@@ -81,7 +81,6 @@
           </div>
         </div>
         <div class="actions">
-          <button class="secondary" id="reloadButton" type="button">Tải lại</button>
           <button id="printButton" type="button" disabled>In tài liệu</button>
           <button id="exportWordButton" type="button" disabled>Xuất Word</button>
         </div>
@@ -98,7 +97,6 @@
       const messageBox = document.getElementById('messageBox');
       const preview = document.getElementById('preview');
       const page = document.getElementById('documentPage');
-      const reloadButton = document.getElementById('reloadButton');
       const printButton = document.getElementById('printButton');
       const exportWordButton = document.getElementById('exportWordButton');
       const idKyQuy = new URLSearchParams(window.location.search).get('ID_KyQuy') || '';
@@ -246,8 +244,12 @@
         return text ? JSON.parse(text) : [];
       }
 
-      async function fetchKyQuyBundle() {
-        const response = await fetch(`/api/ky-quy-lai-xe?ID_KyQuy=${encodeURIComponent(idKyQuy)}`, {
+      async function fetchKyQuyBundle(includeRelated = true) {
+        const params = new URLSearchParams({ ID_KyQuy: idKyQuy });
+        if (!includeRelated) {
+          params.set('includeRelated', '0');
+        }
+        const response = await fetch(`/api/ky-quy-lai-xe?${params.toString()}`, {
           method: 'GET',
           headers: {
             Accept: 'application/json'
@@ -263,6 +265,26 @@
           throw new Error(data.error || `Không tải được dữ liệu ký quỹ lái xe (${response.status}).`);
         }
         return data;
+      }
+
+      async function fetchKyQuyRow() {
+        const bundle = await fetchKyQuyBundle(false);
+        return bundle.row || null;
+      }
+
+      function buildMap(rows, keyName) {
+        return new Map(
+          (Array.isArray(rows) ? rows : [])
+            .map((row) => [cleanValue(row?.[keyName]), row])
+            .filter(([id]) => id)
+        );
+      }
+
+      async function fetchRelatedMap(tableName, keyName, ids) {
+        const selector = buildRefSelector(tableName, keyName, ids);
+        if (!selector) return new Map();
+        const rows = await appSheetFind(tableName, selector);
+        return buildMap(rows, keyName);
       }
 
       function buildRefSelector(tableName, keyName, ids) {
@@ -488,7 +510,6 @@
 
       async function loadData() {
         currentPayload = null;
-        reloadButton.disabled = true;
         printButton.disabled = true;
         exportWordButton.disabled = true;
         messageBox.hidden = true;
@@ -497,22 +518,32 @@
 
         try {
           if (!idKyQuy) throw new Error('Thiếu tham số ID_KyQuy trên URL.');
-          const bundle = await fetchKyQuyBundle();
-          const row = bundle.row || null;
+          const row = await fetchKyQuyRow();
           if (!row) throw new Error(`Không tìm thấy hợp đồng ký quỹ với ID_KyQuy = ${idKyQuy}.`);
-          const nhanSuById = new Map((Array.isArray(bundle.related?.NHANSU) ? bundle.related.NHANSU : []).map((item) => [cleanValue(item.ID_NhanSu), item]));
-          const donViById = new Map((Array.isArray(bundle.related?.DONVI) ? bundle.related.DONVI : []).map((item) => [cleanValue(item.ID_DonVi), item]));
-          currentPayload = buildPayload(row, nhanSuById, donViById);
+
+          currentPayload = buildPayload(row);
           renderDocument(currentPayload);
-          statusText.textContent = `Đã tải hợp đồng ${idKyQuy}.`;
           preview.hidden = false;
           printButton.disabled = false;
-          exportWordButton.disabled = false;
+          statusText.textContent = `Đã tải hợp đồng ${idKyQuy}. Đang tải thêm thông tin liên kết...`;
+
+          try {
+            const [nhanSuById, donViById] = await Promise.all([
+              fetchRelatedMap('NHANSU', 'ID_NhanSu', [row.Ref_NhanSu]),
+              fetchRelatedMap('DONVI', 'ID_DonVi', [getDonViRefId(row)])
+            ]);
+            currentPayload = buildPayload(row, nhanSuById, donViById);
+            renderDocument(currentPayload);
+            statusText.textContent = `Đã tải hợp đồng ${idKyQuy}.`;
+            exportWordButton.disabled = false;
+          } catch (relatedError) {
+            statusText.textContent = 'Đã tải hợp đồng, nhưng chưa tải được dữ liệu liên kết.';
+            exportWordButton.disabled = true;
+            console.error(relatedError);
+          }
         } catch (error) {
           statusText.textContent = 'Không tải được hợp đồng ký quỹ.';
           showMessage(error.message || 'Không tải được hợp đồng ký quỹ.');
-        } finally {
-          reloadButton.disabled = false;
         }
       }
 
@@ -539,7 +570,6 @@
         }
       }
 
-      reloadButton.addEventListener('click', loadData);
       printButton.addEventListener('click', () => window.print());
       exportWordButton.addEventListener('click', exportToWordTemplate);
       loadData();

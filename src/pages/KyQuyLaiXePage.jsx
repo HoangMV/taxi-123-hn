@@ -7,8 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Input } from '../components/ui/input';
 import config from '../config/config';
 import {
+  buildKyQuyPayload,
   buildKyQuyTemplateData,
-  fetchKyQuyData,
+  fetchKyQuyRelated,
+  fetchKyQuyRow,
   getKyQuyIdFromSearch
 } from '../features/kyQuyLaiXe';
 import appSheetService from '../services/appSheetService';
@@ -85,6 +87,7 @@ const KyQuyLaiXePage = () => {
   const [idInput, setIdInput] = useState(idKyQuy);
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingRelated, setLoadingRelated] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const loadRequestIdRef = useRef(0);
@@ -123,15 +126,33 @@ const KyQuyLaiXePage = () => {
       setPayload(null);
       setErrorMessage('');
       setLoading(false);
+      setLoadingRelated(false);
       return;
     }
 
     setLoading(true);
+    setLoadingRelated(false);
     try {
       setErrorMessage('');
-      const nextPayload = await fetchKyQuyData(appSheetService, idKyQuy);
+      const row = await fetchKyQuyRow(appSheetService, idKyQuy);
       if (loadRequestIdRef.current !== requestId) return;
-      setPayload(nextPayload);
+
+      setPayload(buildKyQuyPayload(row));
+      setLoading(false);
+      setLoadingRelated(true);
+
+      try {
+        const related = await fetchKyQuyRelated(appSheetService, row);
+        if (loadRequestIdRef.current !== requestId) return;
+        setPayload(buildKyQuyPayload(row, related));
+      } catch (relatedError) {
+        if (loadRequestIdRef.current !== requestId) return;
+        toast.warning(`Đã tải hợp đồng nhưng chưa tải được dữ liệu liên kết: ${getFriendlyError(relatedError)}`);
+      } finally {
+        if (loadRequestIdRef.current === requestId) {
+          setLoadingRelated(false);
+        }
+      }
     } catch (error) {
       if (loadRequestIdRef.current !== requestId) return;
       const message = getFriendlyError(error);
@@ -236,7 +257,7 @@ const KyQuyLaiXePage = () => {
                 <Printer className="mr-2 h-4 w-4" />
                 In tài liệu
               </Button>
-              <Button type="button" className="w-full sm:w-auto" onClick={exportToWordTemplate} disabled={exporting || loading || !payload}>
+              <Button type="button" className="w-full sm:w-auto" onClick={exportToWordTemplate} disabled={exporting || loadingRelated || !payload}>
                 {exporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                 Xuất Word
               </Button>
@@ -282,6 +303,16 @@ const KyQuyLaiXePage = () => {
 
       {payload && !loading && (
         <>
+          {loadingRelated && (
+            <Card className="kq-actions border-sky-200 bg-sky-50/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 text-sky-900">
+                  <RefreshCw className="h-4 w-4 animate-spin text-sky-700" />
+                  <p className="text-sm">Đã lên hợp đồng chính, đang tải thêm thông tin nhân sự và đơn vị...</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <div className="overflow-x-auto pb-4">
             <div className="kq-document min-w-[21cm]">
               <div className="kq-page">
