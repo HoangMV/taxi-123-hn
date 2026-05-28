@@ -1,7 +1,7 @@
 export function parseDateValue(value) {
   if (!value) return null;
 
-  const parsed = new Date(value);
+  const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
@@ -23,4 +23,18 @@ export function formatAdministrativeDateString(value) {
   const date = formatAdministrativeDate(value);
   if (!date.day || !date.month || !date.year) return '';
   return `${date.day}/${date.month}/${date.year}`;
+}
+
+export function addDays(value, days) {
+  const date = parseDateValue(value);
+  if (!date) return null;
+
+  const result = new Date(date.getTime());
+  result.setDate(result.getDate() + Number(days || 0));
+  return result;
+}
+
+export function calculateInclusiveEndDate(value, totalDays = 365) {
+  const normalizedDays = Math.max(Number(totalDays || 0), 1);
+  return addDays(value, normalizedDays - 1);
 }

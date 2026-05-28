@@ -232,39 +232,33 @@ const BanGiaoXePage = () => {
                 <CardDescription className="mt-1 text-slate-500">
                   {idBienBanXe ? `Đã tải biên bản ${idBienBanXe}.` : 'Nhập ID_BienBanXe để tải dữ liệu từ AppSheet.'}
                 </CardDescription>
-                <form className="mt-3 grid max-w-2xl gap-3 sm:grid-cols-[minmax(220px,1fr)_auto]" onSubmit={submitId}>
-                  <Input
-                    aria-label="ID biên bản bàn giao xe"
-                    className="h-10 rounded-xl"
-                    placeholder="Nhập ID_BienBanXe"
-                    value={idInput}
-                    onChange={(event) => setIdInput(event.target.value)}
-                  />
-                  <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={loading}>
-                    <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                    Tải dữ liệu
-                  </Button>
-                </form>
               </div>
             </div>
-            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2 xl:grid-cols-4">
-              <Button variant="outline" className="w-full" onClick={openStandaloneHtml}>
+            <form className="flex w-full flex-wrap items-center gap-3 xl:w-auto xl:justify-end" onSubmit={submitId}>
+              <Input
+                aria-label="ID biên bản bàn giao xe"
+                className="h-10 w-full rounded-xl sm:w-[220px] xl:w-[240px]"
+                placeholder="Nhập ID_BienBanXe"
+                value={idInput}
+                onChange={(event) => setIdInput(event.target.value)}
+              />
+              <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={loading}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Tải dữ liệu
+              </Button>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={openStandaloneHtml}>
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Mở bản HTML
               </Button>
-              <Button variant="outline" className="w-full" onClick={() => window.print()} disabled={!payload}>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => window.print()} disabled={!payload}>
                 <Printer className="mr-2 h-4 w-4" />
                 In tài liệu
               </Button>
-              <Button className="w-full" onClick={exportToWordTemplate} disabled={exporting || loadingNhanSu || !payload}>
+              <Button type="button" className="w-full sm:w-auto" onClick={exportToWordTemplate} disabled={exporting || loadingNhanSu || !payload}>
                 {exporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                 Xuất Word
               </Button>
-              <Button variant="outline" className="w-full" onClick={loadData} disabled={loading || !idBienBanXe}>
-                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Tải lại
-              </Button>
-            </div>
+            </form>
           </div>
         </CardHeader>
       </Card>

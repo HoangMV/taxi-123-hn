@@ -30,29 +30,41 @@
       button.secondary { border: 1px solid var(--line); background: #fff; color: var(--ink); }
       button:disabled { cursor: not-allowed; opacity: .55; }
       .message { margin-top: 16px; border: 1px dashed var(--line); border-radius: 12px; background: #fff; padding: 24px; color: var(--muted); text-align: center; }
-      .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
-      .summary-item { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 10px; }
-      .summary-label { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
-      .summary-value { margin-top: 4px; font-weight: 700; overflow-wrap: anywhere; }
-      .preview { margin-top: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #d8dde6; padding: 8px; }
-      .page { width: 21cm; min-height: 29.7cm; margin: 0 auto; background: #fff; padding: 1.5cm; color: #000; font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.4; box-shadow: 0 16px 34px rgba(16, 24, 40, 0.2); }
+      .preview { margin-top: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #eef2f7; padding: 0; }
+      .page { width: 21cm; min-height: 29.7cm; margin: 0 auto; background: #fff; padding: 2cm 2.2cm 2cm 2.6cm; color: #000; font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.45; box-shadow: none; }
       .center { text-align: center; }
       .bold { font-weight: 700; }
-      .title { margin: 20px 0 10px; text-align: center; font-size: 18pt; font-weight: 700; }
-      .row { margin: 8px 0; }
-      .grid { display: grid; grid-template-columns: 180px 1fr; gap: 6px 18px; }
-      .section-title { margin: 18px 0 8px; font-weight: 700; text-transform: uppercase; }
-      .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; text-align: center; font-weight: 700; }
-      .sign-note { margin-top: 4px; font-weight: 400; font-style: italic; }
+      .title { margin: 12px 0 0; text-align: center; font-size: 18pt; font-weight: 700; text-transform: uppercase; }
+      .subtitle { margin-bottom: 12px; text-align: center; font-weight: 700; }
+      .row { margin: 4px 0; text-align: justify; }
+      .indent { padding-left: 28px; text-indent: -28px; }
+      .list { margin: 2px 0 2px 34px; padding: 0; list-style: none; }
+      .list li { margin: 2px 0; text-indent: -16px; padding-left: 16px; }
+      .list li::before { content: "- "; }
+      .evidence-title { margin: 8px 0 4px; font-weight: 700; text-decoration: underline; }
+      .evidence-list { margin: 0 0 8px 30px; padding-left: 18px; list-style: disc; }
+      .evidence-list li { margin: 2px 0; font-style: italic; }
+      .party-table, .sign-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      .party-table { margin: 6px 0 8px; }
+      .party-table td { padding: 2px 0; vertical-align: top; }
+      .party-table .label { width: 78px; font-weight: 700; }
+      .party-table .colon { width: 14px; }
+      .party-table .sub-label { width: 108px; }
+      .party-table .value { word-break: break-word; }
+      .article { margin-top: 10px; }
+      .article-title { margin-bottom: 4px; font-weight: 700; }
+      .signatures { margin-top: 28px; }
+      .sign-title { font-weight: 700; text-transform: uppercase; }
+      .sign-note { margin-top: 4px; font-style: italic; }
+      .sign-space { height: 96px; }
       @media (max-width: 900px) {
         .toolbar { align-items: stretch; flex-direction: column; }
-        .actions, .actions button, .summary { width: 100%; }
-        .summary { grid-template-columns: 1fr; }
+        .actions, .actions button { width: 100%; }
         .page { transform: scale(calc((100vw - 44px) / 793.7)); transform-origin: top left; margin-left: 0; margin-bottom: calc(-29.7cm + (29.7cm * ((100vw - 44px) / 793.7)) + 16px); }
       }
       @media print {
         html, body { width: auto !important; height: auto !important; overflow: visible !important; background: #fff; }
-        .toolbar, .message, .summary { display: none !important; }
+        .toolbar, .message { display: none !important; }
         .shell, .preview { margin: 0; padding: 0; border: 0; background: #fff; width: auto; overflow: visible; }
         .page { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; border: 0; }
       }
@@ -75,7 +87,6 @@
         </div>
       </section>
       <div class="message" id="messageBox" hidden></div>
-      <section class="summary" id="summary" hidden></section>
       <section class="preview" id="preview" hidden>
         <article class="page" id="documentPage"></article>
       </section>
@@ -85,7 +96,6 @@
       const config = window.__APPSHEET_RUNTIME_CONFIG__ || {};
       const statusText = document.getElementById('statusText');
       const messageBox = document.getElementById('messageBox');
-      const summary = document.getElementById('summary');
       const preview = document.getElementById('preview');
       const page = document.getElementById('documentPage');
       const reloadButton = document.getElementById('reloadButton');
@@ -128,6 +138,19 @@
         const date = adminDateParts(value);
         if (!date.day || !date.month || !date.year) return '';
         return `${date.day}/${date.month}/${date.year}`;
+      }
+
+      function addDays(value, days) {
+        const date = parseDateValue(value);
+        if (!date) return null;
+        const result = new Date(date.getTime());
+        result.setDate(result.getDate() + Number(days || 0));
+        return result;
+      }
+
+      function calculateInclusiveEndDate(value, totalDays = 365) {
+        const normalizedDays = Math.max(Number(totalDays || 0), 1);
+        return addDays(value, normalizedDays - 1);
       }
 
       function formatMoney(value) {
@@ -260,6 +283,8 @@
           soHopDong: cleanValue(row.MaKyQuy),
           ngayKy: adminDateParts(row.NgayKyHopDong),
           ngayKyText: formatAdministrativeDate(row.NgayKyHopDong),
+          ngayHetHan: adminDateParts(calculateInclusiveEndDate(row.NgayKyHopDong, 365)),
+          ngayHetHanText: formatAdministrativeDate(calculateInclusiveEndDate(row.NgayKyHopDong, 365)),
           hoTenLaiXe: cleanValue(nhanSu?.HoTen) || cleanValue(nhanSu?.Display) || cleanValue(row.Ref_NhanSu),
           soCccd: cleanValue(nhanSu?.CCCD) || cleanValue(row.SoCCCD),
           ngayCapCccd: formatAdministrativeDate(nhanSu?.NgayCapCCCD),
@@ -298,6 +323,8 @@
           so_dien_thoai: payload.soDienThoai,
           so_tien_phai_nop: payload.soTienPhaiNopText,
           so_tien_phai_nop_text: payload.soTienPhaiNopBangChu,
+          ngay_hieu_luc_text: payload.ngayKyText,
+          ngay_het_han_text: payload.ngayHetHanText,
           so_tien_da_nop: payload.soTienDaNopText,
           so_tien_con_lai: payload.soTienConLaiText,
           trang_thai_ky_quy: payload.trangThaiKyQuy
@@ -313,61 +340,140 @@
         return normalizedZip;
       }
 
-      function renderSummary(payload, refStatus = 'Đã tải') {
-        const items = [
-          ['Số hợp đồng', payload.soHopDong],
-          ['Ngày ký', payload.ngayKyText],
-          ['Lái xe', payload.hoTenLaiXe],
-          ['Đơn vị', refStatus === 'Đang tải thông tin Ref...' ? refStatus : payload.tenDonVi],
-          ['CCCD', payload.soCccd],
-          ['Số tiền phải nộp', payload.soTienPhaiNopText],
-          ['Đã nộp', payload.soTienDaNopText],
-          ['Còn lại', payload.soTienConLaiText]
-        ];
-        summary.innerHTML = items.map(([label, value]) => `
-          <div class="summary-item">
-            <div class="summary-label">${escapeHtml(label)}</div>
-            <div class="summary-value">${escapeHtml(value || 'Chưa có')}</div>
-          </div>
-        `).join('');
-      }
-
       function renderDocument(payload) {
         page.innerHTML = `
           <div class="center bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
           <div class="center bold">Độc lập - Tự do - Hạnh phúc</div>
           <div class="center bold">-----o0o-----</div>
-          <div class="title">HỢP ĐỒNG ĐẶT CỌC ĐẢM BẢO TRÁCH NHIỆM TÀI SẢN</div>
-          <div class="center bold">Số: ${escapeHtml(payload.soHopDong)}</div>
-          <div class="row">Hôm nay, ngày ${escapeHtml(payload.ngayKy.day || '...')} tháng ${escapeHtml(payload.ngayKy.month || '...')} năm ${escapeHtml(payload.ngayKy.year || '...')}, chúng tôi gồm:</div>
-          <div class="section-title">Bên A - Bên nhận cọc</div>
-          <div class="grid">
-            <div>Tên đơn vị</div><div>: ${escapeHtml(payload.tenDonVi)}</div>
-            <div>Địa chỉ</div><div>: ${escapeHtml(payload.diaChiDonVi)}</div>
-            <div>Mã số thuế</div><div>: ${escapeHtml(payload.maSoThueDonVi)}</div>
-            <div>Đại diện</div><div>: ${escapeHtml(payload.nguoiDaiDienDonVi)}${payload.chucVuNguoiDaiDien ? ` - ${escapeHtml(payload.chucVuNguoiDaiDien)}` : ''}</div>
-          </div>
-          <div class="section-title">Bên B - Bên đặt cọc</div>
-          <div class="grid">
-            <div>Họ và tên</div><div>: ${escapeHtml(payload.hoTenLaiXe)}</div>
-            <div>Địa chỉ</div><div>: ${escapeHtml(payload.diaChiDayDu)}</div>
-            <div>CCCD</div><div>: ${escapeHtml(payload.soCccd)}</div>
-            <div>Ngày cấp</div><div>: ${escapeHtml(payload.ngayCapCccd)}</div>
-            <div>Nơi cấp</div><div>: ${escapeHtml(payload.noiCapCccd)}</div>
-            <div>Số điện thoại</div><div>: ${escapeHtml(payload.soDienThoai)}</div>
-          </div>
+          <div class="title">HỢP ĐỒNG ĐẶT CỌC</div>
+          <div class="title">ĐẢM BẢO TRÁCH NHIỆM TÀI SẢN</div>
+          <div class="subtitle">Số: ${escapeHtml(payload.soHopDong)}</div>
+          <div class="evidence-title">Căn cứ:</div>
+          <ul class="evidence-list">
+            <li>Bộ luật Dân sự 2015 (Luật số 91/2015/QH13) có hiệu lực từ ngày 01/01/2017;</li>
+            <li>Nghị định 21/2021/NĐ-CP quy định thi hành Bộ luật Dân sự về bảo đảm thực hiện nghĩa vụ có hiệu lực từ ngày 15/05/2021;</li>
+            <li>Nhu cầu và sự tự nguyện thỏa thuận của các bên;</li>
+          </ul>
+          <div class="row">Hôm nay, ngày ${escapeHtml(payload.ngayKy.day || '...')} tháng ${escapeHtml(payload.ngayKy.month || '...')} năm ${escapeHtml(payload.ngayKy.year || '...')}, tại ${escapeHtml(payload.tenDonVi || '................................')}, chúng tôi gồm:</div>
+          <table class="party-table" aria-hidden="true">
+            <tbody>
+              <tr>
+                <td class="label">BÊN A</td>
+                <td class="colon">:</td>
+                <td class="value" colspan="3"><strong>${escapeHtml(payload.tenDonVi)}</strong></td>
+              </tr>
+              <tr>
+                <td class="sub-label">- Địa chỉ</td>
+                <td class="colon">:</td>
+                <td class="value" colspan="3">${escapeHtml(payload.diaChiDonVi)}</td>
+              </tr>
+              <tr>
+                <td class="sub-label">- MST</td>
+                <td class="colon">:</td>
+                <td class="value" colspan="3">${escapeHtml(payload.maSoThueDonVi)}</td>
+              </tr>
+              <tr>
+                <td class="sub-label">- Đại diện</td>
+                <td class="colon">:</td>
+                <td class="value" colspan="3">Ông ${escapeHtml(payload.nguoiDaiDienDonVi)}${payload.chucVuNguoiDaiDien ? ` Chức danh: ${escapeHtml(payload.chucVuNguoiDaiDien)}` : ''}</td>
+              </tr>
+              <tr>
+                <td class="value" colspan="5"><strong>(“Bên Nhận cọc”)</strong></td>
+              </tr>
+              <tr>
+                <td class="label">VÀ</td>
+                <td class="colon"></td>
+                <td class="value" colspan="3"></td>
+              </tr>
+              <tr>
+                <td class="label">BÊN B</td>
+                <td class="colon">:</td>
+                <td class="value" colspan="3">Ông/Bà ${escapeHtml(payload.hoTenLaiXe)}</td>
+              </tr>
+              <tr>
+                <td class="sub-label">- Địa chỉ</td>
+                <td class="colon">:</td>
+                <td class="value" colspan="3">${escapeHtml(payload.diaChiDayDu)}</td>
+              </tr>
+              <tr>
+                <td class="sub-label">- CCCD</td>
+                <td class="colon">:</td>
+                <td class="value">${escapeHtml(payload.soCccd)}</td>
+                <td class="value">Ngày cấp: ${escapeHtml(payload.ngayCapCccd)}</td>
+                <td class="value">Nơi cấp: ${escapeHtml(payload.noiCapCccd)}</td>
+              </tr>
+              <tr>
+                <td class="value" colspan="5">(“Bên đặt cọc”)</td>
+              </tr>
+            </tbody>
+          </table>
           <div class="row">Sau khi thỏa thuận, hai Bên thống nhất ký Hợp đồng đặt cọc đảm bảo trách nhiệm tài sản với các điều khoản sau:</div>
-          <div class="section-title">Nội dung ký quỹ</div>
-          <div class="grid">
-            <div>Số tiền phải nộp</div><div>: ${escapeHtml(payload.soTienPhaiNopText)} đồng (${escapeHtml(payload.soTienPhaiNopBangChu)} đồng)</div>
-            <div>Số tiền đã nộp</div><div>: ${escapeHtml(payload.soTienDaNopText)} đồng</div>
-            <div>Số tiền còn lại</div><div>: ${escapeHtml(payload.soTienConLaiText)} đồng</div>
-            <div>Trạng thái</div><div>: ${escapeHtml(payload.trangThaiKyQuy)}</div>
+          <div class="article">
+            <div class="article-title">Điều 1. Nội dung hợp đồng</div>
+            <div class="row indent">1.1. Bên B tự nguyện nộp cho Bên A một khoản tiền đặt cọc nhằm đảm bảo việc thực hiện các nghĩa vụ đã cam kết với Bên A, bao gồm nhưng không giới hạn:</div>
+            <ul class="list">
+              <li>Nghĩa vụ theo Hợp đồng lao động;</li>
+              <li>Nghĩa vụ giao nhận, quản lý, sử dụng tài sản;</li>
+              <li>Nghĩa vụ theo nội quy, quy chế và các cam kết khác của Bên B với Công ty.</li>
+            </ul>
+            <div class="row indent">1.2. Khoản tiền đặt cọc này là thỏa thuận dân sự độc lập, không thay thế các nghĩa vụ theo Hợp đồng lao động.</div>
+            <div class="row">- Số tiền đặt cọc: ${escapeHtml(payload.soTienPhaiNopText)} đồng (Bằng chữ: ${escapeHtml(payload.soTienPhaiNopBangChu)} đồng).</div>
+            <div class="row indent">1.3. Bên A cung cấp phiếu thu nhận tiền cho Bên B.</div>
           </div>
-          <div class="row">Khoản ký quỹ này dùng để đảm bảo việc thực hiện các nghĩa vụ đã cam kết với đơn vị, bao gồm trách nhiệm quản lý, sử dụng tài sản và các nghĩa vụ tài chính khác theo quy định nội bộ.</div>
+          <div class="article">
+            <div class="article-title">Điều 2. Quyền và nghĩa vụ của Bên B</div>
+            <div class="row indent">2.1. Quyền của Bên B</div>
+            <ul class="list">
+              <li>Được hưởng đầy đủ các quyền lợi theo Hợp đồng lao động và các thỏa thuận đã ký với Bên A.</li>
+              <li>Bên B được hưởng khoản lãi trên số tiền đặt cọc theo mức lãi suất không kỳ hạn do ngân hàng công bố tại thời điểm thanh toán nếu Bên B không vi phạm các nghĩa vụ hợp đồng, thỏa thuận ký kết giữa hai bên.</li>
+              <li>Bên B nhận lại tiền đặt cọc và lãi khi đồng thời: chấm dứt HĐLĐ; hoàn tất bàn giao tài sản; hoàn thành toàn bộ nghĩa vụ tài chính với Bên A; không có tranh chấp hoặc nghĩa vụ chưa hoàn thành.</li>
+              <li>Trường hợp Bên B có nghĩa vụ tài chính chưa thanh toán đầy đủ cho Bên A, thì Bên B sẽ được nhận lại phần tiền còn lại sau khi đã cấn trừ các nghĩa vụ hợp pháp (nếu có).</li>
+              <li>Thời hạn hoàn trả: trong vòng 60 ngày kể từ ngày chấm dứt HĐLĐ và hoàn tất nghĩa vụ.</li>
+            </ul>
+            <div class="row indent">2.2. Nghĩa vụ của Bên B</div>
+            <ul class="list">
+              <li>Nộp đủ tiền đặt cọc trước khi nhận tài sản hoặc thực hiện công việc theo thỏa thuận.</li>
+              <li>Tuân thủ đầy đủ nội quy, quy chế của Công ty và tuân thủ các điều khoản theo hợp đồng, thỏa thuận giữa hai bên.</li>
+              <li>Bảo quản, sử dụng tài sản được giao đúng mục đích; chịu trách nhiệm bồi thường thiệt hại nếu gây hư hỏng, mất mát do lỗi của mình.</li>
+              <li>Thanh toán đầy đủ các khoản công nợ, nghĩa vụ tài chính với Công ty (nếu có).</li>
+              <li>Xuất trình đầy đủ: Hợp đồng này, chứng từ nộp tiền, biên bản thanh lý HĐLĐ khi đến hạn nhận lại khoản cọc.</li>
+            </ul>
+          </div>
+          <div class="article">
+            <div class="article-title">Điều 3. Quyền và nghĩa vụ của Bên A</div>
+            <div class="row indent">3.1. Quyền của Bên A</div>
+            <ul class="list">
+              <li>Yêu cầu Bên B thực hiện đầy đủ các nghĩa vụ đã cam kết.</li>
+              <li>Được cấn trừ tiền đặt cọc để bù đắp các khoản sau: thiệt hại tài sản do lỗi của Bên B; các khoản công nợ, nghĩa vụ tài chính chưa thanh toán.</li>
+              <li>Trường hợp tiền đặt cọc không đủ bù đắp thiệt hại, Bên A có quyền yêu cầu Bên B thanh toán phần còn thiếu theo quy định pháp luật.</li>
+            </ul>
+            <div class="row indent">3.2. Nghĩa vụ của Bên A</div>
+            <ul class="list">
+              <li>Hoàn trả tiền đặt cọc (và lãi, nếu có) cho Bên B đúng thời hạn sau khi hai bên đã hoàn tất nghĩa vụ.</li>
+            </ul>
+          </div>
+          <div class="article">
+            <div class="article-title">Điều 4. Điều khoản chung</div>
+            <ul class="list">
+              <li>Hai bên cam kết việc ký kết hợp đồng là tự nguyện, không bị ép buộc.</li>
+              <li>Trường hợp phát sinh tranh chấp, hai bên ưu tiên giải quyết bằng thương lượng; nếu không đạt được thỏa thuận thì đưa ra Tòa án có thẩm quyền giải quyết.</li>
+              <li>Hợp đồng có hiệu lực từ ngày ${escapeHtml(payload.ngayKyText)} đến hết ngày ${escapeHtml(payload.ngayHetHanText)}. Khi hết thời hạn, nếu hai bên không có thỏa thuận khác, hợp đồng tự động gia hạn cho đến khi có văn bản hoặc hợp đồng khác thay thế.</li>
+              <li>Hợp đồng được lập thành 02 bản, có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</li>
+            </ul>
+          </div>
           <div class="signatures">
-            <div>BÊN NHẬN CỌC<div class="sign-note">(Ký và đóng dấu)</div></div>
-            <div>BÊN ĐẶT CỌC<div class="sign-note">(Ký và ghi rõ họ tên)</div></div>
+            <table class="sign-table" aria-hidden="true">
+              <tbody>
+                <tr>
+                  <td class="center"><div class="sign-title">BÊN NHẬN CỌC</div><div class="sign-note">(Ký và đóng dấu)</div></td>
+                  <td class="center"><div class="sign-title">BÊN ĐẶT CỌC</div><div class="sign-note">(Ký và ghi rõ họ tên)</div></td>
+                </tr>
+                <tr>
+                  <td><div class="sign-space"></div></td>
+                  <td><div class="sign-space"></div></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         `;
       }
@@ -375,7 +481,6 @@
       function showMessage(message) {
         messageBox.hidden = false;
         messageBox.textContent = message;
-        summary.hidden = true;
         preview.hidden = true;
         printButton.disabled = true;
         exportWordButton.disabled = true;
@@ -387,7 +492,6 @@
         printButton.disabled = true;
         exportWordButton.disabled = true;
         messageBox.hidden = true;
-        summary.hidden = true;
         preview.hidden = true;
         statusText.textContent = 'Đang tải hợp đồng ký quỹ từ AppSheet...';
 
@@ -399,10 +503,8 @@
           const nhanSuById = new Map((Array.isArray(bundle.related?.NHANSU) ? bundle.related.NHANSU : []).map((item) => [cleanValue(item.ID_NhanSu), item]));
           const donViById = new Map((Array.isArray(bundle.related?.DONVI) ? bundle.related.DONVI : []).map((item) => [cleanValue(item.ID_DonVi), item]));
           currentPayload = buildPayload(row, nhanSuById, donViById);
-          renderSummary(currentPayload);
           renderDocument(currentPayload);
           statusText.textContent = `Đã tải hợp đồng ${idKyQuy}.`;
-          summary.hidden = false;
           preview.hidden = false;
           printButton.disabled = false;
           exportWordButton.disabled = false;

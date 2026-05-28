@@ -29,16 +29,33 @@ function normalizeDocxZipEntryNames(zip, PizZip) {
 const previewStyles = `
   @page { size: A4; margin: 1.5cm; }
   .kq-actions { print-color-adjust: exact; }
-  .kq-document { font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.4; color: #000; }
-  .kq-page { box-sizing: border-box; width: 21cm; min-height: 29.7cm; margin: 0 auto; padding: 1.5cm; background: #fff; border: 1px solid #cbd5e1; }
+  .kq-document { font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.45; color: #000; }
+  .kq-page { box-sizing: border-box; width: 21cm; min-height: 29.7cm; margin: 0 auto; padding: 2cm 2.2cm 2cm 2.6cm; background: #fff; border: none; }
   .kq-center { text-align: center; }
   .kq-bold { font-weight: 700; }
-  .kq-title { margin: 20px 0 10px; text-align: center; font-size: 18pt; font-weight: 700; }
-  .kq-row { margin: 8px 0; }
-  .kq-grid { display: grid; grid-template-columns: 180px 1fr; gap: 6px 18px; }
-  .kq-section-title { margin: 18px 0 8px; font-weight: 700; text-transform: uppercase; }
-  .kq-signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; text-align: center; font-weight: 700; }
-  .kq-sign-note { margin-top: 4px; font-weight: 400; font-style: italic; }
+  .kq-title { margin: 12px 0 0; text-align: center; font-size: 18pt; font-weight: 700; text-transform: uppercase; }
+  .kq-subtitle { margin-bottom: 12px; text-align: center; font-weight: 700; }
+  .kq-row { margin: 4px 0; text-align: justify; }
+  .kq-indent { padding-left: 28px; text-indent: -28px; }
+  .kq-list { margin: 2px 0 2px 34px; padding: 0; list-style: none; }
+  .kq-list li { margin: 2px 0; text-indent: -16px; padding-left: 16px; }
+  .kq-list li::before { content: "- "; }
+  .kq-evidence-title { margin: 8px 0 4px; font-weight: 700; text-decoration: underline; }
+  .kq-evidence-list { margin: 0 0 8px 30px; padding-left: 18px; list-style: disc; }
+  .kq-evidence-list li { margin: 2px 0; font-style: italic; }
+  .kq-party-table, .kq-sign-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .kq-party-table { margin: 6px 0 8px; }
+  .kq-party-table td { padding: 2px 0; vertical-align: top; }
+  .kq-party-table .label { width: 78px; font-weight: 700; }
+  .kq-party-table .colon { width: 14px; }
+  .kq-party-table .sub-label { width: 108px; }
+  .kq-party-table .value { word-break: break-word; }
+  .kq-article { margin-top: 10px; }
+  .kq-article-title { margin-bottom: 4px; font-weight: 700; }
+  .kq-signatures { margin-top: 28px; }
+  .kq-sign-title { font-weight: 700; text-transform: uppercase; }
+  .kq-sign-note { margin-top: 4px; font-style: italic; }
+  .kq-sign-space { height: 96px; }
   @media print {
     html, body, #root { width: auto !important; height: auto !important; overflow: visible !important; background: #fff !important; }
     aside, header, .kq-actions { display: none !important; }
@@ -59,15 +76,6 @@ function getFriendlyError(error) {
     return 'AppSheet trả về lỗi khi tải hợp đồng ký quỹ. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
   }
   return message;
-}
-
-function InfoItem({ label, value }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-      <div className="text-xs font-semibold uppercase text-slate-500">{label}</div>
-      <div className="mt-1 min-h-5 break-words text-sm text-slate-950">{value || 'Chưa có'}</div>
-    </div>
-  );
 }
 
 const KyQuyLaiXePage = () => {
@@ -206,39 +214,33 @@ const KyQuyLaiXePage = () => {
                 <CardDescription className="mt-1 text-slate-500">
                   {idKyQuy ? `Đã tải hợp đồng ${idKyQuy}.` : 'Nhập ID_KyQuy để tải dữ liệu từ AppSheet.'}
                 </CardDescription>
-                <form className="mt-3 grid max-w-2xl gap-3 sm:grid-cols-[minmax(220px,1fr)_auto]" onSubmit={submitId}>
-                  <Input
-                    aria-label="ID hợp đồng ký quỹ"
-                    className="h-10 rounded-xl"
-                    placeholder="Nhập ID_KyQuy"
-                    value={idInput}
-                    onChange={(event) => setIdInput(event.target.value)}
-                  />
-                  <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={loading}>
-                    <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                    Tải dữ liệu
-                  </Button>
-                </form>
               </div>
             </div>
-            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2 xl:grid-cols-4">
-              <Button variant="outline" className="w-full" onClick={openStandaloneHtml}>
+            <form className="flex w-full flex-wrap items-center gap-3 xl:w-auto xl:justify-end" onSubmit={submitId}>
+              <Input
+                aria-label="ID hợp đồng ký quỹ"
+                className="h-10 w-full rounded-xl sm:w-[220px] xl:w-[240px]"
+                placeholder="Nhập ID_KyQuy"
+                value={idInput}
+                onChange={(event) => setIdInput(event.target.value)}
+              />
+              <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={loading}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Tải dữ liệu
+              </Button>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={openStandaloneHtml}>
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Mở bản HTML
               </Button>
-              <Button variant="outline" className="w-full" onClick={() => window.print()} disabled={!payload}>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => window.print()} disabled={!payload}>
                 <Printer className="mr-2 h-4 w-4" />
                 In tài liệu
               </Button>
-              <Button className="w-full" onClick={exportToWordTemplate} disabled={exporting || loading || !payload}>
+              <Button type="button" className="w-full sm:w-auto" onClick={exportToWordTemplate} disabled={exporting || loading || !payload}>
                 {exporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                 Xuất Word
               </Button>
-              <Button variant="outline" className="w-full" onClick={loadData} disabled={loading || !idKyQuy}>
-                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Tải lại
-              </Button>
-            </div>
+            </form>
           </div>
         </CardHeader>
       </Card>
@@ -280,96 +282,162 @@ const KyQuyLaiXePage = () => {
 
       {payload && !loading && (
         <>
-          <Card className="kq-actions border-slate-200 bg-white">
-            <CardHeader>
-              <CardTitle>Thông tin đã tải</CardTitle>
-              <CardDescription>Kiểm tra nhanh dữ liệu đã resolve trước khi in hoặc xuất Word.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <InfoItem label="Số hợp đồng" value={payload.soHopDong} />
-              <InfoItem label="Ngày ký" value={payload.ngayKyText} />
-              <InfoItem label="Lái xe" value={payload.hoTenLaiXe} />
-              <InfoItem label="Đơn vị" value={payload.tenDonVi} />
-              <InfoItem label="CCCD" value={payload.soCccd} />
-              <InfoItem label="Số tiền phải nộp" value={payload.soTienPhaiNopText} />
-              <InfoItem label="Đã nộp" value={payload.soTienDaNopText} />
-              <InfoItem label="Còn lại" value={payload.soTienConLaiText} />
-            </CardContent>
-          </Card>
-
           <div className="overflow-x-auto pb-4">
             <div className="kq-document min-w-[21cm]">
-              <div className="kq-page shadow-sm">
+              <div className="kq-page">
                 <div className="kq-center kq-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
                 <div className="kq-center kq-bold">Độc lập - Tự do - Hạnh phúc</div>
                 <div className="kq-center kq-bold">-----o0o-----</div>
 
-                <div className="kq-title">HỢP ĐỒNG ĐẶT CỌC ĐẢM BẢO TRÁCH NHIỆM TÀI SẢN</div>
-                <div className="kq-center kq-bold">Số: {payload.soHopDong}</div>
+                <div className="kq-title">HỢP ĐỒNG ĐẶT CỌC</div>
+                <div className="kq-title">ĐẢM BẢO TRÁCH NHIỆM TÀI SẢN</div>
+                <div className="kq-subtitle">Số: {payload.soHopDong}</div>
+
+                <div className="kq-evidence-title">Căn cứ:</div>
+                <ul className="kq-evidence-list">
+                  <li>Bộ luật Dân sự 2015 (Luật số 91/2015/QH13) có hiệu lực từ ngày 01/01/2017;</li>
+                  <li>Nghị định 21/2021/NĐ-CP quy định thi hành Bộ luật Dân sự về bảo đảm thực hiện nghĩa vụ có hiệu lực từ ngày 15/05/2021;</li>
+                  <li>Nhu cầu và sự tự nguyện thỏa thuận của các bên;</li>
+                </ul>
 
                 <div className="kq-row">
                   Hôm nay, ngày {payload.ngayKy.day || '...'} tháng {payload.ngayKy.month || '...'} năm {payload.ngayKy.year || '...'},
-                  chúng tôi gồm:
+                  tại {payload.tenDonVi || '................................'}, chúng tôi gồm:
                 </div>
 
-                <div className="kq-section-title">Bên A - Bên nhận cọc</div>
-                <div className="kq-grid">
-                  <div>Tên đơn vị</div>
-                  <div>: {payload.tenDonVi}</div>
-                  <div>Địa chỉ</div>
-                  <div>: {payload.diaChiDonVi}</div>
-                  <div>Mã số thuế</div>
-                  <div>: {payload.maSoThueDonVi}</div>
-                  <div>Đại diện</div>
-                  <div>: {payload.nguoiDaiDienDonVi}{payload.chucVuNguoiDaiDien ? ` - ${payload.chucVuNguoiDaiDien}` : ''}</div>
-                </div>
-
-                <div className="kq-section-title">Bên B - Bên đặt cọc</div>
-                <div className="kq-grid">
-                  <div>Họ và tên</div>
-                  <div>: {payload.hoTenLaiXe}</div>
-                  <div>Địa chỉ</div>
-                  <div>: {payload.diaChiDayDu}</div>
-                  <div>CCCD</div>
-                  <div>: {payload.soCccd}</div>
-                  <div>Ngày cấp</div>
-                  <div>: {payload.ngayCapCccd}</div>
-                  <div>Nơi cấp</div>
-                  <div>: {payload.noiCapCccd}</div>
-                  <div>Số điện thoại</div>
-                  <div>: {payload.soDienThoai}</div>
-                </div>
+                <table className="kq-party-table" aria-hidden="true">
+                  <tbody>
+                    <tr>
+                      <td className="label">BÊN A</td>
+                      <td className="colon">:</td>
+                      <td className="value" colSpan={3}><strong>{payload.tenDonVi}</strong></td>
+                    </tr>
+                    <tr>
+                      <td className="sub-label">- Địa chỉ</td>
+                      <td className="colon">:</td>
+                      <td className="value" colSpan={3}>{payload.diaChiDonVi}</td>
+                    </tr>
+                    <tr>
+                      <td className="sub-label">- MST</td>
+                      <td className="colon">:</td>
+                      <td className="value" colSpan={3}>{payload.maSoThueDonVi}</td>
+                    </tr>
+                    <tr>
+                      <td className="sub-label">- Đại diện</td>
+                      <td className="colon">:</td>
+                      <td className="value" colSpan={3}>Ông {payload.nguoiDaiDienDonVi} {payload.chucVuNguoiDaiDien ? `Chức danh: ${payload.chucVuNguoiDaiDien}` : ''}</td>
+                    </tr>
+                    <tr>
+                      <td className="value" colSpan={5}><strong>(“Bên Nhận cọc”)</strong></td>
+                    </tr>
+                    <tr>
+                      <td className="label">VÀ</td>
+                      <td className="colon" />
+                      <td className="value" colSpan={3} />
+                    </tr>
+                    <tr>
+                      <td className="label">BÊN B</td>
+                      <td className="colon">:</td>
+                      <td className="value" colSpan={3}>Ông/Bà {payload.hoTenLaiXe}</td>
+                    </tr>
+                    <tr>
+                      <td className="sub-label">- Địa chỉ</td>
+                      <td className="colon">:</td>
+                      <td className="value" colSpan={3}>{payload.diaChiDayDu}</td>
+                    </tr>
+                    <tr>
+                      <td className="sub-label">- CCCD</td>
+                      <td className="colon">:</td>
+                      <td className="value">{payload.soCccd}</td>
+                      <td className="value">Ngày cấp: {payload.ngayCapCccd}</td>
+                      <td className="value">Nơi cấp: {payload.noiCapCccd}</td>
+                    </tr>
+                    <tr>
+                      <td className="value" colSpan={5}>(“Bên đặt cọc”)</td>
+                    </tr>
+                  </tbody>
+                </table>
 
                 <div className="kq-row">
                   Sau khi thỏa thuận, hai Bên thống nhất ký Hợp đồng đặt cọc đảm bảo trách nhiệm tài sản với các điều khoản sau:
                 </div>
 
-                <div className="kq-section-title">Nội dung ký quỹ</div>
-                <div className="kq-grid">
-                  <div>Số tiền phải nộp</div>
-                  <div>: {payload.soTienPhaiNopText} đồng ({payload.soTienPhaiNopBangChu} đồng)</div>
-                  <div>Số tiền đã nộp</div>
-                  <div>: {payload.soTienDaNopText} đồng</div>
-                  <div>Số tiền còn lại</div>
-                  <div>: {payload.soTienConLaiText} đồng</div>
-                  <div>Trạng thái</div>
-                  <div>: {payload.trangThaiKyQuy}</div>
+                <div className="kq-article">
+                  <div className="kq-article-title">Điều 1. Nội dung hợp đồng</div>
+                  <div className="kq-row kq-indent">1.1. Bên B tự nguyện nộp cho Bên A một khoản tiền đặt cọc nhằm đảm bảo việc thực hiện các nghĩa vụ đã cam kết với Bên A, bao gồm nhưng không giới hạn:</div>
+                  <ul className="kq-list">
+                    <li>Nghĩa vụ theo Hợp đồng lao động;</li>
+                    <li>Nghĩa vụ giao nhận, quản lý, sử dụng tài sản;</li>
+                    <li>Nghĩa vụ theo nội quy, quy chế và các cam kết khác của Bên B với Công ty.</li>
+                  </ul>
+                  <div className="kq-row kq-indent">1.2. Khoản tiền đặt cọc này là thỏa thuận dân sự độc lập, không thay thế các nghĩa vụ theo Hợp đồng lao động.</div>
+                  <div className="kq-row">- Số tiền đặt cọc: {payload.soTienPhaiNopText} đồng (Bằng chữ: {payload.soTienPhaiNopBangChu} đồng).</div>
+                  <div className="kq-row kq-indent">1.3. Bên A cung cấp phiếu thu nhận tiền cho Bên B.</div>
                 </div>
 
-                <div className="kq-row">
-                  Khoản ký quỹ này dùng để đảm bảo việc thực hiện các nghĩa vụ đã cam kết với đơn vị, bao gồm trách nhiệm quản lý,
-                  sử dụng tài sản và các nghĩa vụ tài chính khác theo quy định nội bộ.
+                <div className="kq-article">
+                  <div className="kq-article-title">Điều 2. Quyền và nghĩa vụ của Bên B</div>
+                  <div className="kq-row kq-indent">2.1. Quyền của Bên B</div>
+                  <ul className="kq-list">
+                    <li>Được hưởng đầy đủ các quyền lợi theo Hợp đồng lao động và các thỏa thuận đã ký với Bên A.</li>
+                    <li>Bên B được hưởng khoản lãi trên số tiền đặt cọc theo mức lãi suất không kỳ hạn do ngân hàng công bố tại thời điểm thanh toán nếu Bên B không vi phạm các nghĩa vụ hợp đồng, thỏa thuận ký kết giữa hai bên.</li>
+                    <li>Bên B nhận lại tiền đặt cọc và lãi khi đồng thời: chấm dứt HĐLĐ; hoàn tất bàn giao tài sản; hoàn thành toàn bộ nghĩa vụ tài chính với Bên A; không có tranh chấp hoặc nghĩa vụ chưa hoàn thành.</li>
+                    <li>Trường hợp Bên B có nghĩa vụ tài chính chưa thanh toán đầy đủ cho Bên A, thì Bên B sẽ được nhận lại phần tiền còn lại sau khi đã cấn trừ các nghĩa vụ hợp pháp (nếu có).</li>
+                    <li>Thời hạn hoàn trả: trong vòng 60 ngày kể từ ngày chấm dứt HĐLĐ và hoàn tất nghĩa vụ.</li>
+                  </ul>
+                  <div className="kq-row kq-indent">2.2. Nghĩa vụ của Bên B</div>
+                  <ul className="kq-list">
+                    <li>Nộp đủ tiền đặt cọc trước khi nhận tài sản hoặc thực hiện công việc theo thỏa thuận.</li>
+                    <li>Tuân thủ đầy đủ nội quy, quy chế của Công ty và tuân thủ các điều khoản theo hợp đồng, thỏa thuận giữa hai bên.</li>
+                    <li>Bảo quản, sử dụng tài sản được giao đúng mục đích; chịu trách nhiệm bồi thường thiệt hại nếu gây hư hỏng, mất mát do lỗi của mình.</li>
+                    <li>Thanh toán đầy đủ các khoản công nợ, nghĩa vụ tài chính với Công ty (nếu có).</li>
+                    <li>Xuất trình đầy đủ: Hợp đồng này, chứng từ nộp tiền, biên bản thanh lý HĐLĐ khi đến hạn nhận lại khoản cọc.</li>
+                  </ul>
+                </div>
+
+                <div className="kq-article">
+                  <div className="kq-article-title">Điều 3. Quyền và nghĩa vụ của Bên A</div>
+                  <div className="kq-row kq-indent">3.1. Quyền của Bên A</div>
+                  <ul className="kq-list">
+                    <li>Yêu cầu Bên B thực hiện đầy đủ các nghĩa vụ đã cam kết.</li>
+                    <li>Được cấn trừ tiền đặt cọc để bù đắp các khoản sau: thiệt hại tài sản do lỗi của Bên B; các khoản công nợ, nghĩa vụ tài chính chưa thanh toán.</li>
+                    <li>Trường hợp tiền đặt cọc không đủ bù đắp thiệt hại, Bên A có quyền yêu cầu Bên B thanh toán phần còn thiếu theo quy định pháp luật.</li>
+                  </ul>
+                  <div className="kq-row kq-indent">3.2. Nghĩa vụ của Bên A</div>
+                  <ul className="kq-list">
+                    <li>Hoàn trả tiền đặt cọc (và lãi, nếu có) cho Bên B đúng thời hạn sau khi hai bên đã hoàn tất nghĩa vụ.</li>
+                  </ul>
+                </div>
+
+                <div className="kq-article">
+                  <div className="kq-article-title">Điều 4. Điều khoản chung</div>
+                  <ul className="kq-list">
+                    <li>Hai bên cam kết việc ký kết hợp đồng là tự nguyện, không bị ép buộc.</li>
+                    <li>Trường hợp phát sinh tranh chấp, hai bên ưu tiên giải quyết bằng thương lượng; nếu không đạt được thỏa thuận thì đưa ra Tòa án có thẩm quyền giải quyết.</li>
+                    <li>Hợp đồng có hiệu lực từ ngày {payload.ngayKyText} đến hết ngày {payload.ngayHetHanText}. Khi hết thời hạn, nếu hai bên không có thỏa thuận khác, hợp đồng tự động gia hạn cho đến khi có văn bản hoặc hợp đồng khác thay thế.</li>
+                    <li>Hợp đồng được lập thành 02 bản, có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</li>
+                  </ul>
                 </div>
 
                 <div className="kq-signatures">
-                  <div>
-                    BÊN NHẬN CỌC
-                    <div className="kq-sign-note">(Ký và đóng dấu)</div>
-                  </div>
-                  <div>
-                    BÊN ĐẶT CỌC
-                    <div className="kq-sign-note">(Ký và ghi rõ họ tên)</div>
-                  </div>
+                  <table className="kq-sign-table" aria-hidden="true">
+                    <tbody>
+                      <tr>
+                        <td className="kq-center">
+                          <div className="kq-sign-title">BÊN NHẬN CỌC</div>
+                          <div className="kq-sign-note">(Ký và đóng dấu)</div>
+                        </td>
+                        <td className="kq-center">
+                          <div className="kq-sign-title">BÊN ĐẶT CỌC</div>
+                          <div className="kq-sign-note">(Ký và ghi rõ họ tên)</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><div className="kq-sign-space" /></td>
+                        <td><div className="kq-sign-space" /></td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>

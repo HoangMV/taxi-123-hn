@@ -1,4 +1,8 @@
-import { formatAdministrativeDate, formatAdministrativeDateString } from '../lib/dateFormat';
+import {
+  calculateInclusiveEndDate,
+  formatAdministrativeDate,
+  formatAdministrativeDateString
+} from '../lib/dateFormat';
 import { numberToVietnameseWords } from '../lib/numberToVietnamese';
 
 export function getKyQuyIdFromSearch(search) {
@@ -147,6 +151,8 @@ export async function fetchKyQuyRelated(appSheetService, row) {
 
 export function buildKyQuyPayload(row, relatedData = {}) {
   const ngayKy = formatAdministrativeDate(row?.NgayKyHopDong);
+  const ngayHetHanDate = calculateInclusiveEndDate(row?.NgayKyHopDong, 365);
+  const ngayHetHan = formatAdministrativeDate(ngayHetHanDate);
   const nhanSuById = relatedData.nhanSuById || new Map();
   const donViById = relatedData.donViById || new Map();
   const nhanSuId = cleanValue(row?.Ref_NhanSu);
@@ -164,6 +170,8 @@ export function buildKyQuyPayload(row, relatedData = {}) {
     soHopDong: cleanValue(row?.MaKyQuy),
     ngayKy,
     ngayKyText: formatAdministrativeDateString(row?.NgayKyHopDong),
+    ngayHetHan,
+    ngayHetHanText: formatAdministrativeDateString(ngayHetHanDate),
     trangThaiKyQuy: cleanValue(row?.TrangThai),
     nhanSuId,
     donViId,
@@ -209,6 +217,8 @@ export function buildKyQuyTemplateData(payload) {
     so_dien_thoai: payload.soDienThoai,
     so_tien_phai_nop: payload.soTienPhaiNopText,
     so_tien_phai_nop_text: payload.soTienPhaiNopBangChu,
+    ngay_hieu_luc_text: payload.ngayKyText,
+    ngay_het_han_text: payload.ngayHetHanText,
     so_tien_da_nop: payload.soTienDaNopText,
     so_tien_con_lai: payload.soTienConLaiText,
     trang_thai_ky_quy: payload.trangThaiKyQuy

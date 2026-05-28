@@ -61,7 +61,10 @@ replaceRegexStrict(
   /Số tiền đặt cọc: 10\.000\.000 đồng<\/w:t><\/w:r><w:r[^>]*><w:rPr>[\s\S]*?<\/w:rPr><w:t xml:space="preserve"> <\/w:t><\/w:r><w:r[^>]*><w:rPr>[\s\S]*?<\/w:rPr><w:t>\(Bằng chữ: Mười triệu đồng\)\./g,
   'Số tiền đặt cọc: {so_tien_phai_nop} đồng (Bằng chữ: {so_tien_phai_nop_text} đồng).'
 );
-replaceStrict('Hợp đồng có hiệu lực từ ngày 06/11/2025 đến hết ngày 05/11/2026.', 'Hợp đồng có hiệu lực kể từ ngày ký.');
+replaceStrict(
+  'Hợp đồng có hiệu lực từ ngày 06/11/2025 đến hết ngày 05/11/2026.',
+  'Hợp đồng có hiệu lực từ ngày {ngay_hieu_luc_text} đến hết ngày {ngay_het_han_text}.'
+);
 
 fs.writeFileSync(documentPath, xml, 'utf8');
 console.log(`Đã cập nhật ${path.resolve(documentPath)}`);

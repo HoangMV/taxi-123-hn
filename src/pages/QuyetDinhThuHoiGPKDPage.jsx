@@ -296,43 +296,38 @@ const QuyetDinhThuHoiGPKDPage = () => {
                 <CardDescription className="mt-1 text-slate-500">
                   {decisionId ? `Đã tải quyết định ${decisionId}.` : 'Nhập ID quyết định để tải dữ liệu.'}
                 </CardDescription>
-                <form className="mt-3 grid max-w-2xl gap-3 sm:grid-cols-[minmax(220px,1fr)_auto]" onSubmit={submitDecisionId}>
-                  <Input
-                    aria-label="ID quyết định"
-                    className="h-10 rounded-xl"
-                    placeholder="Nhập IDQuyetDinh"
-                    value={decisionIdInput}
-                    onChange={(event) => setDecisionIdInput(event.target.value)}
-                  />
-                  <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={loading}>
-                    <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                    Tải theo ID
-                  </Button>
-                </form>
               </div>
             </div>
-            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3 xl:grid-cols-4">
+            <form className="flex w-full flex-wrap items-center gap-3 xl:w-auto xl:justify-end" onSubmit={submitDecisionId}>
+              <Input
+                aria-label="ID quyết định"
+                className="h-10 w-full rounded-xl sm:w-[220px] xl:w-[240px]"
+                placeholder="Nhập IDQuyetDinh"
+                value={decisionIdInput}
+                onChange={(event) => setDecisionIdInput(event.target.value)}
+              />
+              <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={loading}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Tải theo ID
+              </Button>
               <Button
+                type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full sm:w-auto"
                 onClick={openStandaloneHtml}
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Mở bản HTML
               </Button>
-              <Button variant="outline" className="w-full" onClick={() => window.print()} disabled={!payload}>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => window.print()} disabled={!payload}>
                 <Printer className="mr-2 h-4 w-4" />
                 In tài liệu
               </Button>
-              <Button className="w-full" onClick={exportToWordTemplate} disabled={exporting || !payload}>
+              <Button type="button" className="w-full sm:w-auto" onClick={exportToWordTemplate} disabled={exporting || !payload}>
                 {exporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                 Xuất Word
               </Button>
-              <Button variant="outline" className="w-full" onClick={loadData} disabled={loading || !decisionId}>
-                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Tải lại dữ liệu
-              </Button>
-            </div>
+            </form>
           </div>
         </CardHeader>
       </Card>
