@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, FileText, IdCard, Car } from 'lucide-react';
+import { ArrowRight, FileText, IdCard, Car, HandCoins } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -26,6 +26,13 @@ const actions = [
     path: config.ROUTES.BAN_GIAO_XE_REACT,
     icon: Car,
     tone: 'bg-emerald-50 text-emerald-700'
+  },
+  {
+    title: 'Ký quỹ lái xe',
+    description: 'Xem trước, in và xuất hợp đồng ký quỹ của lái xe từ AppSheet.',
+    path: config.ROUTES.KY_QUY_LAI_XE_REACT,
+    icon: HandCoins,
+    tone: 'bg-sky-50 text-sky-700'
   }
 ];
 

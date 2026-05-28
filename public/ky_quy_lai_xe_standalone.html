@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ký quỹ lái xe</title>
+    <script src="/runtime-config.js"></script>
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+      :root {
+        --brand: #0369a1;
+        --ink: #172033;
+        --muted: #667085;
+        --line: #e4e7ec;
+        --bg: #f6f7f9;
+      }
+      @page { size: A4; margin: 1.5cm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: Arial, sans-serif; }
+      .shell { width: 100%; margin: 0 auto; padding: 12px; }
+      .toolbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.96); padding: 14px; box-shadow: 0 10px 28px rgba(16,24,40,.06); backdrop-filter: blur(10px); }
+      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .brand img { width: 42px; height: 42px; border-radius: 10px; object-fit: contain; }
+      h1 { margin: 0; font-size: 18px; }
+      .status { margin-top: 4px; color: var(--muted); font-size: 13px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      button { min-height: 40px; border: 0; border-radius: 10px; background: var(--brand); color: #fff; cursor: pointer; font-weight: 700; padding: 0 14px; }
+      button.secondary { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+      button:disabled { cursor: not-allowed; opacity: .55; }
+      .message { margin-top: 16px; border: 1px dashed var(--line); border-radius: 12px; background: #fff; padding: 24px; color: var(--muted); text-align: center; }
+      .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+      .summary-item { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 10px; }
+      .summary-label { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+      .summary-value { margin-top: 4px; font-weight: 700; overflow-wrap: anywhere; }
+      .preview { margin-top: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #d8dde6; padding: 8px; }
+      .page { width: 21cm; min-height: 29.7cm; margin: 0 auto; background: #fff; padding: 1.5cm; color: #000; font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.4; box-shadow: 0 16px 34px rgba(16, 24, 40, 0.2); }
+      .center { text-align: center; }
+      .bold { font-weight: 700; }
+      .title { margin: 20px 0 10px; text-align: center; font-size: 18pt; font-weight: 700; }
+      .row { margin: 8px 0; }
+      .grid { display: grid; grid-template-columns: 180px 1fr; gap: 6px 18px; }
+      .section-title { margin: 18px 0 8px; font-weight: 700; text-transform: uppercase; }
+      .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; text-align: center; font-weight: 700; }
+      .sign-note { margin-top: 4px; font-weight: 400; font-style: italic; }
+      @media (max-width: 900px) {
+        .toolbar { align-items: stretch; flex-direction: column; }
+        .actions, .actions button, .summary { width: 100%; }
+        .summary { grid-template-columns: 1fr; }
+        .page { transform: scale(calc((100vw - 44px) / 793.7)); transform-origin: top left; margin-left: 0; margin-bottom: calc(-29.7cm + (29.7cm * ((100vw - 44px) / 793.7)) + 16px); }
+      }
+      @media print {
+        html, body { width: auto !important; height: auto !important; overflow: visible !important; background: #fff; }
+        .toolbar, .message, .summary { display: none !important; }
+        .shell, .preview { margin: 0; padding: 0; border: 0; background: #fff; width: auto; overflow: visible; }
+        .page { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; border: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="toolbar">
+        <div class="brand">
+          <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
+          <div>
+            <h1>Ký quỹ lái xe</h1>
+            <div class="status" id="statusText">Đang kiểm tra tham số ID_KyQuy.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="secondary" id="reloadButton" type="button">Tải lại</button>
+          <button id="printButton" type="button" disabled>In tài liệu</button>
+          <button id="exportWordButton" type="button" disabled>Xuất Word</button>
+        </div>
+      </section>
+      <div class="message" id="messageBox" hidden></div>
+      <section class="summary" id="summary" hidden></section>
+      <section class="preview" id="preview" hidden>
+        <article class="page" id="documentPage"></article>
+      </section>
+    </main>
+
+    <script>
+      const config = window.__APPSHEET_RUNTIME_CONFIG__ || {};
+      const statusText = document.getElementById('statusText');
+      const messageBox = document.getElementById('messageBox');
+      const summary = document.getElementById('summary');
+      const preview = document.getElementById('preview');
+      const page = document.getElementById('documentPage');
+      const reloadButton = document.getElementById('reloadButton');
+      const printButton = document.getElementById('printButton');
+      const exportWordButton = document.getElementById('exportWordButton');
+      const idKyQuy = new URLSearchParams(window.location.search).get('ID_KyQuy') || '';
+      let currentPayload = null;
+
+      function cleanValue(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).trim();
+      }
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, (char) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[char]));
+      }
+
+      function parseDateValue(value) {
+        if (!value) return null;
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+      }
+
+      function adminDateParts(value) {
+        const date = parseDateValue(value);
+        if (!date) return { day: '', month: '', year: '' };
+        const day = String(date.getDate()).padStart(2, '0');
+        const monthValue = date.getMonth() + 1;
+        const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+        return { day, month, year: String(date.getFullYear()) };
+      }
+
+      function formatAdministrativeDate(value) {
+        const date = adminDateParts(value);
+        if (!date.day || !date.month || !date.year) return '';
+        return `${date.day}/${date.month}/${date.year}`;
+      }
+
+      function formatMoney(value) {
+        const digits = String(value ?? '').replace(/[^\d-]/g, '');
+        if (!digits) return '';
+        const numberValue = Number(digits);
+        if (!Number.isFinite(numberValue)) return cleanValue(value);
+        return new Intl.NumberFormat('vi-VN').format(numberValue);
+      }
+
+      function numberToVietnameseWords(value) {
+        const DIGITS = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+        const SCALES = ['', ' nghìn', ' triệu', ' tỷ', ' nghìn tỷ', ' triệu tỷ'];
+        const digits = String(value ?? '').replace(/[^\d]/g, '');
+        const normalized = digits.replace(/^0+/, '') || '0';
+        const numericValue = Number(normalized);
+        if (!Number.isFinite(numericValue)) return '';
+        if (numericValue === 0) return 'Không';
+
+        function normalizeSpaces(text) { return text.replace(/\s+/g, ' ').trim(); }
+        function readTriple(number, isFull) {
+          const hundreds = Math.floor(number / 100);
+          const tensUnits = number % 100;
+          const tens = Math.floor(tensUnits / 10);
+          const units = tensUnits % 10;
+          const parts = [];
+          if (hundreds > 0 || isFull) parts.push(`${DIGITS[hundreds]} trăm`);
+          if (tens > 1) {
+            parts.push(`${DIGITS[tens]} mươi`);
+            if (units === 1) parts.push('mốt');
+            else if (units === 4) parts.push('tư');
+            else if (units === 5) parts.push('lăm');
+            else if (units > 0) parts.push(DIGITS[units]);
+            return normalizeSpaces(parts.join(' '));
+          }
+          if (tens === 1) {
+            parts.push('mười');
+            if (units === 5) parts.push('lăm');
+            else if (units > 0) parts.push(DIGITS[units]);
+            return normalizeSpaces(parts.join(' '));
+          }
+          if (units > 0) {
+            if (hundreds > 0 || isFull) parts.push('lẻ');
+            parts.push(units === 5 && (hundreds > 0 || isFull) ? 'năm' : DIGITS[units]);
+          }
+          return normalizeSpaces(parts.join(' '));
+        }
+
+        const groups = [];
+        let remaining = normalized;
+        while (remaining.length > 0) {
+          groups.unshift(Number(remaining.slice(-3)));
+          remaining = remaining.slice(0, -3);
+        }
+        const firstNonZeroIndex = groups.findIndex((group) => group > 0);
+        const parts = [];
+        groups.forEach((group, index) => {
+          if (!group) return;
+          const scaleIndex = groups.length - index - 1;
+          const hasNonZeroBefore = index > firstNonZeroIndex;
+          parts.push(`${readTriple(group, hasNonZeroBefore)}${SCALES[scaleIndex] || ''}`);
+        });
+        const sentence = normalizeSpaces(parts.join(' '));
+        return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+      }
+
+      function escapeSelectorValue(value) {
+        return String(value || '').replace(/"/g, '\\"');
+      }
+
+      function getDonViRefId(row) {
+        return cleanValue(row?.Ref_DonViQuanLyHienTai) || cleanValue(row?.Ref_DonVi);
+      }
+
+      async function appSheetFind(tableName, selector) {
+        if (!config.API_PROXY_URL) {
+          throw new Error('Thiếu cấu hình proxy AppSheet. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
+        }
+        const response = await fetch(config.API_PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tableName,
+            action: 'Find',
+            payload: { Properties: { Selector: selector || `Filter(${tableName}, true)` } }
+          })
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`AppSheet ${response.status}: ${text || 'Yêu cầu thất bại'}`);
+        }
+        const text = await response.text();
+        return text ? JSON.parse(text) : [];
+      }
+
+      async function fetchKyQuyBundle() {
+        const response = await fetch(`/api/ky-quy-lai-xe?ID_KyQuy=${encodeURIComponent(idKyQuy)}`, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json'
+          }
+        });
+        const contentType = response.headers.get('content-type') || '';
+        const text = await response.text();
+        if (!contentType.includes('application/json')) {
+          throw new Error('Route /api/ky-quy-lai-xe chưa trả JSON hợp lệ trong môi trường hiện tại.');
+        }
+        const data = text ? JSON.parse(text) : {};
+        if (!response.ok) {
+          throw new Error(data.error || `Không tải được dữ liệu ký quỹ lái xe (${response.status}).`);
+        }
+        return data;
+      }
+
+      function buildRefSelector(tableName, keyName, ids) {
+        const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
+        if (!uniqueIds.length) return '';
+        const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
+        return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
+      }
+
+      function buildPayload(row, nhanSuById = new Map(), donViById = new Map()) {
+        const nhanSu = nhanSuById.get(cleanValue(row.Ref_NhanSu));
+        const donVi = donViById.get(getDonViRefId(row));
+        const soTienPhaiNop = cleanValue(row.SoTienPhaiNop);
+        const soTienDaNop = cleanValue(row.SoTienDaNop);
+        const soTienConLai = cleanValue(row.SoTienConLai);
+        return {
+          idKyQuy: cleanValue(row.ID_KyQuy),
+          soHopDong: cleanValue(row.MaKyQuy),
+          ngayKy: adminDateParts(row.NgayKyHopDong),
+          ngayKyText: formatAdministrativeDate(row.NgayKyHopDong),
+          hoTenLaiXe: cleanValue(nhanSu?.HoTen) || cleanValue(nhanSu?.Display) || cleanValue(row.Ref_NhanSu),
+          soCccd: cleanValue(nhanSu?.CCCD) || cleanValue(row.SoCCCD),
+          ngayCapCccd: formatAdministrativeDate(nhanSu?.NgayCapCCCD),
+          noiCapCccd: cleanValue(nhanSu?.NoiCapCCCD),
+          diaChiDayDu: cleanValue(nhanSu?.Dia_Chi_Day_Du) || cleanValue(nhanSu?.Address),
+          soDienThoai: cleanValue(nhanSu?.SoDienThoai),
+          tenDonVi: cleanValue(donVi?.TenDonVi),
+          diaChiDonVi: cleanValue(donVi?.DiaChi),
+          maSoThueDonVi: cleanValue(donVi?.MaSoThue) || cleanValue(donVi?.MaDonVi),
+          nguoiDaiDienDonVi: cleanValue(donVi?.NguoiDaiDien),
+          chucVuNguoiDaiDien: cleanValue(donVi?.ChucVuNguoiDaiDien),
+          trangThaiKyQuy: cleanValue(row.TrangThai),
+          soTienPhaiNopText: formatMoney(soTienPhaiNop),
+          soTienDaNopText: formatMoney(soTienDaNop),
+          soTienConLaiText: formatMoney(soTienConLai),
+          soTienPhaiNopBangChu: numberToVietnameseWords(soTienPhaiNop)
+        };
+      }
+
+      function buildTemplateData(payload) {
+        return {
+          so_hop_dong: payload.soHopDong,
+          ngay_ky: payload.ngayKy.day,
+          thang_ky: payload.ngayKy.month,
+          nam_ky: payload.ngayKy.year,
+          ten_don_vi: payload.tenDonVi,
+          dia_chi_don_vi: payload.diaChiDonVi,
+          ma_so_thue_don_vi: payload.maSoThueDonVi,
+          nguoi_dai_dien_don_vi: payload.nguoiDaiDienDonVi,
+          chuc_vu_nguoi_dai_dien: payload.chucVuNguoiDaiDien,
+          ho_ten_lai_xe: payload.hoTenLaiXe,
+          so_cccd: payload.soCccd,
+          ngay_cap_cccd: payload.ngayCapCccd,
+          noi_cap_cccd: payload.noiCapCccd,
+          dia_chi_day_du: payload.diaChiDayDu,
+          so_dien_thoai: payload.soDienThoai,
+          so_tien_phai_nop: payload.soTienPhaiNopText,
+          so_tien_phai_nop_text: payload.soTienPhaiNopBangChu,
+          so_tien_da_nop: payload.soTienDaNopText,
+          so_tien_con_lai: payload.soTienConLaiText,
+          trang_thai_ky_quy: payload.trangThaiKyQuy
+        };
+      }
+
+      function normalizeDocxZipEntryNames(zip) {
+        const normalizedZip = new PizZip();
+        Object.entries(zip.files).forEach(([entryName, file]) => {
+          if (file.dir) return;
+          normalizedZip.file(entryName.replace(/\\/g, '/'), file.asUint8Array());
+        });
+        return normalizedZip;
+      }
+
+      function renderSummary(payload, refStatus = 'Đã tải') {
+        const items = [
+          ['Số hợp đồng', payload.soHopDong],
+          ['Ngày ký', payload.ngayKyText],
+          ['Lái xe', payload.hoTenLaiXe],
+          ['Đơn vị', refStatus === 'Đang tải thông tin Ref...' ? refStatus : payload.tenDonVi],
+          ['CCCD', payload.soCccd],
+          ['Số tiền phải nộp', payload.soTienPhaiNopText],
+          ['Đã nộp', payload.soTienDaNopText],
+          ['Còn lại', payload.soTienConLaiText]
+        ];
+        summary.innerHTML = items.map(([label, value]) => `
+          <div class="summary-item">
+            <div class="summary-label">${escapeHtml(label)}</div>
+            <div class="summary-value">${escapeHtml(value || 'Chưa có')}</div>
+          </div>
+        `).join('');
+      }
+
+      function renderDocument(payload) {
+        page.innerHTML = `
+          <div class="center bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+          <div class="center bold">Độc lập - Tự do - Hạnh phúc</div>
+          <div class="center bold">-----o0o-----</div>
+          <div class="title">HỢP ĐỒNG ĐẶT CỌC ĐẢM BẢO TRÁCH NHIỆM TÀI SẢN</div>
+          <div class="center bold">Số: ${escapeHtml(payload.soHopDong)}</div>
+          <div class="row">Hôm nay, ngày ${escapeHtml(payload.ngayKy.day || '...')} tháng ${escapeHtml(payload.ngayKy.month || '...')} năm ${escapeHtml(payload.ngayKy.year || '...')}, chúng tôi gồm:</div>
+          <div class="section-title">Bên A - Bên nhận cọc</div>
+          <div class="grid">
+            <div>Tên đơn vị</div><div>: ${escapeHtml(payload.tenDonVi)}</div>
+            <div>Địa chỉ</div><div>: ${escapeHtml(payload.diaChiDonVi)}</div>
+            <div>Mã số thuế</div><div>: ${escapeHtml(payload.maSoThueDonVi)}</div>
+            <div>Đại diện</div><div>: ${escapeHtml(payload.nguoiDaiDienDonVi)}${payload.chucVuNguoiDaiDien ? ` - ${escapeHtml(payload.chucVuNguoiDaiDien)}` : ''}</div>
+          </div>
+          <div class="section-title">Bên B - Bên đặt cọc</div>
+          <div class="grid">
+            <div>Họ và tên</div><div>: ${escapeHtml(payload.hoTenLaiXe)}</div>
+            <div>Địa chỉ</div><div>: ${escapeHtml(payload.diaChiDayDu)}</div>
+            <div>CCCD</div><div>: ${escapeHtml(payload.soCccd)}</div>
+            <div>Ngày cấp</div><div>: ${escapeHtml(payload.ngayCapCccd)}</div>
+            <div>Nơi cấp</div><div>: ${escapeHtml(payload.noiCapCccd)}</div>
+            <div>Số điện thoại</div><div>: ${escapeHtml(payload.soDienThoai)}</div>
+          </div>
+          <div class="row">Sau khi thỏa thuận, hai Bên thống nhất ký Hợp đồng đặt cọc đảm bảo trách nhiệm tài sản với các điều khoản sau:</div>
+          <div class="section-title">Nội dung ký quỹ</div>
+          <div class="grid">
+            <div>Số tiền phải nộp</div><div>: ${escapeHtml(payload.soTienPhaiNopText)} đồng (${escapeHtml(payload.soTienPhaiNopBangChu)} đồng)</div>
+            <div>Số tiền đã nộp</div><div>: ${escapeHtml(payload.soTienDaNopText)} đồng</div>
+            <div>Số tiền còn lại</div><div>: ${escapeHtml(payload.soTienConLaiText)} đồng</div>
+            <div>Trạng thái</div><div>: ${escapeHtml(payload.trangThaiKyQuy)}</div>
+          </div>
+          <div class="row">Khoản ký quỹ này dùng để đảm bảo việc thực hiện các nghĩa vụ đã cam kết với đơn vị, bao gồm trách nhiệm quản lý, sử dụng tài sản và các nghĩa vụ tài chính khác theo quy định nội bộ.</div>
+          <div class="signatures">
+            <div>BÊN NHẬN CỌC<div class="sign-note">(Ký và đóng dấu)</div></div>
+            <div>BÊN ĐẶT CỌC<div class="sign-note">(Ký và ghi rõ họ tên)</div></div>
+          </div>
+        `;
+      }
+
+      function showMessage(message) {
+        messageBox.hidden = false;
+        messageBox.textContent = message;
+        summary.hidden = true;
+        preview.hidden = true;
+        printButton.disabled = true;
+        exportWordButton.disabled = true;
+      }
+
+      async function loadData() {
+        currentPayload = null;
+        reloadButton.disabled = true;
+        printButton.disabled = true;
+        exportWordButton.disabled = true;
+        messageBox.hidden = true;
+        summary.hidden = true;
+        preview.hidden = true;
+        statusText.textContent = 'Đang tải hợp đồng ký quỹ từ AppSheet...';
+
+        try {
+          if (!idKyQuy) throw new Error('Thiếu tham số ID_KyQuy trên URL.');
+          const bundle = await fetchKyQuyBundle();
+          const row = bundle.row || null;
+          if (!row) throw new Error(`Không tìm thấy hợp đồng ký quỹ với ID_KyQuy = ${idKyQuy}.`);
+          const nhanSuById = new Map((Array.isArray(bundle.related?.NHANSU) ? bundle.related.NHANSU : []).map((item) => [cleanValue(item.ID_NhanSu), item]));
+          const donViById = new Map((Array.isArray(bundle.related?.DONVI) ? bundle.related.DONVI : []).map((item) => [cleanValue(item.ID_DonVi), item]));
+          currentPayload = buildPayload(row, nhanSuById, donViById);
+          renderSummary(currentPayload);
+          renderDocument(currentPayload);
+          statusText.textContent = `Đã tải hợp đồng ${idKyQuy}.`;
+          summary.hidden = false;
+          preview.hidden = false;
+          printButton.disabled = false;
+          exportWordButton.disabled = false;
+        } catch (error) {
+          statusText.textContent = 'Không tải được hợp đồng ký quỹ.';
+          showMessage(error.message || 'Không tải được hợp đồng ký quỹ.');
+        } finally {
+          reloadButton.disabled = false;
+        }
+      }
+
+      async function exportToWordTemplate() {
+        if (!currentPayload) return;
+        exportWordButton.disabled = true;
+        exportWordButton.textContent = 'Đang xuất...';
+        try {
+          const response = await fetch('/ky_quy_lai_xe_template.docx');
+          if (!response.ok) throw new Error('Không thể tải template Word.');
+          const templateContent = await response.arrayBuffer();
+          const sourceZip = new PizZip(templateContent);
+          const zip = normalizeDocxZipEntryNames(sourceZip);
+          const Docxtemplater = window.docxtemplater?.Docxtemplater || window.docxtemplater;
+          const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true, nullGetter: () => '' });
+          doc.render(buildTemplateData(currentPayload));
+          const blob = doc.getZip().generate({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+          saveAs(blob, `Ky_quy_lai_xe_${currentPayload.soHopDong || currentPayload.idKyQuy || 'new'}.docx`);
+        } catch (error) {
+          showMessage(error.message || 'Không xuất được file Word.');
+        } finally {
+          exportWordButton.disabled = !currentPayload;
+          exportWordButton.textContent = 'Xuất Word';
+        }
+      }
+
+      reloadButton.addEventListener('click', loadData);
+      printButton.addEventListener('click', () => window.print());
+      exportWordButton.addEventListener('click', exportToWordTemplate);
+      loadData();
+    </script>
+  </body>
+</html>

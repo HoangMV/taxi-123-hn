@@ -40,6 +40,7 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU` | `ID_NhanSu` | `NHANSU_BHXH_BANGIAO_SO` | `Related NHANSU_BHXH_BANGIAO_SOs By NguoiNhan` | `NguoiNhan` |
 | `NHANSU` | `ID_NhanSu` | `DM_DOIXE` | `Related DM_DOIXEs` | Cần kiểm tra thêm trong AppSheet |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_KYQUY` | `Related NHANSU_KYQUYs` | `Ref_NhanSu` |
+| `DONVI` | `ID_DonVi` | `NHANSU_KYQUY` | Cần kiểm tra thêm trong AppSheet | `Ref_DonViQuanLyHienTai`, dự phòng `Ref_DonVi` |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_KYQUY_GIAODICH` | `Related NHANSU_KYQUY_GIAODICHs` | `Ref_NhanSu`, `Ref_KyQuy` |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_KYQUY_GIAODICH` | `Related NHANSU_KYQUY_GIAODICHs By Ref_NhanSu` | `Ref_NhanSu` |
 | `NHANSU` | `ID_NhanSu` | `LAIXE_KHENTHUONG_KYLUAT` | `Related LAIXE_KHENTHUONG_KYLUATs` | `Ref_NhanSu` |
@@ -77,6 +78,7 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU_BHXH_BANGIAO_SO` | Bảng con bàn giao sổ bảo hiểm |
 | `DM_DOIXE` | Bảng danh mục đội xe |
 | `NHANSU_KYQUY` | Bảng con ký quỹ |
+| `DONVI` | Bảng đơn vị, dùng để resolve `Ref_DonViQuanLyHienTai` trong ký quỹ lái xe, dự phòng `Ref_DonVi` cũ |
 | `NHANSU_KYQUY_GIAODICH` | Bảng con giao dịch ký quỹ |
 | `LAIXE_KHENTHUONG_KYLUAT` | Bảng con khen thưởng, kỷ luật |
 | `LAIXE_VIPHAM_ATGT` | Bảng con vi phạm an toàn giao thông |

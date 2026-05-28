@@ -52,6 +52,10 @@ function getUniqueIds(ids) {
   return uniqueIds;
 }
 
+function getDonViRefId(row) {
+  return cleanValue(row?.Ref_DonViQuanLyHienTai) || cleanValue(row?.Ref_DonVi);
+}
+
 function readJson(request) {
   return new Promise((resolve, reject) => {
     let raw = '';
@@ -148,6 +152,24 @@ async function findNhanSuByIds(ids) {
 
   return findAppSheetRows({
     tableName: 'NHANSU',
+    selector
+  });
+}
+
+function buildRefSelector(tableName, keyName, ids) {
+  const uniqueIds = getUniqueIds(ids);
+  if (uniqueIds.length === 0) return '';
+
+  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
+  return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
+}
+
+async function findRowsByIds(tableName, keyName, ids) {
+  const selector = buildRefSelector(tableName, keyName, ids);
+  if (!selector) return [];
+
+  return findAppSheetRows({
+    tableName,
     selector
   });
 }
@@ -264,6 +286,74 @@ async function handleBanGiaoXeBundle(request, response, url) {
   }
 }
 
+async function handleKyQuyLaiXeBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idKyQuy = cleanValue(
+      url.searchParams.get('ID_KyQuy') ||
+      url.searchParams.get('idKyQuy') ||
+      body.ID_KyQuy ||
+      body.idKyQuy
+    );
+    const includeRelated = cleanValue(
+      url.searchParams.get('includeRelated') ||
+      body.includeRelated ||
+      '1'
+    ) !== '0';
+
+    if (!idKyQuy) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_KyQuy.' });
+      return;
+    }
+
+    const selectorValue = escapeSelectorValue(idKyQuy);
+    const rows = await findAppSheetRows({
+      tableName: 'NHANSU_KYQUY',
+      selector: `Filter(NHANSU_KYQUY, [ID_KyQuy] = "${selectorValue}")`
+    });
+    const row = rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Không tìm thấy hợp đồng ký quỹ với ID_KyQuy = ${idKyQuy}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, {
+        row,
+        related: {}
+      });
+      return;
+    }
+
+    const [nhanSuRows, donViRows] = await Promise.all([
+      findRowsByIds('NHANSU', 'ID_NhanSu', [row.Ref_NhanSu]),
+      findRowsByIds('DONVI', 'ID_DonVi', [getDonViRefId(row)])
+    ]);
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        NHANSU: nhanSuRows,
+        DONVI: donViRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu ký quỹ lái xe.'
+    });
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
 
@@ -282,6 +372,15 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleBanGiaoXeBundle(request, response, url);
+    return;
+  }
+
+  if (url.pathname === '/api/ky-quy-lai-xe') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleKyQuyLaiXeBundle(request, response, url);
     return;
   }
 

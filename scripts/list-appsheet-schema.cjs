@@ -21,6 +21,10 @@ function parseEnvFile(filePath) {
   return result;
 }
 
+const TABLE_DEPENDENCIES = {
+  NHANSU_KYQUY: ['DONVI', 'NHANSU']
+};
+
 function parseArgs(argv) {
   const options = {
     format: 'markdown',
@@ -61,7 +65,7 @@ function parseArgs(argv) {
     options.tables.push(...splitTableNames(arg));
   });
 
-  options.tables = [...new Set(options.tables.map((item) => item.trim()).filter(Boolean))];
+  options.tables = expandTablesWithDependencies(options.tables);
   return options;
 }
 
@@ -70,6 +74,24 @@ function splitTableNames(value) {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function expandTablesWithDependencies(tableNames) {
+  const ordered = [];
+  const visited = new Set();
+
+  function visit(tableName) {
+    const normalizedName = String(tableName || '').trim();
+    if (!normalizedName || visited.has(normalizedName)) return;
+    visited.add(normalizedName);
+
+    const dependencies = TABLE_DEPENDENCIES[normalizedName] || [];
+    dependencies.forEach(visit);
+    ordered.push(normalizedName);
+  }
+
+  tableNames.forEach(visit);
+  return ordered;
 }
 
 function printHelp() {
@@ -240,7 +262,9 @@ async function main() {
   const appId = env.REACT_APP_APP_ID || '';
   const accessKey = env.REACT_APP_ACCESS_KEY || '';
   const regionHost = normalizeRegion(env.REACT_APP_REGION || 'www');
-  const envTables = splitTableNames(env.REACT_APP_SCHEMA_TABLES || env.REACT_APP_DEFAULT_TABLE || '');
+  const envTables = expandTablesWithDependencies(
+    splitTableNames(env.REACT_APP_SCHEMA_TABLES || env.REACT_APP_DEFAULT_TABLE || '')
+  );
   const tables = options.tables.length > 0 ? options.tables : envTables;
 
   if (!appId || !accessKey) {

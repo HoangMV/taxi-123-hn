@@ -43,7 +43,7 @@ Số dòng tải được: 2.
 
 ## NHANSU
 
-Số dòng tải được: 1281.
+Số dòng tải được: 1282.
 
 | Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
 | --- | --- | ---: |
@@ -103,13 +103,11 @@ Số dòng tải được: 1281.
 | Related NHANSU_BHXH_BANGIAO_SOs By NguoiNhan | Văn bản | 1 |
 | Display | Văn bản | 100 |
 | Related DM_DOIXEs | Trống | 0 |
-| Related NHANSU_KYQUYs | Văn bản | 1 |
 | Related NHANSU_KYQUY_GIAODICHs | Trống | 0 |
-| Related NHANSU_KYQUY_GIAODICHs By Ref_NhanSu | Văn bản | 1 |
 | Related LAIXE_KHENTHUONG_KYLUATs | Văn bản | 1 |
 | Related LAIXE_VIPHAM_ATGTs | Trống | 0 |
 | Related LAIXE_PHANCONG_XEs | Văn bản | 100 |
-| Related NHANSU_CHAMDUT_HOPDONGs | Trống | 0 |
+| Related NHANSU_CHAMDUT_HOPDONGs | Văn bản | 1 |
 | Related LAIXE_GPLXs | Văn bản | 100 |
 | Related XE_BANGIAOs | Văn bản | 2 |
 | SoGPLX | Số nguyên | 100 |
@@ -122,5 +120,93 @@ Số dòng tải được: 1281.
 | Related PHAN_ANH_KHIEU_NAIs | Văn bản | 1 |
 | Related PHAN_ANH_KHIEU_NAIs By Ref_CanBoXuLy | Văn bản | 1 |
 | Address | Văn bản | 100 |
+| Related NHANSU_THANHLY_HOPDONGs | Trống | 0 |
+| Related NHANSU_KYQUYs | Văn bản | 1 |
+| Related NHANSU_KYQUY_GIAODICHs By Ref_NhanSu | Văn bản | 1 |
+
+## DONVI
+
+Số dòng tải được: 2.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 2 |
+| ID_DonVi | Văn bản | 2 |
+| MaDonVi | Số nguyên hoặc Văn bản | 2 |
+| TenDonVi | Văn bản | 2 |
+| TenVietTat | Văn bản | 2 |
+| LoaiDonVi | Trống | 0 |
+| LoaiQuanHe | Trống | 0 |
+| MaSoThue | Số nguyên hoặc Văn bản | 2 |
+| NguoiDaiDien | Văn bản | 2 |
+| ChucVuNguoiDaiDien | Văn bản | 2 |
+| SoDienThoai | Số nguyên | 2 |
+| Email | Trống | 0 |
+| DiaChi | Văn bản | 2 |
+| TinhThanh | Trống | 0 |
+| TrangThai | Văn bản | 2 |
+| NgayTao | Văn bản | 2 |
+| NguoiTao | Văn bản | 2 |
+| NgayCapNhat | Văn bản | 2 |
+| NguoiCapNhat | Văn bản | 2 |
+| GhiChu | Trống | 0 |
+| Related XE_THONGBAO_NGUNGs | Trống | 0 |
+| Related DONVI_GPKDs | Văn bản | 2 |
+| Related DONVI_HOSO_PHAPLYs | Văn bản | 2 |
+| Related XEs By Ref_DonViChuQuan | Văn bản | 2 |
+| Related XEs By Ref_DonViQuanLyHienTai | Văn bản | 2 |
+| Related XE_PHUHIEUs By Ref_DonViDuocCap | Văn bản | 2 |
+| Related XE_PHUHIEUs By Ref_DonViQuanLyTaiThoiDiemCap | Văn bản | 2 |
+| Related XE_SO_KM_THANGs | Văn bản | 1 |
+| Related XE_DIEUCHUYENs By Ref_DonViCu | Trống | 0 |
+| Related XE_DIEUCHUYENs By Ref_DonViMoi | Trống | 0 |
+| Related NHANSU_BHXHs | Văn bản | 2 |
+| Related XE_BANGIAOs | Văn bản | 2 |
+| Related NHANSUs By Ref_DonViChuQuan | Văn bản | 2 |
+| Related NHANSUs By Ref_DonViLamViecHienTai | Văn bản | 2 |
+| Related NHANSU_QUATRINH_CONGTACs | Trống | 0 |
+| Related NHANSU_HOPDONG_LAODONGs | Văn bản | 2 |
+| Related LAIXE_TAINANs | Trống | 0 |
+| Related DM_CHUXE_DOITACs | Trống | 0 |
+| Related DM_DOIXEs | Trống | 0 |
+| Related DM_NGUOIKYs | Trống | 0 |
+| Related HD_THUE_XEs | Trống | 0 |
+| Related HD_HOPTAC_KINHDOANHs | Văn bản | 1 |
+| Related LAIXE_PHANCONG_XEs By Ref_DonViChuQuan | Văn bản | 2 |
+| Related LAIXE_PHANCONG_XEs By Ref_DonViLamViecHienTai | Văn bản | 2 |
+| Related HS_DE_NGHI_PHUHIEUs | Văn bản | 1 |
+| Related CT_HS_DE_NGHI_PHUHIEUs By Ref_DonViDuocCap | Văn bản | 1 |
+| Related CT_HS_DE_NGHI_PHUHIEUs By Ref_DonViQuanLyTaiThoiDiem | Văn bản | 1 |
+| Related KIEMTRA_XE_TAXIs | Văn bản | 2 |
+| Related NHANSU_KYQUYs | Văn bản | 1 |
+
+## NHANSU_KYQUY
+
+Số dòng tải được: 1.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 1 |
+| ID_KyQuy | Văn bản | 1 |
+| MaKyQuy | Văn bản | 1 |
+| NgayKyHopDong | Trống | 0 |
+| Ref_NhanSu | Văn bản | 1 |
+| Ref_DonViQuanLyHienTai | Văn bản | 1 |
+| SoTienPhaiNop | Số nguyên | 1 |
+| SoTienDaNop | Số nguyên | 1 |
+| SoTienConLai | Số nguyên | 1 |
+| TrangThai | Văn bản | 1 |
+| NgayThanhLy | Trống | 0 |
+| Ref_ThanhLy | Trống | 0 |
+| TrangThaiThanhLy | Trống | 0 |
+| NgayTao | Văn bản | 1 |
+| NguoiTao | Văn bản | 1 |
+| NgayCapNhat | Văn bản | 1 |
+| NguoiCapNhat | Văn bản | 1 |
+| GhiChu | Trống | 0 |
+| Related NHANSU_KYQUY_GIAODICHs | Văn bản | 1 |
+| Related NHANSU_KYQUY_MUCs | Trống | 0 |
+| SoCCCD | Số nguyên | 1 |
+| Related NHANSU_KYQUY_THANHLYs | Trống | 0 |
 
 Ghi chú: Kiểu dữ liệu ở đây được suy luận từ dữ liệu API trả về, không phải cấu hình schema gốc trong AppSheet Editor.
