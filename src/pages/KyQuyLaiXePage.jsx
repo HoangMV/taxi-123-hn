@@ -341,7 +341,7 @@ const KyQuyLaiXePage = () => {
                     <tr>
                       <td className="label">BÊN A</td>
                       <td className="colon">:</td>
-                      <td className="value" colSpan={3}><strong>{payload.tenDonVi}</strong></td>
+                      <td className="value" colSpan={3}><strong>{(payload.tenDonVi || '').toUpperCase()}</strong></td>
                     </tr>
                     <tr>
                       <td className="sub-label">- Địa chỉ</td>
@@ -356,7 +356,7 @@ const KyQuyLaiXePage = () => {
                     <tr>
                       <td className="sub-label">- Đại diện</td>
                       <td className="colon">:</td>
-                      <td className="value" colSpan={3}>Ông {payload.nguoiDaiDienDonVi} {payload.chucVuNguoiDaiDien ? `Chức danh: ${payload.chucVuNguoiDaiDien}` : ''}</td>
+                      <td className="value" colSpan={3}>Ông <strong>{payload.nguoiDaiDienDonVi}</strong> {payload.chucVuNguoiDaiDien ? `Chức danh: ${payload.chucVuNguoiDaiDien}` : ''}</td>
                     </tr>
                     <tr>
                       <td className="value" colSpan={5}><strong>(“Bên Nhận cọc”)</strong></td>
@@ -369,7 +369,7 @@ const KyQuyLaiXePage = () => {
                     <tr>
                       <td className="label">BÊN B</td>
                       <td className="colon">:</td>
-                      <td className="value" colSpan={3}>Ông/Bà {payload.hoTenLaiXe}</td>
+                      <td className="value" colSpan={3}>Ông/Bà <strong>{payload.hoTenLaiXe}</strong></td>
                     </tr>
                     <tr>
                       <td className="sub-label">- Địa chỉ</td>

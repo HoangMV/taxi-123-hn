@@ -382,7 +382,7 @@
               <tr>
                 <td class="label">BÊN A</td>
                 <td class="colon">:</td>
-                <td class="value" colspan="3"><strong>${escapeHtml(payload.tenDonVi)}</strong></td>
+                <td class="value" colspan="3"><strong>${escapeHtml((payload.tenDonVi || '').toUpperCase())}</strong></td>
               </tr>
               <tr>
                 <td class="sub-label">- Địa chỉ</td>
@@ -397,7 +397,7 @@
               <tr>
                 <td class="sub-label">- Đại diện</td>
                 <td class="colon">:</td>
-                <td class="value" colspan="3">Ông ${escapeHtml(payload.nguoiDaiDienDonVi)}${payload.chucVuNguoiDaiDien ? ` Chức danh: ${escapeHtml(payload.chucVuNguoiDaiDien)}` : ''}</td>
+                <td class="value" colspan="3">Ông <strong>${escapeHtml(payload.nguoiDaiDienDonVi)}</strong>${payload.chucVuNguoiDaiDien ? ` Chức danh: ${escapeHtml(payload.chucVuNguoiDaiDien)}` : ''}</td>
               </tr>
               <tr>
                 <td class="value" colspan="5"><strong>(“Bên Nhận cọc”)</strong></td>
@@ -410,7 +410,7 @@
               <tr>
                 <td class="label">BÊN B</td>
                 <td class="colon">:</td>
-                <td class="value" colspan="3">Ông/Bà ${escapeHtml(payload.hoTenLaiXe)}</td>
+                <td class="value" colspan="3">Ông/Bà <strong>${escapeHtml(payload.hoTenLaiXe)}</strong></td>
               </tr>
               <tr>
                 <td class="sub-label">- Địa chỉ</td>

@@ -205,6 +205,7 @@ export function buildKyQuyTemplateData(payload) {
     thang_ky: payload.ngayKy.month,
     nam_ky: payload.ngayKy.year,
     ten_don_vi: payload.tenDonVi,
+    ten_don_vi_uper: (payload.tenDonVi || '').toUpperCase(),
     dia_chi_don_vi: payload.diaChiDonVi,
     ma_so_thue_don_vi: payload.maSoThueDonVi,
     nguoi_dai_dien_don_vi: payload.nguoiDaiDienDonVi,
