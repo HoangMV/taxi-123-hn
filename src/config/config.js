@@ -19,7 +19,8 @@ const config = {
     THONG_KE_PHU_HIEU_REACT: '/thong-ke-phu-hieu-don-vi',
     QUYET_DINH_THU_HOI_GPKD_REACT: '/quyet-dinh-thu-hoi-gpkd',
     BAN_GIAO_XE_REACT: '/ban-giao-xe',
-    KY_QUY_LAI_XE_REACT: '/ky-quy-lai-xe'
+    KY_QUY_LAI_XE_REACT: '/ky-quy-lai-xe',
+    BAN_GIAO_SO_BHXH_REACT: '/ban-giao-so-bhxh'
   }
 };
 

@@ -354,6 +354,85 @@ async function handleKyQuyLaiXeBundle(request, response, url) {
   }
 }
 
+async function handleBanGiaoSoBhxhBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idBanGiaoSo = cleanValue(
+      url.searchParams.get('ID_BanGiaoSo') ||
+      url.searchParams.get('idBanGiaoSo') ||
+      body.ID_BanGiaoSo ||
+      body.idBanGiaoSo
+    );
+    const includeRelated = cleanValue(
+      url.searchParams.get('includeRelated') ||
+      body.includeRelated ||
+      '1'
+    ) !== '0';
+
+    if (!idBanGiaoSo) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_BanGiaoSo.' });
+      return;
+    }
+
+    const selectorValue = escapeSelectorValue(idBanGiaoSo);
+    const rows = await findAppSheetRows({
+      tableName: 'NHANSU_BHXH_BANGIAO_SO',
+      selector: `Filter(NHANSU_BHXH_BANGIAO_SO, [ID_BanGiaoSo] = "${selectorValue}")`
+    });
+    const row = rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Không tìm thấy biên bản bàn giao sổ BHXH với ID_BanGiaoSo = ${idBanGiaoSo}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, {
+        row,
+        related: {}
+      });
+      return;
+    }
+
+    const bhxhRows = await findRowsByIds('NHANSU_BHXH', 'ID_BHXH', [row.Ref_BHXH]);
+    const bhxh = bhxhRows[0] || null;
+    const [nhanSuRows, donViRows] = await Promise.all([
+      findRowsByIds('NHANSU', 'ID_NhanSu', [bhxh?.Ref_NhanSu, row.NguoiGiao, row.NguoiNhan]),
+      findAppSheetRows({
+        tableName: 'DONVI'
+      })
+    ]);
+    const chucDanhRows = await findRowsByIds(
+      'DM_CHUCDANH',
+      'ID_ChucDanh',
+      nhanSuRows.map((nhanSu) => nhanSu.Ref_ChucDanh)
+    );
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        NHANSU_BHXH: bhxhRows,
+        NHANSU: nhanSuRows,
+        DONVI: donViRows,
+        DM_CHUCDANH: chucDanhRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu bàn giao sổ BHXH.'
+    });
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
 
@@ -381,6 +460,15 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleKyQuyLaiXeBundle(request, response, url);
+    return;
+  }
+
+  if (url.pathname === '/api/ban-giao-so-bhxh') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleBanGiaoSoBhxhBundle(request, response, url);
     return;
   }
 

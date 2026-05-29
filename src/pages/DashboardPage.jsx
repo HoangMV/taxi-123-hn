@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, FileText, IdCard, Car, HandCoins } from 'lucide-react';
+import { ArrowRight, BookMarked, FileText, IdCard, Car, HandCoins } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -33,6 +33,13 @@ const actions = [
     path: config.ROUTES.KY_QUY_LAI_XE_REACT,
     icon: HandCoins,
     tone: 'bg-sky-50 text-sky-700'
+  },
+  {
+    title: 'Bàn giao sổ BHXH',
+    description: 'Xem trước, in và xuất biên bản bàn giao sổ bảo hiểm xã hội.',
+    path: config.ROUTES.BAN_GIAO_SO_BHXH_REACT,
+    icon: BookMarked,
+    tone: 'bg-violet-50 text-violet-700'
   }
 ];
 

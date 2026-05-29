@@ -29,6 +29,7 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU` | `ID_NhanSu` | `XE_BANGIAO` | `Related XE_BANGIAOs By DaiDienBenGiao2` | `DaiDienBenGiao2` |
 | `XE_BANGIAO` | `ID_BienBanXe` | `XE_BANGIAO_HINHANH` | `Related XE_BANGIAO_HINHANHs` | Cần kiểm tra thêm trong AppSheet |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_BHXH` | `Related NHANSU_BHXHs` | `Ref_NhanSu` |
+| `DM_CHUCDANH` | `ID_ChucDanh` | `NHANSU` | `Related NHANSUs` | `Ref_ChucDanh` |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_NGUOITHAN` | `Related NHANSU_NGUOITHANs` | Cần kiểm tra thêm trong AppSheet |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_HOSO_CANHAN` | `Related NHANSU_HOSO_CANHANs` | Cần kiểm tra thêm trong AppSheet |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_QUATRINH_CONGTAC` | `Related NHANSU_QUATRINH_CONGTACs` | Cần kiểm tra thêm trong AppSheet |
@@ -76,6 +77,7 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `LAIXE_DAOTAO` | Bảng con đào tạo lái xe |
 | `LAIXE_TAINAN` | Bảng con tai nạn lái xe |
 | `NHANSU_BHXH_BANGIAO_SO` | Bảng con bàn giao sổ bảo hiểm |
+| `DM_CHUCDANH` | Bảng danh mục chức danh, dùng để resolve `NHANSU.Ref_ChucDanh` sang `TenChucDanh` khi hiển thị chứng từ nhân sự |
 | `DM_DOIXE` | Bảng danh mục đội xe |
 | `NHANSU_KYQUY` | Bảng con ký quỹ |
 | `DONVI` | Bảng đơn vị, dùng để resolve `Ref_DonViQuanLyHienTai` trong ký quỹ lái xe, dự phòng `Ref_DonVi` cũ |
