@@ -35,6 +35,10 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU` | `ID_NhanSu` | `NHANSU_QUATRINH_CONGTAC` | `Related NHANSU_QUATRINH_CONGTACs` | Cần kiểm tra thêm trong AppSheet |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_SUCKHOE` | `Related NHANSU_SUCKHOEs` | Cần kiểm tra thêm trong AppSheet |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_HOPDONG_LAODONG` | `Related NHANSU_HOPDONG_LAODONGs` | `Ref_NhanSu`, `Ref_NguoiKy` |
+| `DONVI` | `ID_DonVi` | `NHANSU_HOPDONG_LAODONG` | `Related NHANSU_HOPDONG_LAODONGs` | `Ref_DonViLamViec` |
+| `DM_BOPHAN` | `ID_BoPhan` | `NHANSU_HOPDONG_LAODONG` | Cần kiểm tra thêm trong AppSheet | `Ref_BoPhan`; thực tế có dòng đang lưu mã chức danh nên cần thử thêm `DM_CHUCDANH.ID_ChucDanh` |
+| `DM_CHUCDANH` | `ID_ChucDanh` | `NHANSU_HOPDONG_LAODONG` | `Related NHANSU_HOPDONG_LAODONGs` | `Ref_BoPhan` khi giá trị thực tế là mã chức danh; ưu tiên `NHANSU.Ref_ChucDanh` cho chức danh nhân sự |
+| `DM_MUCLUONG_DONGBHXH` | `ID_MucLuong` | `NHANSU_HOPDONG_LAODONG` | Cần kiểm tra thêm trong AppSheet | `MucLuongCoBan` |
 | `NHANSU` | `ID_NhanSu` | `LAIXE_DAOTAO` | `Related LAIXE_DAOTAOs` | `Ref_NhanSu` |
 | `NHANSU` | `ID_NhanSu` | `LAIXE_TAINAN` | `Related LAIXE_TAINANs` | Cần kiểm tra thêm trong AppSheet |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_BHXH_BANGIAO_SO` | `Related NHANSU_BHXH_BANGIAO_SOs By NguoiGiao` | `NguoiGiao` |
@@ -78,6 +82,8 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `LAIXE_TAINAN` | Bảng con tai nạn lái xe |
 | `NHANSU_BHXH_BANGIAO_SO` | Bảng con bàn giao sổ bảo hiểm |
 | `DM_CHUCDANH` | Bảng danh mục chức danh, dùng để resolve `NHANSU.Ref_ChucDanh` sang `TenChucDanh` khi hiển thị chứng từ nhân sự |
+| `DM_BOPHAN` | Bảng danh mục bộ phận, dùng để resolve bộ phận làm việc trong HĐLĐ |
+| `DM_MUCLUONG_DONGBHXH` | Bảng danh mục mức lương đóng BHXH, dùng để resolve `NHANSU_HOPDONG_LAODONG.MucLuongCoBan` sang `MucLuong`; nếu không tìm thấy thì không được xuất Word |
 | `DM_DOIXE` | Bảng danh mục đội xe |
 | `NHANSU_KYQUY` | Bảng con ký quỹ |
 | `DONVI` | Bảng đơn vị, dùng để resolve `Ref_DonViQuanLyHienTai` trong ký quỹ lái xe, dự phòng `Ref_DonVi` cũ |

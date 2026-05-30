@@ -20,7 +20,8 @@ const config = {
     QUYET_DINH_THU_HOI_GPKD_REACT: '/quyet-dinh-thu-hoi-gpkd',
     BAN_GIAO_XE_REACT: '/ban-giao-xe',
     KY_QUY_LAI_XE_REACT: '/ky-quy-lai-xe',
-    BAN_GIAO_SO_BHXH_REACT: '/ban-giao-so-bhxh'
+    BAN_GIAO_SO_BHXH_REACT: '/ban-giao-so-bhxh',
+    HDLD_NHAN_VIEN_LAI_XE_REACT: '/hdld-nhan-vien-lai-xe'
   }
 };
 

@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HĐLĐ nhân viên lái xe</title>
+    <script src="/runtime-config.js"></script>
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+      :root { --brand: #4338ca; --ink: #172033; --muted: #667085; --line: #e4e7ec; --bg: #f6f7f9; --danger: #b42318; }
+      @page { size: A4; margin: 1.5cm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: Arial, sans-serif; }
+      .shell { width: 100%; margin: 0 auto; padding: 12px; }
+      .toolbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.96); padding: 14px; box-shadow: 0 10px 28px rgba(16,24,40,.06); backdrop-filter: blur(10px); }
+      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .brand img { width: 42px; height: 42px; border-radius: 10px; object-fit: contain; }
+      h1 { margin: 0; font-size: 18px; }
+      .status { margin-top: 4px; color: var(--muted); font-size: 13px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      button { min-height: 40px; border: 0; border-radius: 10px; background: var(--brand); color: #fff; cursor: pointer; font-weight: 700; padding: 0 14px; }
+      button.secondary { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+      button:disabled { cursor: not-allowed; opacity: .55; }
+      .message { margin-top: 16px; border: 1px dashed var(--line); border-radius: 12px; background: #fff; padding: 24px; color: var(--muted); text-align: center; }
+      .message.danger { border-color: #fecdca; background: #fffbfa; color: var(--danger); }
+      .preview { margin-top: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #eef2f7; padding: 0; }
+      .page { width: 21cm; min-height: 29.7cm; margin: 0 auto; background: #fff; padding: 1.6cm 1.8cm 1.6cm 2.2cm; color: #000; font-family: "Times New Roman", Times, serif; font-size: 13pt; line-height: 1.35; box-shadow: none; }
+      .center { text-align: center; }
+      .bold { font-weight: 700; }
+      .title { margin: 10px 0 6px; text-align: center; font-size: 16pt; font-weight: 700; text-transform: uppercase; }
+      .row { margin: 4px 0; text-align: justify; }
+      .line { margin: 3px 0; }
+      .section { margin-top: 8px; }
+      .indent { padding-left: 24px; }
+      .sign-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 24px; }
+      .sign-table td { text-align: center; vertical-align: top; }
+      .sign-title { font-weight: 700; text-transform: uppercase; }
+      .sign-note { margin-top: 4px; font-style: italic; }
+      .sign-space { height: 84px; }
+      @media print {
+        html, body { width: auto !important; height: auto !important; overflow: visible !important; background: #fff !important; }
+        .toolbar, .message { display: none !important; }
+        .shell, .preview { margin: 0 !important; padding: 0 !important; border: 0 !important; background: #fff !important; overflow: visible !important; }
+        .page { width: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="toolbar">
+        <div class="brand">
+          <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
+          <div>
+            <h1>HĐLĐ nhân viên lái xe</h1>
+            <div class="status" id="statusText">Đang kiểm tra tham số ID_HopDongLaoDong.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="secondary" type="button" onclick="window.print()" id="printButton" disabled>In tài liệu</button>
+          <button type="button" onclick="exportWord()" id="exportButton" disabled>Xuất Word</button>
+        </div>
+      </div>
+      <div id="message" class="message">Đang tải dữ liệu...</div>
+      <div id="preview" class="preview" hidden></div>
+    </div>
+
+    <script>
+      const idHopDongLaoDong = new URLSearchParams(window.location.search).get('ID_HopDongLaoDong') || '';
+      const statusText = document.getElementById('statusText');
+      const message = document.getElementById('message');
+      const preview = document.getElementById('preview');
+      const printButton = document.getElementById('printButton');
+      const exportButton = document.getElementById('exportButton');
+      let currentPayload = null;
+
+      function cleanValue(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).trim();
+      }
+
+      function parseDateValue(value) {
+        if (!value) return null;
+        const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+
+      function formatAdministrativeDate(value) {
+        const date = parseDateValue(value);
+        if (!date) return { day: '', month: '', year: '' };
+        const day = String(date.getDate()).padStart(2, '0');
+        const monthValue = date.getMonth() + 1;
+        const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+        return { day, month, year: String(date.getFullYear()) };
+      }
+
+      function formatAdministrativeDateString(value) {
+        const date = formatAdministrativeDate(value);
+        if (!date.day || !date.month || !date.year) return '';
+        return `${date.day}/${date.month}/${date.year}`;
+      }
+
+      function formatMoney(value) {
+        const digits = cleanValue(value).replace(/[^\d]/g, '');
+        if (!digits) return '';
+        return Number(digits).toLocaleString('vi-VN');
+      }
+
+      const digitsText = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+      const scalesText = ['', ' nghìn', ' triệu', ' tỷ', ' nghìn tỷ', ' triệu tỷ'];
+
+      function normalizeSpaces(value) {
+        return value.replace(/\s+/g, ' ').trim();
+      }
+
+      function readTriple(number, isFull) {
+        const hundreds = Math.floor(number / 100);
+        const tensUnits = number % 100;
+        const tens = Math.floor(tensUnits / 10);
+        const units = tensUnits % 10;
+        const parts = [];
+        if (hundreds > 0 || isFull) parts.push(`${digitsText[hundreds]} trăm`);
+        if (tens > 1) {
+          parts.push(`${digitsText[tens]} mươi`);
+          if (units === 1) parts.push('mốt');
+          else if (units === 4) parts.push('tư');
+          else if (units === 5) parts.push('lăm');
+          else if (units > 0) parts.push(digitsText[units]);
+          return normalizeSpaces(parts.join(' '));
+        }
+        if (tens === 1) {
+          parts.push('mười');
+          if (units === 5) parts.push('lăm');
+          else if (units > 0) parts.push(digitsText[units]);
+          return normalizeSpaces(parts.join(' '));
+        }
+        if (units > 0) {
+          if (hundreds > 0 || isFull) parts.push('lẻ');
+          parts.push(digitsText[units]);
+        }
+        return normalizeSpaces(parts.join(' '));
+      }
+
+      function numberToWords(value) {
+        const normalized = String(value ?? '').replace(/[^\d]/g, '').replace(/^0+/, '') || '0';
+        if (normalized === '0') return 'Không';
+        const groups = [];
+        let remaining = normalized;
+        while (remaining.length > 0) {
+          groups.unshift(Number(remaining.slice(-3)));
+          remaining = remaining.slice(0, -3);
+        }
+        const firstNonZeroIndex = groups.findIndex((group) => group > 0);
+        const parts = [];
+        groups.forEach((group, index) => {
+          if (!group) return;
+          const scaleIndex = groups.length - index - 1;
+          parts.push(`${readTriple(group, index > firstNonZeroIndex)}${scalesText[scaleIndex] || ''}`);
+        });
+        const sentence = normalizeSpaces(parts.join(' '));
+        return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+      }
+
+      function buildMap(rows, keyName) {
+        return new Map((Array.isArray(rows) ? rows : []).map((row) => [cleanValue(row[keyName]), row]).filter(([id]) => id));
+      }
+
+      function getNhanSuDisplayName(nhanSu) {
+        if (!nhanSu) return '';
+        return cleanValue(nhanSu.HoTen) || cleanValue(nhanSu.Display) || cleanValue(nhanSu.ID_NhanSu);
+      }
+
+      function getDonViDisplayName(donVi) {
+        if (!donVi) return '';
+        return cleanValue(donVi.TenDonVi) || cleanValue(donVi.Display) || cleanValue(donVi.ID_DonVi);
+      }
+
+      function getChucDanhDisplayName(chucDanh) {
+        if (!chucDanh) return '';
+        return cleanValue(chucDanh.TenChucDanh) || cleanValue(chucDanh.Display) || cleanValue(chucDanh.ID_ChucDanh);
+      }
+
+      function getBoPhanDisplayName(boPhan) {
+        if (!boPhan) return '';
+        return cleanValue(boPhan.TenBoPhan) || cleanValue(boPhan.Display) || cleanValue(boPhan.ID_BoPhan);
+      }
+
+      function normalizeLookupText(value) {
+        return cleanValue(value).toLowerCase();
+      }
+
+      function findDonVi(donViById, value) {
+        const ref = cleanValue(value);
+        if (!ref) return null;
+        const direct = donViById.get(ref);
+        if (direct) return direct;
+        const normalizedRef = normalizeLookupText(ref);
+        for (const donVi of donViById.values()) {
+          const candidates = [donVi.ID_DonVi, donVi.MaDonVi, donVi.TenDonVi, donVi.TenVietTat].map(normalizeLookupText).filter(Boolean);
+          if (
+            candidates.some((candidate) => candidate === normalizedRef) ||
+            candidates.some((candidate) => normalizedRef.includes(candidate) || candidate.includes(normalizedRef))
+          ) {
+            return donVi;
+          }
+        }
+        return null;
+      }
+
+      async function fetchBundle() {
+        const params = new URLSearchParams({ ID_HopDongLaoDong: idHopDongLaoDong });
+        const response = await fetch(`/api/hdld-nhan-vien-lai-xe?${params.toString()}`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' }
+        });
+        const contentType = response.headers.get('content-type') || '';
+        const text = await response.text();
+        if (!contentType.includes('application/json')) {
+          throw new Error('Route /api/hdld-nhan-vien-lai-xe chưa trả JSON hợp lệ trong môi trường hiện tại.');
+        }
+        const data = text ? JSON.parse(text) : {};
+        if (!response.ok) throw new Error(data.error || `Không tải được dữ liệu HĐLĐ (${response.status}).`);
+        return data;
+      }
+
+      function buildPayload(row, related = {}) {
+        const nhanSuById = buildMap(related.NHANSU, 'ID_NhanSu');
+        const donViById = buildMap(related.DONVI, 'ID_DonVi');
+        const chucDanhById = buildMap(related.DM_CHUCDANH, 'ID_ChucDanh');
+        const boPhanById = buildMap(related.DM_BOPHAN, 'ID_BoPhan');
+        const mucLuongById = buildMap(related.DM_MUCLUONG_DONGBHXH, 'ID_MucLuong');
+        const nhanSu = nhanSuById.get(cleanValue(row.Ref_NhanSu));
+        const nguoiKy = nhanSuById.get(cleanValue(row.Ref_NguoiKy));
+        const donVi = findDonVi(donViById, row.Ref_DonViLamViec);
+        const chucDanh = chucDanhById.get(cleanValue(nhanSu?.Ref_ChucDanh)) || chucDanhById.get(cleanValue(row.Ref_BoPhan));
+        const nguoiKyChucDanh = chucDanhById.get(cleanValue(nguoiKy?.Ref_ChucDanh));
+        const boPhan = boPhanById.get(cleanValue(row.Ref_BoPhan)) || boPhanById.get(cleanValue(chucDanh?.Ref_BoPhan));
+        const mucLuong = mucLuongById.get(cleanValue(row.MucLuongCoBan));
+        const salaryDigits = cleanValue(mucLuong?.MucLuong).replace(/[^\d]/g, '');
+        const ngayKy = formatAdministrativeDate(row.NgayKy);
+        const tenDonVi = getDonViDisplayName(donVi) || cleanValue(row.Ref_DonViLamViec);
+        const missingSalary = Boolean(cleanValue(row.MucLuongCoBan) && !mucLuong);
+        return {
+          idHopDongLaoDong: cleanValue(row.ID_HopDongLaoDong),
+          soHopDong: cleanValue(row.SoHopDong) || cleanValue(nhanSu?.CCCD) || cleanValue(row.ID_HopDongLaoDong),
+          namHopDong: ngayKy.year,
+          ngayKy,
+          ngayKyText: formatAdministrativeDateString(row.NgayKy),
+          ngayBatDauText: formatAdministrativeDateString(row.NgayBatDau),
+          ngayKetThucText: formatAdministrativeDateString(row.NgayKetThuc),
+          tenDonVi,
+          tenDonViUpper: tenDonVi.toUpperCase(),
+          maSoThueDonVi: cleanValue(donVi?.MaSoThue) || cleanValue(donVi?.MaDonVi),
+          diaChiDonVi: cleanValue(donVi?.DiaChi),
+          hoTenNguoiKy: getNhanSuDisplayName(nguoiKy) || cleanValue(donVi?.NguoiDaiDien),
+          chucVuNguoiKy: getChucDanhDisplayName(nguoiKyChucDanh) || cleanValue(donVi?.ChucVuNguoiDaiDien),
+          hoTenNhanSu: getNhanSuDisplayName(nhanSu) || cleanValue(row.Ref_NhanSu),
+          ngaySinh: formatAdministrativeDateString(nhanSu?.NgaySinh),
+          diaChiNhanSu: cleanValue(nhanSu?.Dia_Chi_Day_Du) || cleanValue(nhanSu?.Address),
+          soCccd: cleanValue(nhanSu?.CCCD),
+          ngayCapCccd: formatAdministrativeDateString(nhanSu?.NgayCapCCCD),
+          noiCapCccd: cleanValue(nhanSu?.NoiCapCCCD),
+          soGplx: cleanValue(nhanSu?.SoGPLX),
+          hangGplx: cleanValue(nhanSu?.HangGPLX) || 'B2',
+          chucDanh: getChucDanhDisplayName(chucDanh) || cleanValue(row.Ref_BoPhan),
+          boPhan: getBoPhanDisplayName(boPhan),
+          loaiHopDong: cleanValue(row.LoaiHopDong),
+          mucLuongText: formatMoney(mucLuong?.MucLuong),
+          mucLuongBangChu: salaryDigits ? `${numberToWords(salaryDigits)} đồng` : '',
+          missingSalary,
+          missingSalaryMessage: missingSalary ? `Không tìm thấy mã lương ${cleanValue(row.MucLuongCoBan)} trong bảng DM_MUCLUONG_DONGBHXH. Hệ thống đã khóa xuất Word để tránh phát hành hợp đồng sai.` : '',
+          trangThaiXuLy: cleanValue(row.TrangThaiXuLy),
+          ghiChu: cleanValue(row.GhiChu)
+        };
+      }
+
+      function buildTemplateData(payload) {
+        return {
+          so_hop_dong: payload.soHopDong,
+          nam_hop_dong: payload.namHopDong,
+          ngay_ky_text: payload.ngayKyText,
+          ngay_ky: payload.ngayKy.day,
+          thang_ky: payload.ngayKy.month,
+          nam_ky: payload.ngayKy.year,
+          ten_don_vi: payload.tenDonVi,
+          ten_don_vi_upper: payload.tenDonViUpper,
+          ma_so_thue_don_vi: payload.maSoThueDonVi,
+          dia_chi_don_vi: payload.diaChiDonVi,
+          ho_ten_nguoi_ky: payload.hoTenNguoiKy,
+          chuc_vu_nguoi_ky: payload.chucVuNguoiKy,
+          ho_ten_nhan_su: payload.hoTenNhanSu,
+          ngay_sinh: payload.ngaySinh,
+          dia_chi_nhan_su: payload.diaChiNhanSu,
+          so_cccd: payload.soCccd,
+          ngay_cap_cccd: payload.ngayCapCccd,
+          noi_cap_cccd: payload.noiCapCccd,
+          so_gplx: payload.soGplx,
+          hang_gplx: payload.hangGplx,
+          chuc_danh: payload.chucDanh,
+          bo_phan: payload.boPhan,
+          loai_hop_dong: payload.loaiHopDong,
+          ngay_bat_dau: payload.ngayBatDauText,
+          ngay_ket_thuc: payload.ngayKetThucText,
+          muc_luong: payload.mucLuongText,
+          muc_luong_bang_chu: payload.mucLuongBangChu,
+          trang_thai: payload.trangThaiXuLy,
+          ghi_chu: payload.ghiChu
+        };
+      }
+
+      function normalizeDocxZipEntryNames(zip) {
+        const normalizedZip = new PizZip();
+        Object.entries(zip.files).forEach(([entryName, file]) => {
+          if (file.dir) return;
+          normalizedZip.file(entryName.replace(/\\/g, '/'), file.asUint8Array());
+        });
+        return normalizedZip;
+      }
+
+      function render(payload) {
+        currentPayload = payload;
+        preview.hidden = false;
+        message.hidden = true;
+        printButton.disabled = false;
+        exportButton.disabled = payload.missingSalary;
+        preview.innerHTML = `
+          <div class="page">
+            <div class="center bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+            <div class="center bold">Độc lập - Tự do - Hạnh phúc</div>
+            <div class="title">HỢP ĐỒNG LAO ĐỘNG</div>
+            <div class="center">Số: ${payload.soHopDong || '...'} /${payload.namHopDong || '...'}/HĐLĐ</div>
+            <div class="row">Hôm nay, ngày ${payload.ngayKy.day || '...'} tháng ${payload.ngayKy.month || '...'} năm ${payload.ngayKy.year || '...'} tại ${payload.tenDonVi || '................................'}, chúng tôi gồm:</div>
+            <div class="section">
+              <div class="line"><strong>BÊN A:</strong> ${payload.tenDonViUpper || ''}</div>
+              <div class="line">Địa chỉ: ${payload.diaChiDonVi || ''}</div>
+              <div class="line">Mã số thuế: ${payload.maSoThueDonVi || ''}</div>
+              <div class="line">Đại diện: ${payload.hoTenNguoiKy || ''} - Chức danh: ${payload.chucVuNguoiKy || ''}</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>BÊN B:</strong> ${payload.hoTenNhanSu || ''}</div>
+              <div class="line">Ngày sinh: ${payload.ngaySinh || ''}</div>
+              <div class="line">Địa chỉ thường trú: ${payload.diaChiNhanSu || ''}</div>
+              <div class="line">Số CCCD: ${payload.soCccd || ''}; ngày cấp: ${payload.ngayCapCccd || ''}; nơi cấp: ${payload.noiCapCccd || ''}</div>
+              <div class="line">GPLX số: ${payload.soGplx || ''}; hạng bằng: ${payload.hangGplx || ''}</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>Điều 1. Công việc và địa điểm làm việc</strong></div>
+              <div class="line indent">Chức danh: ${payload.chucDanh || ''}; bộ phận: ${payload.boPhan || '................................'}.</div>
+              <div class="line indent">Người lao động thực hiện công việc lái xe taxi và các công việc liên quan theo sự phân công của Công ty.</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>Điều 2. Thời hạn hợp đồng</strong></div>
+              <div class="line indent">Loại hợp đồng lao động: ${payload.loaiHopDong || ''}.</div>
+              <div class="line indent">Thời hạn hợp đồng lao động: từ ngày ${payload.ngayBatDauText || ''} đến ngày ${payload.ngayKetThucText || ''}.</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>Điều 3. Tiền lương và chế độ</strong></div>
+              <div class="line indent">Mức lương chính: ${payload.mucLuongText || '................................'} VNĐ/tháng.</div>
+              <div class="line indent">Bằng chữ: ${payload.mucLuongBangChu || '................................'}.</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>Điều 4. Cam kết chung</strong></div>
+              <div class="line indent">Hai bên cam kết thực hiện đúng các điều khoản trong hợp đồng này và các quy định pháp luật lao động hiện hành.</div>
+            </div>
+            <table class="sign-table">
+              <tr><td><div class="sign-title">Người sử dụng lao động</div><div class="sign-note">(Ký, ghi rõ họ tên)</div></td><td><div class="sign-title">Người lao động</div><div class="sign-note">(Ký, ghi rõ họ tên)</div></td></tr>
+              <tr><td><div class="sign-space"></div></td><td><div class="sign-space"></div></td></tr>
+              <tr><td class="bold">${payload.hoTenNguoiKy || ''}</td><td class="bold">${payload.hoTenNhanSu || ''}</td></tr>
+            </table>
+          </div>
+        `;
+        if (payload.missingSalary) {
+          message.hidden = false;
+          message.className = 'message danger';
+          message.textContent = payload.missingSalaryMessage;
+        }
+      }
+
+      async function exportWord() {
+        if (!currentPayload) return;
+        if (currentPayload.missingSalary) {
+          alert(currentPayload.missingSalaryMessage);
+          return;
+        }
+        exportButton.disabled = true;
+        try {
+          const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=utf8-20260529');
+          if (!response.ok) throw new Error('Không thể tải template Word.');
+          const content = await response.arrayBuffer();
+          const sourceZip = new PizZip(content);
+          const zip = normalizeDocxZipEntryNames(sourceZip);
+          const Docxtemplater = window.docxtemplater?.Docxtemplater || window.docxtemplater;
+          const doc = new Docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+            nullGetter: () => ''
+          });
+          doc.render(buildTemplateData(currentPayload));
+          const blob = doc.getZip().generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          });
+          window.saveAs(blob, `HDLD_nhan_vien_lai_xe_${currentPayload.soHopDong || currentPayload.idHopDongLaoDong || 'new'}.docx`);
+        } catch (error) {
+          alert(`Xuất Word thất bại: ${error.message}`);
+        } finally {
+          exportButton.disabled = currentPayload?.missingSalary || false;
+        }
+      }
+
+      async function init() {
+        try {
+          if (!idHopDongLaoDong) throw new Error('Thiếu tham số ID_HopDongLaoDong trên URL.');
+          statusText.textContent = 'Đang tải HĐLĐ nhân viên lái xe từ AppSheet...';
+          const bundle = await fetchBundle();
+          const row = bundle.row || null;
+          if (!row) throw new Error(`Không tìm thấy HĐLĐ nhân viên lái xe với ID_HopDongLaoDong = ${idHopDongLaoDong}.`);
+          const payload = buildPayload(row, bundle.related || {});
+          render(payload);
+          statusText.textContent = payload.missingSalary
+            ? `Đã tải hợp đồng ${idHopDongLaoDong}, nhưng thiếu dữ liệu mức lương.`
+            : `Đã tải hợp đồng ${idHopDongLaoDong}.`;
+        } catch (error) {
+          statusText.textContent = 'Không tải được HĐLĐ nhân viên lái xe.';
+          message.hidden = false;
+          message.textContent = error.message || 'Không tải được HĐLĐ nhân viên lái xe.';
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>

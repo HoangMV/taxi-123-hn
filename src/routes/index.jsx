@@ -4,6 +4,7 @@ import config from '../config/config';
 import BanGiaoXePage from '../pages/BanGiaoXePage';
 import BanGiaoSoBHXHPage from '../pages/BanGiaoSoBHXHPage';
 import DashboardPage from '../pages/DashboardPage';
+import HdldNhanVienLaiXePage from '../pages/HdldNhanVienLaiXePage';
 import KyQuyLaiXePage from '../pages/KyQuyLaiXePage';
 import QuyetDinhThuHoiGPKDPage from '../pages/QuyetDinhThuHoiGPKDPage';
 import ThongKePhuHieuDonViPage from '../pages/ThongKePhuHieuDonViPage';
@@ -16,5 +17,6 @@ export const appRoutes = [
   { path: config.ROUTES.BAN_GIAO_XE_REACT, element: <BanGiaoXePage /> },
   { path: config.ROUTES.KY_QUY_LAI_XE_REACT, element: <KyQuyLaiXePage /> },
   { path: config.ROUTES.BAN_GIAO_SO_BHXH_REACT, element: <BanGiaoSoBHXHPage /> },
+  { path: config.ROUTES.HDLD_NHAN_VIEN_LAI_XE_REACT, element: <HdldNhanVienLaiXePage /> },
   { path: '*', element: <Navigate to={config.ROUTES.DASHBOARD} replace /> }
 ];

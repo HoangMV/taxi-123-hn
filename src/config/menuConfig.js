@@ -1,4 +1,4 @@
-import { BookMarked, Car, FileText, HandCoins, IdCard, LayoutDashboard } from 'lucide-react';
+import { BookMarked, Car, FileText, HandCoins, IdCard, LayoutDashboard, ScrollText } from 'lucide-react';
 import config from './config';
 
 export const menuSections = [
@@ -41,6 +41,12 @@ export const menuSections = [
         text: 'Bàn giao sổ BHXH',
         path: config.ROUTES.BAN_GIAO_SO_BHXH_REACT,
         icon: BookMarked
+      },
+      {
+        id: 'hdld-nhan-vien-lai-xe',
+        text: 'HĐLĐ nhân viên lái xe',
+        path: config.ROUTES.HDLD_NHAN_VIEN_LAI_XE_REACT,
+        icon: ScrollText
       }
     ]
   }

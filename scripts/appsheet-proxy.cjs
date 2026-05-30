@@ -433,6 +433,96 @@ async function handleBanGiaoSoBhxhBundle(request, response, url) {
   }
 }
 
+async function handleHdldNhanVienLaiXeBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idHopDongLaoDong = cleanValue(
+      url.searchParams.get('ID_HopDongLaoDong') ||
+      url.searchParams.get('idHopDongLaoDong') ||
+      body.ID_HopDongLaoDong ||
+      body.idHopDongLaoDong
+    );
+    const includeRelated = cleanValue(
+      url.searchParams.get('includeRelated') ||
+      body.includeRelated ||
+      '1'
+    ) !== '0';
+
+    if (!idHopDongLaoDong) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_HopDongLaoDong.' });
+      return;
+    }
+
+    const selectorValue = escapeSelectorValue(idHopDongLaoDong);
+    const rows = await findAppSheetRows({
+      tableName: 'NHANSU_HOPDONG_LAODONG',
+      selector: `Filter(NHANSU_HOPDONG_LAODONG, [ID_HopDongLaoDong] = "${selectorValue}")`
+    });
+    const row = rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Không tìm thấy HĐLĐ nhân viên lái xe với ID_HopDongLaoDong = ${idHopDongLaoDong}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, {
+        row,
+        related: {}
+      });
+      return;
+    }
+
+    const [nhanSuRows, donViRows, mucLuongRows] = await Promise.all([
+      findRowsByIds('NHANSU', 'ID_NhanSu', [row.Ref_NhanSu, row.Ref_NguoiKy]),
+      findAppSheetRows({
+        tableName: 'DONVI'
+      }),
+      findRowsByIds('DM_MUCLUONG_DONGBHXH', 'ID_MucLuong', [row.MucLuongCoBan])
+    ]);
+    const chucDanhRows = await findRowsByIds(
+      'DM_CHUCDANH',
+      'ID_ChucDanh',
+      [
+        row.Ref_BoPhan,
+        ...nhanSuRows.map((nhanSu) => nhanSu.Ref_ChucDanh)
+      ]
+    );
+    const boPhanRows = await findRowsByIds(
+      'DM_BOPHAN',
+      'ID_BoPhan',
+      [
+        row.Ref_BoPhan,
+        ...chucDanhRows.map((chucDanh) => chucDanh.Ref_BoPhan)
+      ]
+    );
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        NHANSU: nhanSuRows,
+        DONVI: donViRows,
+        DM_CHUCDANH: chucDanhRows,
+        DM_BOPHAN: boPhanRows,
+        DM_MUCLUONG_DONGBHXH: mucLuongRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu HĐLĐ nhân viên lái xe.'
+    });
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
 
@@ -469,6 +559,15 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleBanGiaoSoBhxhBundle(request, response, url);
+    return;
+  }
+
+  if (url.pathname === '/api/hdld-nhan-vien-lai-xe') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleHdldNhanVienLaiXeBundle(request, response, url);
     return;
   }
 

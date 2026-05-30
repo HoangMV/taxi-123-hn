@@ -288,4 +288,66 @@ Số dòng tải được: 14.
 | Related NHANSU_QUATRINH_CONGTACs | Trống | 0 |
 | Related NHANSU_HOPDONG_LAODONGs | Văn bản | 1 |
 
+## NHANSU_HOPDONG_LAODONG
+
+Số dòng tải được: 1281.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 100 |
+| ID_HopDongLaoDong | Văn bản | 100 |
+| Ref_NhanSu | Văn bản | 100 |
+| Ref_HDLDCu | Trống | 0 |
+| Ref_DonViLamViec | Văn bản | 100 |
+| SoHopDong | Trống | 0 |
+| LoaiHopDong | Văn bản | 100 |
+| NgayKy | Ngày | 100 |
+| Ref_NguoiKy | Trống | 0 |
+| NgayBatDau | Ngày | 100 |
+| NgayKetThuc | Ngày | 100 |
+| Ref_BoPhan | Văn bản | 100 |
+| MucLuongCoBan | Văn bản | 100 |
+| TrangThai | Trống | 0 |
+| TrangThaiXuLy | Văn bản | 100 |
+| FileHopDong | Trống | 0 |
+| NgayTao | Trống | 0 |
+| NguoiTao | Trống | 0 |
+| NgayCapNhat | Trống | 0 |
+| NguoiCapNhat | Trống | 0 |
+| GhiChu | Trống | 0 |
+| CanhBaoHopDong | Văn bản | 100 |
+| Related NHANSU_CHAMDUT_HOPDONGs | Trống | 0 |
+| Related NHANSU_THANHLY_HOPDONGs | Trống | 0 |
+
+## DM_MUCLUONG_DONGBHXH
+
+Số dòng tải được: 2.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 2 |
+| ID_MucLuong | Văn bản | 2 |
+| MucLuong | Số nguyên | 2 |
+| NgayApDung | Trống | 0 |
+| NgayKetThuc | Trống | 0 |
+| GhiChu | Trống | 0 |
+| Related NHANSU_BHXHs | Văn bản | 2 |
+| Related NHANSU_HOPDONG_LAODONGs | Văn bản | 1 |
+
+## DM_BOPHAN
+
+Số dòng tải được: 7.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 7 |
+| ID_BoPhan | Văn bản | 7 |
+| TenBoPhan | Văn bản | 7 |
+| TrangThai | Văn bản | 7 |
+| GhiChu | Trống | 0 |
+| Related NHANSUs | Văn bản | 2 |
+| Related NHANSU_QUATRINH_CONGTACs | Trống | 0 |
+| Related DM_CHUCDANHs | Văn bản | 2 |
+| Related DM_MUC_KYQUYs | Văn bản | 1 |
+
 Ghi chú: Kiểu dữ liệu ở đây được suy luận từ dữ liệu API trả về, không phải cấu hình schema gốc trong AppSheet Editor.
