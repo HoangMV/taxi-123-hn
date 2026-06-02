@@ -56,6 +56,46 @@ function getDonViRefId(row) {
   return cleanValue(row?.Ref_DonViQuanLyHienTai) || cleanValue(row?.Ref_DonVi);
 }
 
+function parseDateValue(value) {
+  if (!value) return null;
+  const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function toDateKey(value) {
+  const date = parseDateValue(value);
+  if (!date) return '';
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function getDateTime(value) {
+  const date = parseDateValue(value);
+  return date ? date.getTime() : 0;
+}
+
+function pickThanhLyHopDong(rows, ngayLap) {
+  const candidates = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  if (candidates.length === 0) return null;
+
+  const ngayLapKey = toDateKey(ngayLap);
+  if (ngayLapKey) {
+    const exact = candidates.find((row) => toDateKey(row?.NgayThanhLy) === ngayLapKey);
+    if (exact) return exact;
+  }
+
+  const lapTime = getDateTime(ngayLap);
+  const notAfter = candidates
+    .filter((row) => {
+      const rowTime = getDateTime(row?.NgayThanhLy);
+      return rowTime > 0 && (!lapTime || rowTime <= lapTime);
+    })
+    .sort((a, b) => getDateTime(b?.NgayThanhLy) - getDateTime(a?.NgayThanhLy));
+
+  if (notAfter[0]) return notAfter[0];
+
+  return [...candidates].sort((a, b) => getDateTime(b?.NgayThanhLy) - getDateTime(a?.NgayThanhLy))[0] || candidates[0];
+}
+
 function readJson(request) {
   return new Promise((resolve, reject) => {
     let raw = '';
@@ -162,6 +202,12 @@ function buildRefSelector(tableName, keyName, ids) {
 
   const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
   return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
+}
+
+function buildEqualsSelector(tableName, keyName, value) {
+  const cleanId = cleanValue(value);
+  if (!cleanId) return '';
+  return `Filter(${tableName}, [${keyName}] = "${escapeSelectorValue(cleanId)}")`;
 }
 
 async function findRowsByIds(tableName, keyName, ids) {
@@ -523,6 +569,92 @@ async function handleHdldNhanVienLaiXeBundle(request, response, url) {
   }
 }
 
+async function handleThanhLyKyQuyLaiXeBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idThanhLy = cleanValue(
+      url.searchParams.get('ID_ThanhLy') ||
+      url.searchParams.get('idThanhLy') ||
+      body.ID_ThanhLy ||
+      body.idThanhLy
+    );
+    const includeRelated = cleanValue(
+      url.searchParams.get('includeRelated') ||
+      body.includeRelated ||
+      '1'
+    ) !== '0';
+
+    if (!idThanhLy) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_ThanhLy.' });
+      return;
+    }
+
+    const rows = await findAppSheetRows({
+      tableName: 'NHANSU_KYQUY_THANHLY',
+      selector: buildEqualsSelector('NHANSU_KYQUY_THANHLY', 'ID_ThanhLy', idThanhLy)
+    });
+    const row = rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Không tìm thấy biên bản thanh lý ký quỹ với ID_ThanhLy = ${idThanhLy}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, {
+        row,
+        related: {}
+      });
+      return;
+    }
+
+    const kyQuyRows = await findRowsByIds('NHANSU_KYQUY', 'ID_KyQuy', [row.Ref_KyQuy]);
+    const kyQuy = kyQuyRows[0] || null;
+    const nhanSuId = cleanValue(kyQuy?.Ref_NhanSu);
+    const donViId = getDonViRefId(kyQuy);
+    const [nhanSuRows, donViRows, thanhLyHopDongRows] = await Promise.all([
+      findRowsByIds('NHANSU', 'ID_NhanSu', [nhanSuId]),
+      findRowsByIds('DONVI', 'ID_DonVi', [donViId]),
+      nhanSuId
+        ? findAppSheetRows({
+            tableName: 'NHANSU_THANHLY_HOPDONG',
+            selector: buildEqualsSelector('NHANSU_THANHLY_HOPDONG', 'Ref_NhanSu', nhanSuId)
+          })
+        : Promise.resolve([])
+    ]);
+    const thanhLyHopDong = pickThanhLyHopDong(thanhLyHopDongRows, row.NgayLap);
+    const hopDongLaoDongRows = await findRowsByIds(
+      'NHANSU_HOPDONG_LAODONG',
+      'ID_HopDongLaoDong',
+      [thanhLyHopDong?.Ref_HopDongLD]
+    );
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        NHANSU_KYQUY: kyQuyRows,
+        NHANSU: nhanSuRows,
+        DONVI: donViRows,
+        NHANSU_THANHLY_HOPDONG: thanhLyHopDongRows,
+        NHANSU_HOPDONG_LAODONG: hopDongLaoDongRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu thanh lý ký quỹ lái xe.'
+    });
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
 
@@ -568,6 +700,15 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleHdldNhanVienLaiXeBundle(request, response, url);
+    return;
+  }
+
+  if (url.pathname === '/api/thanh-ly-ky-quy-lai-xe') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleThanhLyKyQuyLaiXeBundle(request, response, url);
     return;
   }
 

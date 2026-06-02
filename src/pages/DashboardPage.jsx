@@ -35,6 +35,13 @@ const actions = [
     tone: 'bg-sky-50 text-sky-700'
   },
   {
+    title: 'Thanh lý ký quỹ',
+    description: 'Xem trước, in và xuất biên bản thanh lý hợp đồng đặt cọc lái xe từ AppSheet.',
+    path: config.ROUTES.THANH_LY_KY_QUY_LAI_XE_REACT,
+    icon: FileText,
+    tone: 'bg-emerald-50 text-emerald-700'
+  },
+  {
     title: 'Bàn giao sổ BHXH',
     description: 'Xem trước, in và xuất biên bản bàn giao sổ bảo hiểm xã hội.',
     path: config.ROUTES.BAN_GIAO_SO_BHXH_REACT,

@@ -37,6 +37,12 @@ export const menuSections = [
         icon: HandCoins
       },
       {
+        id: 'thanh-ly-ky-quy-lai-xe',
+        text: 'Thanh lý ký quỹ',
+        path: config.ROUTES.THANH_LY_KY_QUY_LAI_XE_REACT,
+        icon: FileText
+      },
+      {
         id: 'ban-giao-so-bhxh',
         text: 'Bàn giao sổ BHXH',
         path: config.ROUTES.BAN_GIAO_SO_BHXH_REACT,

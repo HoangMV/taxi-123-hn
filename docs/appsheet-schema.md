@@ -52,7 +52,7 @@ Số dòng tải được: 1282.
 | Scan CCCD | Trống | 0 |
 | HoTen | Văn bản | 100 |
 | MaApp | Văn bản | 100 |
-| NgaySinh | Số nguyên | 100 |
+| NgaySinh | Văn bản hoặc Số nguyên | 100 |
 | GioiTinh | Văn bản | 100 |
 | CCCD | Số nguyên | 100 |
 | NgayCapCCCD | Ngày | 100 |
@@ -89,8 +89,8 @@ Số dòng tải được: 1282.
 | GhiChu | Trống | 0 |
 | NgayTao | Trống | 0 |
 | NguoiTao | Trống | 0 |
-| NgayCapNhat | Trống | 0 |
-| NguoiCapNhat | Trống | 0 |
+| NgayCapNhat | Văn bản | 6 |
+| NguoiCapNhat | Văn bản | 6 |
 | Related NHANSU_BHXHs | Văn bản | 100 |
 | Related NHANSU_NGUOITHANs | Trống | 0 |
 | Related NHANSU_HOSO_CANHANs | Trống | 0 |
@@ -107,7 +107,7 @@ Số dòng tải được: 1282.
 | Related LAIXE_KHENTHUONG_KYLUATs | Văn bản | 1 |
 | Related LAIXE_VIPHAM_ATGTs | Trống | 0 |
 | Related LAIXE_PHANCONG_XEs | Văn bản | 100 |
-| Related NHANSU_CHAMDUT_HOPDONGs | Trống | 0 |
+| Related NHANSU_CHAMDUT_HOPDONGs | Văn bản | 8 |
 | Related LAIXE_GPLXs | Văn bản | 100 |
 | Related XE_BANGIAOs | Văn bản | 2 |
 | SoGPLX | Số nguyên | 100 |
@@ -120,9 +120,9 @@ Số dòng tải được: 1282.
 | Related PHAN_ANH_KHIEU_NAIs | Văn bản | 1 |
 | Related PHAN_ANH_KHIEU_NAIs By Ref_CanBoXuLy | Văn bản | 1 |
 | Address | Văn bản | 100 |
-| Related NHANSU_THANHLY_HOPDONGs | Trống | 0 |
-| Related NHANSU_KYQUYs | Văn bản | 1 |
-| Related NHANSU_KYQUY_GIAODICHs By Ref_NhanSu | Văn bản | 1 |
+| Related NHANSU_THANHLY_HOPDONGs | Văn bản | 5 |
+| Related NHANSU_KYQUYs | Văn bản hoặc Số nguyên | 3 |
+| Related NHANSU_KYQUY_GIAODICHs By Ref_NhanSu | Văn bản | 3 |
 
 ## DONVI
 
@@ -150,7 +150,7 @@ Số dòng tải được: 2.
 | NgayCapNhat | Văn bản | 2 |
 | NguoiCapNhat | Văn bản | 2 |
 | GhiChu | Trống | 0 |
-| Related XE_THONGBAO_NGUNGs | Trống | 0 |
+| Related XE_THONGBAO_NGUNGs | Văn bản | 1 |
 | Related DONVI_GPKDs | Văn bản | 2 |
 | Related DONVI_HOSO_PHAPLYs | Văn bản | 2 |
 | Related XEs By Ref_DonViChuQuan | Văn bản | 2 |
@@ -174,65 +174,67 @@ Số dòng tải được: 2.
 | Related HD_HOPTAC_KINHDOANHs | Văn bản | 1 |
 | Related LAIXE_PHANCONG_XEs By Ref_DonViChuQuan | Văn bản | 2 |
 | Related LAIXE_PHANCONG_XEs By Ref_DonViLamViecHienTai | Văn bản | 2 |
-| Related HS_DE_NGHI_PHUHIEUs | Văn bản | 1 |
-| Related CT_HS_DE_NGHI_PHUHIEUs By Ref_DonViDuocCap | Văn bản | 1 |
-| Related CT_HS_DE_NGHI_PHUHIEUs By Ref_DonViQuanLyTaiThoiDiem | Văn bản | 1 |
+| Related HS_DE_NGHI_PHUHIEUs | Văn bản | 2 |
+| Related CT_HS_DE_NGHI_PHUHIEUs By Ref_DonViDuocCap | Văn bản | 2 |
+| Related CT_HS_DE_NGHI_PHUHIEUs By Ref_DonViQuanLyTaiThoiDiem | Văn bản | 2 |
 | Related KIEMTRA_XE_TAXIs | Văn bản | 2 |
 | Related NHANSU_KYQUYs | Văn bản | 1 |
 
 ## NHANSU_KYQUY
 
-Số dòng tải được: 1.
+Số dòng tải được: 3.
 
 | Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
 | --- | --- | ---: |
-| _RowNumber | Số nguyên | 1 |
-| ID_KyQuy | Văn bản | 1 |
-| MaKyQuy | Văn bản | 1 |
-| NgayKyHopDong | Ngày | 1 |
-| Ref_NhanSu | Văn bản | 1 |
-| Ref_DonViQuanLyHienTai | Văn bản | 1 |
-| SoTienPhaiNop | Số nguyên | 1 |
-| SoTienDaNop | Số nguyên | 1 |
-| SoTienConLai | Số nguyên | 1 |
-| TrangThai | Văn bản | 1 |
-| NgayThanhLy | Trống | 0 |
+| _RowNumber | Số nguyên | 3 |
+| ID_KyQuy | Văn bản hoặc Số nguyên | 3 |
+| MaKyQuy | Văn bản | 3 |
+| NgayKyHopDong | Ngày | 3 |
+| Ref_NhanSu | Văn bản | 3 |
+| Ref_DonViQuanLyHienTai | Văn bản | 3 |
+| SoTienPhaiNop | Số nguyên | 3 |
+| SoTienDaNop | Số nguyên | 3 |
+| SoTienConLai | Số nguyên | 3 |
+| SoTienKhauTru | Số nguyên | 1 |
+| TrangThai | Văn bản | 3 |
+| NgayThanhLy | Văn bản | 2 |
 | Ref_ThanhLy | Trống | 0 |
-| TrangThaiThanhLy | Trống | 0 |
-| NgayTao | Văn bản | 1 |
-| NguoiTao | Văn bản | 1 |
-| NgayCapNhat | Văn bản | 1 |
-| NguoiCapNhat | Văn bản | 1 |
+| TrangThaiThanhLy | Văn bản | 2 |
+| NgayTao | Văn bản | 3 |
+| NguoiTao | Văn bản | 3 |
+| NgayCapNhat | Văn bản | 3 |
+| NguoiCapNhat | Văn bản | 3 |
 | GhiChu | Trống | 0 |
-| Related NHANSU_KYQUY_GIAODICHs | Văn bản | 1 |
+| Related NHANSU_KYQUY_GIAODICHs | Văn bản | 3 |
 | Related NHANSU_KYQUY_MUCs | Trống | 0 |
-| SoCCCD | Số nguyên | 1 |
-| Related NHANSU_KYQUY_THANHLYs | Trống | 0 |
+| SoCCCD | Số nguyên | 3 |
+| Related NHANSU_KYQUY_THANHLYs | Văn bản | 1 |
+| SoTienHoanTra | Số nguyên | 3 |
 
 ## NHANSU_BHXH_BANGIAO_SO
 
-Số dòng tải được: 2.
+Số dòng tải được: 4.
 
 | Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
 | --- | --- | ---: |
-| _RowNumber | Số nguyên | 2 |
-| ID_BanGiaoSo | Văn bản | 2 |
-| Ref_BHXH | Văn bản | 2 |
-| LoaiGiaoDich | Văn bản | 2 |
-| NgayGiaoNhan | Ngày | 2 |
-| NguoiGiao | Văn bản | 2 |
-| NguoiNhan | Văn bản | 2 |
-| DonViGiao | Văn bản | 2 |
-| SoBiaSo | Số nguyên | 2 |
-| SoTrangSoToRoi | Số nguyên | 2 |
-| HienTrangSo | Văn bản | 2 |
-| FileBienBan | Văn bản | 2 |
+| _RowNumber | Số nguyên | 4 |
+| ID_BanGiaoSo | Văn bản hoặc Số nguyên | 4 |
+| Ref_BHXH | Văn bản | 4 |
+| LoaiGiaoDich | Văn bản | 4 |
+| NgayGiaoNhan | Ngày | 4 |
+| NguoiGiao | Văn bản | 4 |
+| NguoiNhan | Văn bản | 4 |
+| DonViGiao | Văn bản | 4 |
+| SoBiaSo | Số nguyên | 3 |
+| SoTrangSoToRoi | Số nguyên | 3 |
+| HienTrangSo | Văn bản | 4 |
+| FileBienBan | Văn bản | 4 |
 | GhiChu | Trống | 0 |
-| TrangThai | Văn bản | 2 |
-| NgayTao | Văn bản | 2 |
-| NguoiTao | Văn bản | 2 |
-| NgayCapNhat | Văn bản | 2 |
-| NguoiCapNhat | Văn bản | 2 |
+| TrangThai | Văn bản | 4 |
+| NgayTao | Văn bản | 4 |
+| NguoiTao | Văn bản | 4 |
+| NgayCapNhat | Văn bản | 4 |
+| NguoiCapNhat | Văn bản | 4 |
 
 ## NHANSU_BHXH
 
@@ -252,23 +254,23 @@ Số dòng tải được: 1280.
 | NgayBatDauThamGia | Ngày | 80 |
 | NgayKetThucThamGia | Trống | 0 |
 | MucLuongDongBHXH | Văn bản | 86 |
-| TyLeDongNguoiLaoDong | Văn bản | 100 |
-| TyLeDongDonVi | Văn bản | 100 |
-| TienDongNguoiLaoDong | Trống | 0 |
-| TienDongDonVi | Trống | 0 |
-| TongTienDong | Trống | 0 |
+| TyLeDongNguoiLaoDong | Số thập phân hoặc Văn bản | 100 |
+| TyLeDongDonVi | Số thập phân hoặc Văn bản | 100 |
+| TienDongNguoiLaoDong | Số nguyên | 1 |
+| TienDongDonVi | Số nguyên | 1 |
+| TongTienDong | Số nguyên | 1 |
 | TrangThaiBHXH | Văn bản | 100 |
 | NgayChotSo | Trống | 0 |
 | NoiChotSo | Trống | 0 |
 | FileBHXH | Trống | 0 |
-| TinhTrangSoBHXH | Văn bản | 59 |
-| NoiLuuGiuSoBHXH | Trống | 0 |
+| TinhTrangSoBHXH | Văn bản | 100 |
+| NoiLuuGiuSoBHXH | Văn bản | 59 |
 | NgayTraSo | Ngày | 2 |
 | GhiChu | Trống | 0 |
 | NgayTao | Trống | 0 |
 | NguoiTao | Trống | 0 |
-| NgayCapNhat | Trống | 0 |
-| NguoiCapNhat | Trống | 0 |
+| NgayCapNhat | Văn bản | 1 |
+| NguoiCapNhat | Văn bản | 1 |
 | Related NHANSU_BHXH_BANGIAO_SOs | Văn bản | 1 |
 | Display | Văn bản | 100 |
 
@@ -307,7 +309,7 @@ Số dòng tải được: 1281.
 | NgayKetThuc | Ngày | 100 |
 | Ref_BoPhan | Văn bản | 100 |
 | MucLuongCoBan | Văn bản | 100 |
-| TrangThai | Trống | 0 |
+| TrangThai | Văn bản | 6 |
 | TrangThaiXuLy | Văn bản | 100 |
 | FileHopDong | Trống | 0 |
 | NgayTao | Trống | 0 |
@@ -316,8 +318,8 @@ Số dòng tải được: 1281.
 | NguoiCapNhat | Trống | 0 |
 | GhiChu | Trống | 0 |
 | CanhBaoHopDong | Văn bản | 100 |
-| Related NHANSU_CHAMDUT_HOPDONGs | Trống | 0 |
-| Related NHANSU_THANHLY_HOPDONGs | Trống | 0 |
+| Related NHANSU_CHAMDUT_HOPDONGs | Văn bản | 8 |
+| Related NHANSU_THANHLY_HOPDONGs | Văn bản | 5 |
 
 ## DM_MUCLUONG_DONGBHXH
 
@@ -349,5 +351,69 @@ Số dòng tải được: 7.
 | Related NHANSU_QUATRINH_CONGTACs | Trống | 0 |
 | Related DM_CHUCDANHs | Văn bản | 2 |
 | Related DM_MUC_KYQUYs | Văn bản | 1 |
+
+## NHANSU_KYQUY_THANHLY
+
+Số dòng tải được: 1.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 1 |
+| ID_ThanhLy | Văn bản | 1 |
+| SoBienBan | Văn bản | 1 |
+| NgayLap | Ngày | 1 |
+| Ref_KyQuy | Văn bản | 1 |
+| TenNhanSu | Văn bản | 1 |
+| DiaChiNhanSu | Văn bản | 1 |
+| SoCCCD | Số nguyên | 1 |
+| NgayCapCCCD | Ngày | 1 |
+| NoiCapCCCD | Văn bản | 1 |
+| TenDonVi | Văn bản | 1 |
+| DiaChiDonVi | Văn bản | 1 |
+| MaSoThueDonVi | Văn bản | 1 |
+| DaiDienDonVi | Văn bản | 1 |
+| ChucVuDaiDien | Văn bản | 1 |
+| SoHopDongDatCoc | Văn bản | 1 |
+| NgayKyHopDong | Văn bản | 1 |
+| LyDoThanhLy | Văn bản | 1 |
+| SoTienKyQuyConLai | Số nguyên | 1 |
+| SoTienKhauTru | Trống | 0 |
+| SoTienHoanTra | Số nguyên | 1 |
+| HinhThucThanhToan | Văn bản | 1 |
+| TrangThaiThanhLy | Văn bản | 1 |
+| FileBienBan | Trống | 0 |
+| GhiChu | Trống | 0 |
+| NgayTao | Văn bản | 1 |
+| NguoiTao | Văn bản | 1 |
+| NgayCapNhat | Trống | 0 |
+| NguoiCapNhat | Trống | 0 |
+| Related NHANSU_KYQUYs | Trống | 0 |
+
+## NHANSU_THANHLY_HOPDONG
+
+Số dòng tải được: 6.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 6 |
+| ID_ThanhLyHD | Văn bản | 6 |
+| SoBienBan | Văn bản | 6 |
+| Ref_ChamDutHD | Văn bản | 6 |
+| Ref_HopDongLD | Văn bản | 6 |
+| Ref_NhanSu | Văn bản | 6 |
+| NgayThanhLy | Ngày | 6 |
+| NgayChamDut | Ngày | 6 |
+| LyDoThanhLy | Văn bản | 6 |
+| DaBanGiaoTaiSan | Văn bản | 6 |
+| DaThanhToanCongNo | Văn bản | 6 |
+| DaHoanTatKyQuy | Văn bản | 6 |
+| DaKetThucPhanCongXe | Văn bản | 6 |
+| FileBienBan | Văn bản | 3 |
+| TrangThaiThanhLy | Văn bản | 6 |
+| GhiChu | Trống | 0 |
+| NgayTao | Văn bản | 6 |
+| NguoiTao | Văn bản | 6 |
+| NgayCapNhat | Văn bản | 6 |
+| NguoiCapNhat | Văn bản | 6 |
 
 Ghi chú: Kiểu dữ liệu ở đây được suy luận từ dữ liệu API trả về, không phải cấu hình schema gốc trong AppSheet Editor.
