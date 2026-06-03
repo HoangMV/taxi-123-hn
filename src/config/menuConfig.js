@@ -19,6 +19,12 @@ export const menuSections = [
         icon: IdCard
       },
       {
+        id: 'de-nghi-cap-phu-hieu-xe',
+        text: 'Đơn cấp phù hiệu',
+        path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT,
+        icon: FileText
+      },
+      {
         id: 'quyet-dinh-thu-hoi-gpkd',
         text: 'Thu hồi GPKD',
         path: config.ROUTES.QUYET_DINH_THU_HOI_GPKD_REACT,

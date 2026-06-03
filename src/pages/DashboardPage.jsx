@@ -1,8 +1,8 @@
 import React from 'react';
-import { ArrowRight, BookMarked, FileText, IdCard, Car, HandCoins, ScrollText } from 'lucide-react';
+import { ArrowRight, BookMarked, Car, FileText, HandCoins, IdCard, ScrollText } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import config from '../config/config';
 
 const actions = [
@@ -12,6 +12,13 @@ const actions = [
     path: config.ROUTES.THONG_KE_PHU_HIEU_REACT,
     icon: IdCard,
     tone: 'bg-red-50 text-red-700'
+  },
+  {
+    title: 'Đơn cấp phù hiệu',
+    description: 'Xem trước, in và xuất đơn đề nghị cấp phù hiệu xe từ hồ sơ AppSheet.',
+    path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT,
+    icon: FileText,
+    tone: 'bg-slate-50 text-slate-700'
   },
   {
     title: 'Thu hồi GPKD',
@@ -77,7 +84,7 @@ const DashboardPage = () => {
                 </div>
                 <div className="space-y-1.5">
                   <CardTitle className="text-lg font-semibold text-slate-900">{item.title}</CardTitle>
-                  <CardDescription className="text-sm text-slate-500 leading-relaxed">{item.description}</CardDescription>
+                  <CardDescription className="text-sm leading-relaxed text-slate-500">{item.description}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="pt-2">

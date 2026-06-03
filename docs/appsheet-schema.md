@@ -174,7 +174,7 @@ Số dòng tải được: 2.
 | Related HD_HOPTAC_KINHDOANHs | Văn bản | 1 |
 | Related LAIXE_PHANCONG_XEs By Ref_DonViChuQuan | Văn bản | 2 |
 | Related LAIXE_PHANCONG_XEs By Ref_DonViLamViecHienTai | Văn bản | 2 |
-| Related HS_DE_NGHI_PHUHIEUs | Văn bản | 2 |
+| Related HS_DE_NGHI_PHUHIEUs | Văn bản | 1 |
 | Related CT_HS_DE_NGHI_PHUHIEUs By Ref_DonViDuocCap | Văn bản | 2 |
 | Related CT_HS_DE_NGHI_PHUHIEUs By Ref_DonViQuanLyTaiThoiDiem | Văn bản | 2 |
 | Related KIEMTRA_XE_TAXIs | Văn bản | 2 |
@@ -415,5 +415,176 @@ Số dòng tải được: 6.
 | NguoiTao | Văn bản | 6 |
 | NgayCapNhat | Văn bản | 6 |
 | NguoiCapNhat | Văn bản | 6 |
+
+## HS_DE_NGHI_PHUHIEU
+
+Số dòng tải được: 1.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 1 |
+| ID_HoSoPhuHieu | Văn bản | 1 |
+| SoHoSo | Văn bản | 1 |
+| NgayLap | Ngày | 1 |
+| Ref_CoQuanCap | Số nguyên | 1 |
+| Ref_DonViDeNghi | Văn bản | 1 |
+| LoaiPhuHieu | Văn bản | 1 |
+| HinhThucCap | Văn bản | 1 |
+| NgayCapMoi | Ngày | 1 |
+| NgayHetHanMoi | Ngày | 1 |
+| PhuongThucTinhTien | Văn bản | 1 |
+| TrangThaiHoSo | Văn bản | 1 |
+| GhiChu | Trống | 0 |
+| NgayTao | Văn bản | 1 |
+| NguoiTao | Văn bản | 1 |
+| NgayCapNhat | Văn bản | 1 |
+| NguoiCapNhat | Văn bản | 1 |
+| Related CT_HS_DE_NGHI_PHUHIEUs | Văn bản | 1 |
+
+## CT_HS_DE_NGHI_PHUHIEU
+
+Số dòng tải được: 101.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 100 |
+| ID_ChiTietHoSo | Văn bản hoặc Số nguyên | 100 |
+| Ref_HoSoPhuHieu | Văn bản | 100 |
+| Ref_PhuHieuCu | Văn bản hoặc Số nguyên | 92 |
+| Ref_PhuHieuMoi | Trống | 0 |
+| Ref_Xe | Văn bản | 100 |
+| LoaiPhuHieu | Văn bản | 93 |
+| SoPhuHieuCu | Văn bản hoặc Số nguyên | 2 |
+| NgayHetHanCu | Ngày | 85 |
+| NgayCapMoi | Ngày | 100 |
+| NgayHetHanMoi | Ngày | 100 |
+| CoQuanCap | Văn bản hoặc Số nguyên | 95 |
+| Ref_DonViDuocCap | Văn bản | 100 |
+| Ref_DonViQuanLyTaiThoiDiem | Văn bản | 100 |
+| TrangThaiXuLy | Văn bản | 100 |
+| LyDoCap | Văn bản | 100 |
+| GhiChu | Văn bản | 85 |
+
+## XE
+
+Số dòng tải được: 1250.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 100 |
+| ID_Xe | Văn bản | 100 |
+| MaDam | Số nguyên | 100 |
+| BienSo | Văn bản | 100 |
+| TenDangKyXe | Văn bản | 100 |
+| SoKhung | Văn bản hoặc Số nguyên | 100 |
+| SoMay | Văn bản hoặc Số nguyên | 100 |
+| NhanHieu | Văn bản | 100 |
+| LoaiXe | Văn bản | 100 |
+| SoCho | Số nguyên | 100 |
+| NuocSX | Văn bản | 100 |
+| TaiTrong | Trống | 0 |
+| NamSanXuat | Số nguyên | 100 |
+| MauSon | Văn bản | 56 |
+| HinhThucSoHuu | Văn bản | 100 |
+| SoGCNDangKyXe | Trống | 0 |
+| NgayDangKyXeLanDau | Trống | 0 |
+| NgayDuaVaoHoatDong | Trống | 0 |
+| Ref_DonViChuQuan | Văn bản | 100 |
+| Ref_DonViQuanLyHienTai | Văn bản | 100 |
+| NgayNhanQuanLyHienTai | Trống | 0 |
+| PhuongThucNopDoanhThu | Văn bản | 100 |
+| DonViKeKhaiThue | Văn bản | 100 |
+| CQ_QuanLyThue | Văn bản | 100 |
+| Ref_DoiXe | Trống | 0 |
+| TrangThaiXe | Văn bản | 100 |
+| NgayNgungHoatDong | Trống | 0 |
+| LyDoNgung | Trống | 0 |
+| GhiChu | Trống | 0 |
+| NgayTao | Trống | 0 |
+| NguoiTao | Trống | 0 |
+| NgayCapNhat | Văn bản | 1 |
+| NguoiCapNhat | Văn bản | 1 |
+| IsTheChap | Văn bản | 100 |
+| Ref_TheChapHienTai | Văn bản | 50 |
+| TrangThaiTaiSan | Văn bản | 100 |
+| TextDkyxe | Trống | 0 |
+| Related XE_THONGBAO_NGUNG_CHITIETs | Trống | 0 |
+| Related XE_BAOHIEMs | Văn bản | 100 |
+| Related XE_DANGKIEMs | Văn bản | 100 |
+| Related XE_BAODUONG_SUACHUAs | Văn bản | 2 |
+| Related XE_PHUHIEUs | Văn bản | 100 |
+| Related XE_HOSO_PHAPLYs | Trống | 0 |
+| Related XE_THECHAP_NGANHANGs | Văn bản | 4 |
+| Related XE_SO_KM_THANGs | Văn bản | 2 |
+| Related XE_TAXIMETs | Văn bản | 100 |
+| Related XE_QUANHE_SOHUUs | Trống | 0 |
+| Related XE_DIEUCHUYENs | Trống | 0 |
+| Display | Văn bản | 100 |
+| Related XE_BANGIAOs | Văn bản | 2 |
+| Related NHANSU_QUATRINH_CONGTACs | Trống | 0 |
+| Related LAIXE_TAINANs | Trống | 0 |
+| Related LAIXE_VIPHAM_ATGTs | Trống | 0 |
+| Related HD_HOPTAC_KINHDOANH_CHITIETs | Trống | 0 |
+| Related LAIXE_PHANCONG_XEs | Văn bản | 98 |
+| Related CT_HS_DE_NGHI_BAOHIEMs | Trống | 0 |
+| Related CT_HS_DE_NGHI_PHUHIEUs | Văn bản hoặc Số nguyên | 15 |
+| Related CT_HS_KIEMDINH_TAXIMETs | Văn bản | 9 |
+| Related KIEMTRA_XE_TAXIs | Văn bản | 100 |
+| Related PHAN_ANH_KHIEU_NAIs | Văn bản | 1 |
+| SoLaiXeDangHoatDong | Số nguyên | 100 |
+| Related NHANSUs | Văn bản | 98 |
+| Related XE_THECHAP_HOSO_CHITIETs | Văn bản | 2 |
+
+## XE_PHUHIEU
+
+Số dòng tải được: 1250.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 100 |
+| ID_PhuHieu | Văn bản | 100 |
+| Ref_Xe | Văn bản | 100 |
+| LoaiPhuHieu | Văn bản | 100 |
+| SoPhuHieu | Văn bản hoặc Số nguyên | 100 |
+| Ref_PhuHieuCu | Trống | 0 |
+| Ref_ThongBaoNgung | Trống | 0 |
+| NgayHetHieuLucThucTe | Trống | 0 |
+| LyDoHetHieuLuc | Trống | 0 |
+| NgayCap | Trống | 0 |
+| NgayHetHan | Ngày | 100 |
+| TrangThai | Văn bản | 100 |
+| Ref_CoQuanCap | Văn bản | 100 |
+| Ref_DonViDuocCap | Văn bản | 100 |
+| Ref_DonViQuanLyTaiThoiDiemCap | Văn bản | 100 |
+| LyDoCap | Trống | 0 |
+| FileScan | Trống | 0 |
+| NgayTao | Trống | 0 |
+| NguoiTao | Trống | 0 |
+| NgayCapNhat | Trống | 0 |
+| NguoiCapNhat | Trống | 0 |
+| GhiChu | Trống | 0 |
+| CanhBaoPhuHieu | Văn bản | 100 |
+| Related XE_THONGBAO_NGUNG_CHITIETs | Văn bản | 1 |
+| Related CT_HS_DE_NGHI_PHUHIEUs | Trống | 0 |
+| DaDuaVaoHoSo | Văn bản | 100 |
+
+## DM_COQUAN_CAP
+
+Số dòng tải được: 4.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 4 |
+| ID_CoQuanCap | Văn bản hoặc Số nguyên | 4 |
+| TenCoQuanCap | Văn bản | 4 |
+| TrangThai | Văn bản | 3 |
+| GhiChu | Trống | 0 |
+| Related XE_THONGBAO_NGUNGs | Trống | 0 |
+| Related DONVI_GPKDs | Văn bản | 1 |
+| Related DONVI_HOSO_PHAPLYs | Văn bản | 2 |
+| Related XE_PHUHIEUs | Văn bản | 2 |
+| Related XE_HOSO_PHAPLYs | Trống | 0 |
+| Related CT_HS_DE_NGHI_PHUHIEUs | Văn bản | 2 |
+| Related HS_DE_NGHI_PHUHIEUs | Văn bản | 1 |
 
 Ghi chú: Kiểu dữ liệu ở đây được suy luận từ dữ liệu API trả về, không phải cấu hình schema gốc trong AppSheet Editor.
