@@ -311,11 +311,7 @@ const DeNghiCapPhuHieuXePage = () => {
       </Card>
 
       <Card className="dncph-actions border-slate-200 bg-white">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base text-slate-900">Thông số nhập tay</CardTitle>
-          <CardDescription>Nhập số lượng phù hiệu nộp lại để dùng chung cho preview, bản HTML và file Word xuất ra.</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-3">
           <div className="max-w-xs">
             <label htmlFor="so-luong-nop-lai" className="mb-2 block text-sm font-medium text-slate-700">
               Số lượng phù hiệu nộp lại
@@ -354,18 +350,10 @@ const DeNghiCapPhuHieuXePage = () => {
 
       {payload && (
         <Card className="border-slate-200 bg-slate-100/80">
-          <CardHeader>
-            <CardTitle>Xem trước nội dung đơn</CardTitle>
-            <CardDescription>
-              `Đề nghị được cấp` luôn bằng {payload.soLuongDeNghiCap} xe trong bảng bên dưới.
-              {loadingRelated ? ' Đang bổ sung dữ liệu liên kết từ AppSheet.' : ''}
-            </CardDescription>
-          </CardHeader>
           <CardContent>
             <article className="dncph-page">
               <div className="dncph-header">
                 <div className="dncph-center">
-                  <div className="dncph-bold">TÊN ĐƠN VỊ KDVT:</div>
                   <div className="dncph-org-name">{renderValue(payload.tenDonVi, '........................................')}</div>
                 </div>
                 <div className="dncph-center">
