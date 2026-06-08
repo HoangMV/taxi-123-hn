@@ -9,6 +9,7 @@ import HdldNhanVienLaiXePage from '../pages/HdldNhanVienLaiXePage';
 import KyQuyLaiXePage from '../pages/KyQuyLaiXePage';
 import QuyetDinhThuHoiGPKDPage from '../pages/QuyetDinhThuHoiGPKDPage';
 import ThanhLyKyQuyLaiXePage from '../pages/ThanhLyKyQuyLaiXePage';
+import ThongBaoNgungPhuHieuPage from '../pages/ThongBaoNgungPhuHieuPage';
 import ThongKePhuHieuDonViPage from '../pages/ThongKePhuHieuDonViPage';
 
 export const appRoutes = [
@@ -16,6 +17,7 @@ export const appRoutes = [
   { path: config.ROUTES.DASHBOARD, element: <DashboardPage /> },
   { path: config.ROUTES.THONG_KE_PHU_HIEU_REACT, element: <ThongKePhuHieuDonViPage /> },
   { path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT, element: <DeNghiCapPhuHieuXePage /> },
+  { path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT, element: <ThongBaoNgungPhuHieuPage /> },
   { path: config.ROUTES.QUYET_DINH_THU_HOI_GPKD_REACT, element: <QuyetDinhThuHoiGPKDPage /> },
   { path: config.ROUTES.BAN_GIAO_XE_REACT, element: <BanGiaoXePage /> },
   { path: config.ROUTES.KY_QUY_LAI_XE_REACT, element: <KyQuyLaiXePage /> },

@@ -25,6 +25,12 @@ export const menuSections = [
         icon: FileText
       },
       {
+        id: 'thong-bao-ngung-phu-hieu',
+        text: 'Thông báo ngừng phù hiệu',
+        path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT,
+        icon: IdCard
+      },
+      {
         id: 'quyet-dinh-thu-hoi-gpkd',
         text: 'Thu hồi GPKD',
         path: config.ROUTES.QUYET_DINH_THU_HOI_GPKD_REACT,

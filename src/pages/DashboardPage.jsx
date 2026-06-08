@@ -21,6 +21,13 @@ const actions = [
     tone: 'bg-slate-50 text-slate-700'
   },
   {
+    title: 'Thông báo ngừng phù hiệu',
+    description: 'Xem trước, in và xuất giấy đề nghị hủy phù hiệu, biển hiệu từ thông báo AppSheet.',
+    path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT,
+    icon: IdCard,
+    tone: 'bg-rose-50 text-rose-700'
+  },
+  {
     title: 'Thu hồi GPKD',
     description: 'Xem trước, in và xuất quyết định thu hồi giấy phép.',
     path: `${config.ROUTES.QUYET_DINH_THU_HOI_GPKD_REACT}?IDQuyetDinh=`,

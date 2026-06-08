@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thông báo ngừng phù hiệu</title>
+  <script src="/runtime-config.js"></script>
+  <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    :root {
+      --brand: #b91c1c;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #e4e7ec;
+      --bg: #f6f7f9;
+    }
+
+    @page {
+      size: A4;
+      margin: 1.5cm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, sans-serif;
+    }
+
+    .shell {
+      width: 100%;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .96);
+      padding: 14px;
+      box-shadow: 0 10px 28px rgba(16, 24, 40, .06);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      object-fit: contain;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .status {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: end;
+      justify-content: flex-end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 220px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .field input {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 12px;
+      font: inherit;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--brand);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      padding: 0 14px;
+    }
+
+    button.secondary {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+
+    .message {
+      margin-top: 16px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .message.error {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .preview {
+      margin-top: 16px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #eef2f7;
+      padding: 16px;
+    }
+
+    .page {
+      box-sizing: border-box;
+      width: 21cm;
+      min-height: 29.7cm;
+      margin: 0 auto;
+      padding: 1.4cm 1.5cm 1.6cm;
+      background: #fff;
+      color: #000;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 13pt;
+      line-height: 1.35;
+    }
+
+    .doc-header {
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: 18px;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .bold {
+      font-weight: 700;
+    }
+
+    .underlined {
+      display: inline-block;
+      border-bottom: 1px solid #000;
+      padding: 0 8px 2px;
+    }
+
+    .meta {
+      margin-top: 10px;
+    }
+
+    .title {
+      margin: 20px 0 10px;
+      text-align: center;
+      font-size: 16pt;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .row {
+      margin: 6px 0;
+      text-align: justify;
+    }
+
+    .indent {
+      padding-left: 28px;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 8px;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      border: 1px solid #000;
+      padding: 4px;
+      vertical-align: middle;
+      font-size: 12pt;
+      text-align: center;
+    }
+
+    th {
+      font-weight: 700;
+    }
+
+    td.left {
+      text-align: left;
+    }
+
+    .sign {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .sign-right {
+      text-align: center;
+    }
+
+    .sign-space {
+      height: 92px;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .toolbar,
+      .message {
+        display: none !important;
+      }
+
+      .shell,
+      .preview,
+      .page {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        width: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="shell">
+    <section class="toolbar">
+      <div class="brand">
+        <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
+        <div>
+          <h1>Thông báo ngừng phù hiệu</h1>
+          <div class="status" id="statusText">Đang kiểm tra tham số ID_ThongBaoNgung.</div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="field">
+          <label for="idInput">ID_ThongBaoNgung</label>
+          <input id="idInput" placeholder="Nhập ID_ThongBaoNgung" />
+        </div>
+        <button id="loadBtn" type="button">Tải dữ liệu</button>
+        <button id="printBtn" type="button" class="secondary">In</button>
+        <button id="wordBtn" type="button">Xuất Word</button>
+      </div>
+    </section>
+
+    <section id="messageBox" class="message">Điền ID_ThongBaoNgung để tải dữ liệu.</section>
+    <section id="previewBox" class="preview" hidden></section>
+  </main>
+
+  <script>
+    const TEMPLATE_CONFIGS = [
+      {
+        maDonVi: '0104163591',
+        label: 'Hà Nội',
+        templateUrl: '/thong_bao_ngung_phu_hieu_ha_noi_template.docx?v=20260605',
+        diaDanh: 'Hà Nội',
+        coQuanNhan: 'Sở Xây dựng TP Hà Nội'
+      },
+      {
+        maDonVi: '0104163591-001',
+        label: 'Vĩnh Phúc',
+        templateUrl: '/thong_bao_ngung_phu_hieu_vinh_phuc_template.docx?v=20260605',
+        diaDanh: 'Phú Thọ',
+        coQuanNhan: 'Sở Xây dựng tỉnh Phú Thọ'
+      }
+    ];
+
+    const state = {
+      idThongBaoNgung: new URLSearchParams(window.location.search).get('ID_ThongBaoNgung') || '',
+      payload: null,
+      loading: false
+    };
+
+    const elements = {
+      idInput: document.getElementById('idInput'),
+      loadBtn: document.getElementById('loadBtn'),
+      printBtn: document.getElementById('printBtn'),
+      wordBtn: document.getElementById('wordBtn'),
+      statusText: document.getElementById('statusText'),
+      messageBox: document.getElementById('messageBox'),
+      previewBox: document.getElementById('previewBox')
+    };
+
+    elements.idInput.value = state.idThongBaoNgung;
+
+    function cleanValue(value) {
+      if (value === null || value === undefined) return '';
+      return String(value).trim();
+    }
+
+    function escapeSelectorValue(value) {
+      return String(value || '').replace(/"/g, '\\"');
+    }
+
+    function buildEqualsSelector(tableName, keyName, value) {
+      const cleanId = cleanValue(value);
+      if (!cleanId) return '';
+      return `Filter(${tableName}, [${keyName}] = "${escapeSelectorValue(cleanId)}")`;
+    }
+
+    function buildRefSelector(tableName, keyName, ids) {
+      const uniqueIds = [...new Set((Array.isArray(ids) ? ids : []).map(cleanValue).filter(Boolean))];
+      if (!uniqueIds.length) return '';
+      const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
+      return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
+    }
+
+    async function appSheetFind(tableName, selector = '') {
+      const runtimeConfig = window.__APPSHEET_RUNTIME_CONFIG__ || {};
+      const response = await fetch(runtimeConfig.API_PROXY_URL || '/api/appsheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tableName,
+          action: 'Find',
+          payload: selector ? { Properties: { Selector: selector } } : {}
+        })
+      });
+
+      const text = await response.text();
+      if (!response.ok) throw new Error(`AppSheet ${response.status}: ${text || 'Yêu cầu thất bại'}`);
+      return text ? JSON.parse(text) : [];
+    }
+
+    function buildMap(rows, keyName) {
+      return new Map((Array.isArray(rows) ? rows : []).map((row) => [cleanValue(row?.[keyName]), row]).filter(([id]) => id));
+    }
+
+    async function fetchMap(tableName, keyName, ids) {
+      const selector = buildRefSelector(tableName, keyName, ids);
+      if (!selector) return new Map();
+      return buildMap(await appSheetFind(tableName, selector), keyName);
+    }
+
+    function parseDateValue(value) {
+      if (!value) return null;
+      const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function formatAdministrativeDate(value) {
+      const date = parseDateValue(value);
+      if (!date) return { day: '', month: '', year: '' };
+      const day = String(date.getDate()).padStart(2, '0');
+      const monthValue = date.getMonth() + 1;
+      const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+      return { day, month, year: String(date.getFullYear()) };
+    }
+
+    function formatAdministrativeDateString(value) {
+      const date = formatAdministrativeDate(value);
+      if (!date.day || !date.month || !date.year) return '';
+      return `${date.day}/${date.month}/${date.year}`;
+    }
+
+    function formatQuantity(value) {
+      const number = Number(value || 0);
+      if (!Number.isFinite(number) || number <= 0) return '00';
+      return String(number).padStart(2, '0');
+    }
+
+    function getTemplateConfigByMaDonVi(maDonVi) {
+      return TEMPLATE_CONFIGS.find((config) => config.maDonVi === cleanValue(maDonVi)) || null;
+    }
+
+    function getDonViDisplayName(donVi) {
+      if (!donVi) return '';
+      return cleanValue(donVi.TenDonVi) || cleanValue(donVi.Display) || cleanValue(donVi.ID_DonVi);
+    }
+
+    function getLoaiPhuHieuDisplay(value) {
+      const text = cleanValue(value);
+      if (!text) return 'Xe taxi';
+      if (text.toLowerCase() === 'taxi') return 'Xe taxi';
+      return text;
+    }
+
+    function buildVehicleItems(chiTietRows, xeById, phuHieuById, donVi) {
+      const tenDonVi = getDonViDisplayName(donVi);
+      return (Array.isArray(chiTietRows) ? chiTietRows : []).map((row, index) => {
+        const xe = xeById.get(cleanValue(row?.Ref_Xe));
+        const phuHieu = phuHieuById.get(cleanValue(row?.Ref_PhuHieu));
+        return {
+          stt: String(index + 1),
+          bienSo: cleanValue(xe?.BienSo) || cleanValue(row?.BienSoTaiThoiDiemThongBao) || cleanValue(row?.Ref_Xe),
+          soPhuHieu: cleanValue(phuHieu?.SoPhuHieu) || cleanValue(row?.SoPhuHieu) || cleanValue(row?.Ref_PhuHieu),
+          hanPhuHieu: formatAdministrativeDateString(phuHieu?.NgayHetHan || row?.ThoiHanPhuHieu),
+          donVi: tenDonVi,
+          lyDo: cleanValue(row?.LyDoNgungChiTiet),
+          loaiPhuHieu: cleanValue(phuHieu?.LoaiPhuHieu)
+        };
+      });
+    }
+
+    function buildPayload(row, related) {
+      const donVi = related.donViById.get(cleanValue(row?.Ref_DonVi));
+      const maDonVi = cleanValue(donVi?.MaDonVi) || cleanValue(donVi?.MaSoThue);
+      const templateConfig = getTemplateConfigByMaDonVi(maDonVi);
+      const danhSachXe = buildVehicleItems(related.chiTietRows, related.xeById, related.phuHieuById, donVi);
+      const ngayThongBao = formatAdministrativeDate(row?.NgayThongBao);
+      const loaiPhuHieu = getLoaiPhuHieuDisplay(danhSachXe.find((item) => item.loaiPhuHieu)?.loaiPhuHieu);
+
+      return {
+        idThongBaoNgung: cleanValue(row?.ID_ThongBaoNgung),
+        soThongBao: cleanValue(row?.SoThongBao),
+        ngayThongBao,
+        ngayThongBaoText: formatAdministrativeDateString(row?.NgayThongBao),
+        maDonVi,
+        tenDonVi: getDonViDisplayName(donVi),
+        diaChiDonVi: cleanValue(donVi?.DiaChi),
+        soDienThoai: cleanValue(donVi?.SoDienThoai),
+        coQuanNhanThongBao: cleanValue(row?.CoQuanNhanThongBao) || templateConfig?.coQuanNhan || '',
+        diaDanhLapThongBao: templateConfig?.diaDanh || '',
+        templateConfig,
+        danhSachXe,
+        soLuongXe: danhSachXe.length,
+        soLuongXeText: formatQuantity(danhSachXe.length),
+        loaiPhuHieu
+      };
+    }
+
+    async function loadData() {
+      const id = cleanValue(elements.idInput.value);
+      if (!id) {
+        setMessage('Điền ID_ThongBaoNgung để tải dữ liệu.');
+        return;
+      }
+
+      state.idThongBaoNgung = id;
+      state.loading = true;
+      elements.statusText.textContent = `Đang tải thông báo ${id}...`;
+      setMessage('Đang tải dữ liệu từ AppSheet...');
+      renderActions();
+
+      try {
+        const rows = await appSheetFind('XE_THONGBAO_NGUNG', buildEqualsSelector('XE_THONGBAO_NGUNG', 'ID_ThongBaoNgung', id));
+        const row = Array.isArray(rows) ? rows[0] : null;
+        if (!row) throw new Error(`Không tìm thấy thông báo ngừng phù hiệu với ID_ThongBaoNgung = ${id}.`);
+
+        const chiTietRows = await appSheetFind('XE_THONGBAO_NGUNG_CHITIET', buildEqualsSelector('XE_THONGBAO_NGUNG_CHITIET', 'Ref_ThongBaoNgung', row.ID_ThongBaoNgung));
+        const [donViById, xeById, phuHieuById] = await Promise.all([
+          fetchMap('DONVI', 'ID_DonVi', [row.Ref_DonVi]),
+          fetchMap('XE', 'ID_Xe', chiTietRows.map((item) => item.Ref_Xe)),
+          fetchMap('XE_PHUHIEU', 'ID_PhuHieu', chiTietRows.map((item) => item.Ref_PhuHieu))
+        ]);
+
+        state.payload = buildPayload(row, { chiTietRows, donViById, xeById, phuHieuById });
+        elements.statusText.textContent = `Đã tải thông báo ${id}.`;
+        setMessage('');
+        renderPreview();
+      } catch (error) {
+        state.payload = null;
+        elements.previewBox.hidden = true;
+        elements.statusText.textContent = 'Không tải được dữ liệu.';
+        setMessage(error.message || 'Không tải được thông báo ngừng phù hiệu.', true);
+      } finally {
+        state.loading = false;
+        renderActions();
+      }
+    }
+
+    function buildTemplateData(payload) {
+      return {
+        so_thong_bao: payload.soThongBao,
+        dia_danh_lap_thong_bao: payload.diaDanhLapThongBao,
+        ngay_thong_bao_day: payload.ngayThongBao.day,
+        ngay_thong_bao_month: payload.ngayThongBao.month,
+        ngay_thong_bao_year: payload.ngayThongBao.year,
+        co_quan_nhan_thong_bao: payload.coQuanNhanThongBao,
+        ten_don_vi: payload.tenDonVi,
+        dia_chi_don_vi: payload.diaChiDonVi,
+        so_dien_thoai: payload.soDienThoai,
+        so_luong_xe: payload.soLuongXeText,
+        so_luong_phu_hieu_nop_lai: payload.soLuongXeText,
+        loai_phu_hieu: payload.loaiPhuHieu,
+        danh_sach_xe: payload.danhSachXe.map((item) => ({
+          stt: item.stt,
+          bien_so: item.bienSo,
+          so_phu_hieu: item.soPhuHieu,
+          han_phu_hieu: item.hanPhuHieu,
+          don_vi: item.donVi,
+          ly_do: item.lyDo
+        }))
+      };
+    }
+
+    function normalizeDocxZipEntryNames(zip) {
+      const normalizedZip = new PizZip();
+      Object.entries(zip.files).forEach(([entryName, file]) => {
+        if (!file.dir) normalizedZip.file(entryName.replace(/\\/g, '/'), file.asUint8Array());
+      });
+      return normalizedZip;
+    }
+
+    async function exportWord() {
+      const payload = state.payload;
+      if (!payload) return;
+      if (!payload.templateConfig) {
+        setMessage(`Chưa có template Word cho MaDonVi = ${payload.maDonVi || 'trống'}.`, true);
+        return;
+      }
+
+      elements.wordBtn.disabled = true;
+      elements.wordBtn.textContent = 'Đang xuất...';
+      try {
+        const response = await fetch(payload.templateConfig.templateUrl);
+        if (!response.ok) throw new Error('Không thể tải template Word.');
+        const sourceZip = new PizZip(await response.arrayBuffer());
+        const doc = new window.docxtemplater(normalizeDocxZipEntryNames(sourceZip), {
+          paragraphLoop: true,
+          linebreaks: true,
+          nullGetter: () => ''
+        });
+        doc.render(buildTemplateData(payload));
+        const blob = doc.getZip().generate({
+          type: 'blob',
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+        const fileId = payload.soThongBao || payload.idThongBaoNgung || 'new';
+        saveAs(blob, `Thong_bao_ngung_phu_hieu_${fileId.replace(/[\\/:*?"<>|]/g, '_')}.docx`);
+      } catch (error) {
+        setMessage(`Xuất Word thất bại: ${error.message}`, true);
+      } finally {
+        elements.wordBtn.textContent = 'Xuất Word';
+        renderActions();
+      }
+    }
+
+    function setMessage(message, isError = false) {
+      elements.messageBox.textContent = message;
+      elements.messageBox.hidden = !message;
+      elements.messageBox.classList.toggle('error', Boolean(isError));
+    }
+
+    function renderActions() {
+      elements.loadBtn.disabled = state.loading;
+      elements.printBtn.disabled = !state.payload;
+      elements.wordBtn.disabled = !state.payload || state.loading;
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[char]);
+    }
+
+    function renderValue(value, fallback = '........................................................') {
+      return escapeHtml(value || fallback);
+    }
+
+    function renderVehicleRows(payload) {
+      if (!payload.danhSachXe.length) {
+        return '<tr><td colspan="6" class="left">Chưa có xe trong thông báo ngừng phù hiệu này.</td></tr>';
+      }
+
+      return payload.danhSachXe.map((item) => `
+        <tr>
+          <td>${escapeHtml(item.stt)}</td>
+          <td>${escapeHtml(item.bienSo)}</td>
+          <td>${escapeHtml(item.soPhuHieu)}</td>
+          <td>${escapeHtml(item.hanPhuHieu)}</td>
+          <td class="left">${escapeHtml(item.donVi)}</td>
+          <td class="left">${escapeHtml(item.lyDo)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPreview() {
+      const payload = state.payload;
+      const isVinhPhuc = payload.templateConfig?.maDonVi === '0104163591-001';
+      elements.previewBox.hidden = false;
+      elements.previewBox.innerHTML = `
+        <article class="page">
+          <div class="doc-header">
+            <div class="center bold">
+              ${isVinhPhuc ? '<div>CÔNG TY CPVT HOÀNG MINH DŨNG</div><div>CHI NHÁNH VĨNH PHÚC</div>' : '<div>CÔNG TY CỔ PHẦN VẬN TẢI</div><div>HOÀNG MINH DŨNG</div>'}
+              <div class="meta">Số: ${renderValue(payload.soThongBao, '......../2026/CV-SXD')}</div>
+            </div>
+            <div class="center">
+              <div class="bold">CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+              <div class="bold underlined">Độc lập - Tự do - Hạnh phúc</div>
+              <div class="meta"><em>${renderValue(payload.diaDanhLapThongBao, '........')}, ngày ${renderValue(payload.ngayThongBao.day, '....')} tháng ${renderValue(payload.ngayThongBao.month, '....')} năm ${renderValue(payload.ngayThongBao.year, '20....')}</em></div>
+            </div>
+          </div>
+          <div class="title">Giấy đề nghị hủy phù hiệu, biển hiệu</div>
+          <div class="row center">Kính gửi: ${renderValue(payload.coQuanNhanThongBao)}</div>
+          <div class="row">Tên doanh nghiệp vận tải: ${renderValue(payload.tenDonVi)}</div>
+          <div class="row">Địa chỉ trụ sở doanh nghiệp: ${renderValue(payload.diaChiDonVi)}</div>
+          <div class="row">Số điện thoại: ${renderValue(payload.soDienThoai)}</div>
+          <div class="row">${isVinhPhuc ? 'Giấy Số phép kinh doanh vận tải bằng xe ô tô số 26210009/GPKDVT cấp lần thứ 4 ngày 19 tháng 11 năm 2021 do Sở Giao Thông Vận Tải tỉnh Vĩnh Phúc cấp.' : 'Giấy Số phép kinh doanh vận tải bằng xe ô tô số 100/GPKDVT cấp lần thứ 6 ngày 06 tháng 05 năm 2025 do Sở Xây dựng Hà Nội cấp.'}</div>
+          <div class="row">${isVinhPhuc ? `5. Số lượng xe đề nghị hủy phù hiệu: ${payload.soLuongXeText} xe, danh sách xe như sau:` : `5. Số lượng xe xin tạm ngừng kinh doanh taxi: ${payload.soLuongXeText} xe, danh sách xe như sau:`}</div>
+          <table>
+            <thead>
+              <tr><th style="width:7%">STT</th><th style="width:15%">Biển kiểm soát</th><th style="width:18%">Số phù hiệu</th><th style="width:14%">Hạn phù hiệu</th><th style="width:28%">Đơn vị</th><th style="width:18%">Lý do</th></tr>
+            </thead>
+            <tbody>${renderVehicleRows(payload)}</tbody>
+          </table>
+          <div class="row">${isVinhPhuc ? `- Số lượng phù hiệu, biển hiệu nộp lại: ${payload.soLuongXeText} phù hiệu.` : `- Số lượng phù hiệu nộp lại: ${payload.soLuongXeText} phù hiệu.`}</div>
+          ${isVinhPhuc
+            ? '<div class="row">6. Thông tin về tài khoản giám sát hành trình:</div><div class="row indent">Trang web nhà cung cấp dịch vụ: https://taxi.binhanhcorp.com/</div><div class="row indent">Tài khoản đăng nhập: xe123taxi</div><div class="row indent">Mật khẩu: 123456</div>'
+            : `<div class="row">6. Hiện nay ${renderValue(payload.tenDonVi)} thu hồi ${payload.soLuongXeText} phù hiệu “${renderValue(payload.loaiPhuHieu)}” nộp lại Sở giao thông và xin bảo lưu số phù hiệu trên chờ thay thế.</div>`}
+          <div class="row">Chúng tôi xin cam kết những thông tin cung cấp trên đây là hoàn toàn chính xác. Nếu sai chúng tôi xin hoàn toàn chịu trách nhiệm trước pháp luật.</div>
+          <div class="sign">
+            <div><div class="bold"><em>Nơi nhận:</em></div><div><em>- Như trên;</em></div><div><em>- Lưu.</em></div></div>
+            <div class="sign-right"><div class="bold">ĐẠI DIỆN DOANH NGHIỆP</div><div><em>(Ký tên, đóng dấu)</em></div><div class="sign-space"></div></div>
+          </div>
+          <div class="center">Xác nhận của ${isVinhPhuc ? 'Sở Xây dựng tỉnh Phú Thọ' : 'Sở Xây dựng TP Hà Nội'}<br />Ngày…… tháng…… năm ………</div>
+        </article>
+      `;
+    }
+
+    elements.loadBtn.addEventListener('click', loadData);
+    elements.printBtn.addEventListener('click', () => window.print());
+    elements.wordBtn.addEventListener('click', exportWord);
+    elements.idInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') loadData();
+    });
+
+    renderActions();
+    if (state.idThongBaoNgung) {
+      loadData();
+    } else {
+      elements.statusText.textContent = 'Chưa có ID_ThongBaoNgung để tải dữ liệu.';
+    }
+  </script>
+</body>
+
+</html>

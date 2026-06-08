@@ -66,6 +66,10 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU_KYQUY` | `ID_KyQuy` | `NHANSU_KYQUY_MUC` | `Related NHANSU_KYQUY_MUCs` | Cần kiểm tra thêm trong AppSheet |
 | `NHANSU_KYQUY` | `ID_KyQuy` | `NHANSU_KYQUY_THANHLY` | `Related NHANSU_KYQUY_THANHLYs` | `Ref_KyQuy` |
 | `KIEMTRA_XE_TAXI` | `ID_KiemTra` | `KIEMTRA_XE_TAXI_CHITIET` | `Related KIEMTRA_XE_TAXI_CHITIETs` | `Ref_KiemTra` |
+| `DONVI` | `ID_DonVi` | `XE_THONGBAO_NGUNG` | `Related XE_THONGBAO_NGUNGs` | `Ref_DonVi` |
+| `XE_THONGBAO_NGUNG` | `ID_ThongBaoNgung` | `XE_THONGBAO_NGUNG_CHITIET` | `Related XE_THONGBAO_NGUNG_CHITIETs` | `Ref_ThongBaoNgung` |
+| `XE` | `ID_Xe` | `XE_THONGBAO_NGUNG_CHITIET` | `Related XE_THONGBAO_NGUNG_CHITIETs` | `Ref_Xe` |
+| `XE_PHUHIEU` | `ID_PhuHieu` | `XE_THONGBAO_NGUNG_CHITIET` | `Related XE_THONGBAO_NGUNG_CHITIETs` | `Ref_PhuHieu` |
 
 ## Bảng đã đọc thêm từ quan hệ
 

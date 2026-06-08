@@ -137,7 +137,7 @@ Số dòng tải được: 2.
 | TenVietTat | Văn bản | 2 |
 | LoaiDonVi | Trống | 0 |
 | LoaiQuanHe | Trống | 0 |
-| MaSoThue | Văn bản | 2 |
+| MaSoThue | Số nguyên hoặc Văn bản | 2 |
 | NguoiDaiDien | Văn bản | 2 |
 | ChucVuNguoiDaiDien | Văn bản | 2 |
 | SoDienThoai | Số nguyên | 2 |
@@ -586,5 +586,59 @@ Số dòng tải được: 4.
 | Related XE_HOSO_PHAPLYs | Trống | 0 |
 | Related CT_HS_DE_NGHI_PHUHIEUs | Văn bản | 2 |
 | Related HS_DE_NGHI_PHUHIEUs | Văn bản | 1 |
+
+## XE_THONGBAO_NGUNG
+
+Số dòng tải được: 1.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 1 |
+| ID_ThongBaoNgung | Văn bản | 1 |
+| SoThongBao | Văn bản | 1 |
+| NamThongBao | Số nguyên | 1 |
+| SoThuTu | Số nguyên | 1 |
+| NgayThongBao | Ngày | 1 |
+| Ref_DonVi | Văn bản | 1 |
+| LyDoThongBao | Trống | 0 |
+| NgayBatDauNgung | Ngày | 1 |
+| CoQuanNhanThongBao | Trống | 0 |
+| Ref_NguoiKy | Trống | 0 |
+| FileThongBao | Trống | 0 |
+| TrangThaiThongBao | Văn bản | 1 |
+| DaGuiSo | Trống | 0 |
+| IsDaGuiEmailSo | Trống | 0 |
+| NgayGuiSo | Ngày | 1 |
+| GhiChu | Trống | 0 |
+| NgayTao | Văn bản | 1 |
+| NguoiTao | Văn bản | 1 |
+| NgayCapNhat | Văn bản | 1 |
+| NguoiCapNhat | Văn bản | 1 |
+| Related XE_THONGBAO_NGUNG_CHITIETs | Văn bản | 1 |
+| Related XE_PHUHIEUs | Trống | 0 |
+| TenVietTat | Văn bản | 1 |
+
+## XE_THONGBAO_NGUNG_CHITIET
+
+Số dòng tải được: 1.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| _RowNumber | Số nguyên | 1 |
+| ID_ThongBaoNgungChiTiet | Văn bản | 1 |
+| Ref_ThongBaoNgung | Văn bản | 1 |
+| Ref_Xe | Văn bản | 1 |
+| Ref_PhuHieu | Văn bản | 1 |
+| BienSoTaiThoiDiemThongBao | Trống | 0 |
+| LyDoNgungChiTiet | Trống | 0 |
+| IsThuHoiPhuHieu | Trống | 0 |
+| NgayNgungThucTe | Ngày | 1 |
+| NgayNgungHieuLuc | Trống | 0 |
+| TrangThaiXuLy | Trống | 0 |
+| GhiChu | Trống | 0 |
+| NgayTao | Văn bản | 1 |
+| NguoiTao | Văn bản | 1 |
+| SoPhuHieu | Văn bản | 1 |
+| ThoiHanPhuHieu | Ngày | 1 |
 
 Ghi chú: Kiểu dữ liệu ở đây được suy luận từ dữ liệu API trả về, không phải cấu hình schema gốc trong AppSheet Editor.
