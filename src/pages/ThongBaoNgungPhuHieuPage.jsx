@@ -72,6 +72,15 @@ function renderValue(value, fallback = '........................................
   return value || fallback;
 }
 
+function InfoItem({ label, value }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+      <div className="text-xs font-semibold uppercase text-slate-500">{label}</div>
+      <div className="mt-1 min-h-5 break-words text-sm text-slate-950">{value || 'Chưa có'}</div>
+    </div>
+  );
+}
+
 function VehicleTable({ payload }) {
   return (
     <table className="tbnp-table">
@@ -359,79 +368,87 @@ const ThongBaoNgungPhuHieuPage = () => {
                 </CardDescription>
               </div>
             </div>
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button variant="outline" onClick={loadData} disabled={loading || !idThongBaoNgung}>
+            <form className="flex w-full flex-wrap items-center gap-3 xl:w-auto xl:justify-end" onSubmit={submitId}>
+              <Input
+                value={idInput}
+                onChange={(event) => setIdInput(event.target.value)}
+                aria-label="ID thông báo ngừng phù hiệu"
+                placeholder="Nhập ID_ThongBaoNgung"
+                className="h-10 w-full rounded-xl sm:w-[220px] xl:w-[240px]"
+              />
+              <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={loading}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${loading || loadingRelated ? 'animate-spin' : ''}`} />
-                Tải lại
+                Tải dữ liệu
               </Button>
-              <Button variant="outline" onClick={() => window.print()} disabled={!payload}>
-                <Printer className="mr-2 h-4 w-4" />
-                In
-              </Button>
-              <Button variant="outline" onClick={openStandaloneHtml}>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={openStandaloneHtml}>
                 <ExternalLink className="mr-2 h-4 w-4" />
-                Mở HTML
+                Mở bản HTML
               </Button>
-              <Button onClick={exportToWordTemplate} disabled={!payload || exporting || loadingRelated}>
-                <FileText className="mr-2 h-4 w-4" />
-                {exporting ? 'Đang xuất...' : 'Xuất Word'}
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => window.print()} disabled={!payload}>
+                <Printer className="mr-2 h-4 w-4" />
+                In tài liệu
               </Button>
-            </div>
+              <Button type="button" className="w-full sm:w-auto" onClick={exportToWordTemplate} disabled={!payload || exporting || loadingRelated}>
+                {exporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                Xuất Word
+              </Button>
+            </form>
           </div>
         </CardHeader>
-        <CardContent className="border-t border-slate-100 p-4 sm:p-5">
-          <form onSubmit={submitId} className="flex flex-col gap-3 sm:flex-row">
-            <Input
-              value={idInput}
-              onChange={(event) => setIdInput(event.target.value)}
-              aria-label="ID thông báo ngừng phù hiệu"
-              placeholder="Nhập ID_ThongBaoNgung"
-              className="sm:max-w-sm"
-            />
-            <Button type="submit" disabled={loading}>
-              Tải dữ liệu
-            </Button>
-          </form>
-          {payload && (
-            <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
-              <div>Mẫu Word: <strong>{payload.templateLabel || 'Chưa hỗ trợ'}</strong></div>
-              <div>Mã đơn vị: <strong>{payload.maDonVi || 'Trống'}</strong></div>
-              <div>Số xe: <strong>{payload.soLuongXeText}</strong></div>
-              <div>Ngày thông báo: <strong>{payload.ngayThongBaoText || 'Trống'}</strong></div>
-            </div>
-          )}
-        </CardContent>
       </Card>
 
       {!idThongBaoNgung && (
-        <Card className="border-dashed border-slate-300 bg-white/80">
+        <Card className="tbnp-actions border-slate-200 bg-white">
           <CardHeader>
-            <CardTitle className="text-lg">Chưa có ID thông báo</CardTitle>
-            <CardDescription>Điền `ID_ThongBaoNgung` vào ô phía trên rồi bấm “Tải dữ liệu”.</CardDescription>
+            <CardTitle>Nhập ID thông báo để bắt đầu</CardTitle>
+            <CardDescription>Điền ID_ThongBaoNgung vào ô phía trên rồi bấm “Tải dữ liệu”. Trang sẽ thêm ID vào URL để mở lại thuận tiện.</CardDescription>
           </CardHeader>
         </Card>
       )}
 
       {loading && idThongBaoNgung && (
-        <Card>
-          <CardContent className="flex items-center gap-3 p-6 text-slate-600">
-            <RefreshCw className="h-5 w-5 animate-spin" />
-            Đang tải thông báo ngừng phù hiệu...
+        <Card className="tbnp-actions">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 text-slate-700">
+              <RefreshCw className="h-5 w-5 animate-spin text-red-700" />
+              <div>
+                <p className="font-semibold">Đang tải thông báo ngừng phù hiệu</p>
+                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ AppSheet, vui lòng chờ trong giây lát.</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {errorMessage && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="flex items-start gap-3 p-5 text-amber-800">
-            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-            <div>{errorMessage}</div>
+      {errorMessage && !loading && (
+        <Card className="tbnp-actions border-amber-200 bg-amber-50/80">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <AlertCircle className="h-6 w-6 text-amber-600" />
+              Không tải được thông báo
+            </CardTitle>
+            <CardDescription className="text-amber-900">{errorMessage}</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      {payload && !loading && (
+        <Card className="tbnp-actions border-slate-200 bg-white">
+          <CardHeader>
+            <CardTitle>Thông tin đã tải</CardTitle>
+            <CardDescription>Kiểm tra nhanh dữ liệu trước khi xuất Word.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <InfoItem label="Mẫu Word" value={payload.templateLabel || 'Chưa hỗ trợ'} />
+            <InfoItem label="Mã đơn vị" value={payload.maDonVi || 'Trống'} />
+            <InfoItem label="Số xe" value={payload.soLuongXeText} />
+            <InfoItem label="Ngày thông báo" value={payload.ngayThongBaoText || 'Trống'} />
           </CardContent>
         </Card>
       )}
 
       {payload && !payload.templateConfig && (
-        <Card className="border-amber-200 bg-amber-50">
+        <Card className="tbnp-actions border-amber-200 bg-amber-50">
           <CardContent className="flex items-start gap-3 p-5 text-amber-800">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>Chưa có template Word cho MaDonVi = {payload.maDonVi || 'trống'}. Hiện chỉ hỗ trợ 0104163591 và 0104163591-001.</div>
