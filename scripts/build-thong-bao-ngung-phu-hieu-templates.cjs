@@ -10,8 +10,11 @@ const TEMPLATE_SOURCES = [
     sourceIncludes: ['CV ', 'Hà Nội', '.docx'],
     outputName: 'thong_bao_ngung_phu_hieu_ha_noi_template.docx',
     replacements: [
+      ['CÔNG TY CỔ PHẦN VẬN TẢI', '{ten_don_vi_upper}'],
+      ['HOÀNG MINH DŨNG', ''],
       ['Số: ......../2026/CV-SXD', 'Số: {so_thong_bao}'],
       ['ngày .... tháng .... năm', '                {dia_danh_lap_thong_bao}, ngày {ngay_thong_bao_day} tháng {ngay_thong_bao_month} năm {ngay_thong_bao_year}'],
+      ['      Ngày…… tháng…… năm ………', '      Ngày {ngay_thong_bao_day} tháng {ngay_thong_bao_month} năm {ngay_thong_bao_year}'],
       ['Kính gửi: Sở Xây dựng TP Hà Nội', 'Kính gửi: {co_quan_nhan_thong_bao}'],
       ['Tên doanh nghiệp vận tải: Công ty cổ phần vận tải Hoàng Minh Dũng ', 'Tên doanh nghiệp vận tải: {ten_don_vi}'],
       ['Địa chỉ trụ sở doanh nghiệp: Số 96 - Khu III – Đường QL 2 – Nội Bài – Hà Nội. ', 'Địa chỉ trụ sở doanh nghiệp: {dia_chi_don_vi}'],
@@ -31,8 +34,11 @@ const TEMPLATE_SOURCES = [
     sourceIncludes: ['CV ', 'Vĩnh Phúc', '.docx'],
     outputName: 'thong_bao_ngung_phu_hieu_vinh_phuc_template.docx',
     replacements: [
+      ['CÔNG TY CPVT HOÀNG MINH DŨNG', '{ten_don_vi_upper}'],
+      ['CHI NHÁNH VĨNH PHÚC', ''],
       ['Số: ......../2026/CV-SXD', 'Số: {so_thong_bao}'],
       ['ngày .... tháng .... năm', '                {dia_danh_lap_thong_bao}, ngày {ngay_thong_bao_day} tháng {ngay_thong_bao_month} năm {ngay_thong_bao_year}'],
+      ['      Ngày…… tháng…… năm ………', '      Ngày {ngay_thong_bao_day} tháng {ngay_thong_bao_month} năm {ngay_thong_bao_year}'],
       ['Kính gửi: Sở Xây dựng tỉnh Phú Thọ', 'Kính gửi: {co_quan_nhan_thong_bao}'],
       ['Tên doanh nghiệp vận tải: Công ty cổ phần vận tải Hoàng Minh Dũng – Chi nhánh Vĩnh Phúc', 'Tên doanh nghiệp vận tải: {ten_don_vi}'],
       ['Địa chỉ trụ sở doanh nghiệp: Tổ 1, Phường Phúc Yên, Tỉnh Phú Thọ', 'Địa chỉ trụ sở doanh nghiệp: {dia_chi_don_vi}'],
@@ -65,7 +71,11 @@ function replaceText(xml, search, replacement) {
     return xml.replace(escapedSearch, escapedReplacement);
   }
 
-  return replaceParagraphContent(xml, (text) => text.includes(search), replacement);
+  try {
+    return replaceParagraphContent(xml, (text) => text.includes(search), replacement);
+  } catch (error) {
+    return xml;
+  }
 }
 
 function replaceFirstText(xml, search, replacement) {
@@ -195,7 +205,15 @@ function addVehicleLoop(xml) {
 }
 
 function buildTemplate(config) {
-  const sourcePath = findSourceFile(config.sourceIncludes);
+  let sourcePath;
+  try {
+    sourcePath = findSourceFile(config.sourceIncludes);
+  } catch (error) {
+    sourcePath = path.join(publicDir, config.outputName);
+    if (!fs.existsSync(sourcePath)) {
+      throw error;
+    }
+  }
   const zip = new PizZip(fs.readFileSync(sourcePath));
   let documentXml = zip.file('word/document.xml')?.asText();
 

@@ -148,6 +148,33 @@
       color: #92400e;
     }
 
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .summary-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      margin-top: 4px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
     .preview {
       margin-top: 16px;
       overflow-x: auto;
@@ -250,13 +277,32 @@
       height: 92px;
     }
 
+    @media (max-width: 900px) {
+      .toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .actions,
+      .actions button,
+      .field,
+      .summary {
+        width: 100%;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media print {
       body {
         background: #fff;
       }
 
       .toolbar,
-      .message {
+      .message,
+      .summary {
         display: none !important;
       }
 
@@ -292,12 +338,13 @@
           <input id="idInput" placeholder="Nhập ID_ThongBaoNgung" />
         </div>
         <button id="loadBtn" type="button">Tải dữ liệu</button>
-        <button id="printBtn" type="button" class="secondary">In</button>
+        <button id="printBtn" type="button" class="secondary">In tài liệu</button>
         <button id="wordBtn" type="button">Xuất Word</button>
       </div>
     </section>
 
     <section id="messageBox" class="message">Điền ID_ThongBaoNgung để tải dữ liệu.</section>
+    <section id="summaryBox" class="summary" hidden></section>
     <section id="previewBox" class="preview" hidden></section>
   </main>
 
@@ -332,6 +379,7 @@
       wordBtn: document.getElementById('wordBtn'),
       statusText: document.getElementById('statusText'),
       messageBox: document.getElementById('messageBox'),
+      summaryBox: document.getElementById('summaryBox'),
       previewBox: document.getElementById('previewBox')
     };
 
@@ -461,11 +509,13 @@
         ngayThongBaoText: formatAdministrativeDateString(row?.NgayThongBao),
         maDonVi,
         tenDonVi: getDonViDisplayName(donVi),
+        tenDonViUpper: getDonViDisplayName(donVi).toUpperCase(),
         diaChiDonVi: cleanValue(donVi?.DiaChi),
         soDienThoai: cleanValue(donVi?.SoDienThoai),
         coQuanNhanThongBao: cleanValue(row?.CoQuanNhanThongBao) || templateConfig?.coQuanNhan || '',
         diaDanhLapThongBao: templateConfig?.diaDanh || '',
         templateConfig,
+        templateLabel: templateConfig?.label || '',
         danhSachXe,
         soLuongXe: danhSachXe.length,
         soLuongXeText: formatQuantity(danhSachXe.length),
@@ -484,6 +534,7 @@
       state.loading = true;
       elements.statusText.textContent = `Đang tải thông báo ${id}...`;
       setMessage('Đang tải dữ liệu từ AppSheet...');
+      elements.summaryBox.hidden = true;
       renderActions();
 
       try {
@@ -501,9 +552,11 @@
         state.payload = buildPayload(row, { chiTietRows, donViById, xeById, phuHieuById });
         elements.statusText.textContent = `Đã tải thông báo ${id}.`;
         setMessage('');
+        renderSummary();
         renderPreview();
       } catch (error) {
         state.payload = null;
+        elements.summaryBox.hidden = true;
         elements.previewBox.hidden = true;
         elements.statusText.textContent = 'Không tải được dữ liệu.';
         setMessage(error.message || 'Không tải được thông báo ngừng phù hiệu.', true);
@@ -522,6 +575,7 @@
         ngay_thong_bao_year: payload.ngayThongBao.year,
         co_quan_nhan_thong_bao: payload.coQuanNhanThongBao,
         ten_don_vi: payload.tenDonVi,
+        ten_don_vi_upper: payload.tenDonViUpper,
         dia_chi_don_vi: payload.diaChiDonVi,
         so_dien_thoai: payload.soDienThoai,
         so_luong_xe: payload.soLuongXeText,
@@ -584,6 +638,29 @@
       elements.messageBox.textContent = message;
       elements.messageBox.hidden = !message;
       elements.messageBox.classList.toggle('error', Boolean(isError));
+    }
+
+    function renderSummary() {
+      const payload = state.payload;
+      if (!payload) {
+        elements.summaryBox.hidden = true;
+        return;
+      }
+
+      const items = [
+        ['Mẫu Word', payload.templateLabel || 'Chưa hỗ trợ'],
+        ['Mã đơn vị', payload.maDonVi || 'Trống'],
+        ['Số xe', payload.soLuongXeText],
+        ['Ngày thông báo', payload.ngayThongBaoText || 'Trống']
+      ];
+
+      elements.summaryBox.innerHTML = items.map(([label, value]) => `
+        <div class="summary-item">
+          <div class="summary-label">${escapeHtml(label)}</div>
+          <div class="summary-value">${escapeHtml(value || 'Chưa có')}</div>
+        </div>
+      `).join('');
+      elements.summaryBox.hidden = false;
     }
 
     function renderActions() {
