@@ -105,3 +105,14 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU_KYQUY_THANHLY` | Bảng con thanh lý ký quỹ; trang thanh lý ký quỹ lấy theo `ID_ThanhLy`, resolve thêm `Ref_KyQuy` sang `NHANSU_KYQUY` |
 | `NHANSU_THANHLY_HOPDONG` | Bảng thanh lý hợp đồng lao động, dùng `Ref_NhanSu` để tìm hồ sơ thanh lý HĐLĐ liên quan và lấy `Ref_HopDongLD` |
 | `KIEMTRA_XE_TAXI_CHITIET` | Bảng chi tiết kiểm tra xe taxi |
+
+## Nghiệp vụ chấm dứt hợp đồng lao động
+
+| Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |
+| --- | --- | --- | --- | --- |
+| `NHANSU_CHAMDUT_HOPDONG` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, dự phòng `Display`; lấy thêm `NgaySinh`, `CCCD`, `NgayCapCCCD`, `NoiCapCCCD`, `Dia_Chi_Day_Du` |
+| `NHANSU_CHAMDUT_HOPDONG` | `Ref_HopDongLD` | `NHANSU_HOPDONG_LAODONG` | `ID_HopDongLaoDong` | `SoHopDong`, `NgayKy`, `Ref_DonViLamViec`, `Ref_BoPhan` |
+| `NHANSU_CHAMDUT_HOPDONG` | `Ref_NguoiKy` | `NHANSU` | `ID_NhanSu` | `HoTen`, dự phòng `Display`; nếu trống thì dùng `DONVI.NguoiDaiDien` và `DONVI.ChucVuNguoiDaiDien` |
+
+Khi render quyết định chấm dứt HĐLĐ hoặc xuất Word, không hiển thị trực tiếp mã Ref như `Ref_NhanSu`, `Ref_HopDongLD`, `Ref_NguoiKy`. Phải resolve sang thông tin thật của nhân sự, hợp đồng lao động, đơn vị, chức danh và người ký trước khi đưa vào chứng từ.
+

@@ -68,6 +68,13 @@ const actions = [
     path: config.ROUTES.HDLD_NHAN_VIEN_LAI_XE_REACT,
     icon: ScrollText,
     tone: 'bg-indigo-50 text-indigo-700'
+  },
+  {
+    title: 'Chấm dứt HĐLĐ',
+    description: 'Xem trước, in và xuất quyết định chấm dứt hợp đồng lao động từ AppSheet.',
+    path: config.ROUTES.CHAM_DUT_HOP_DONG_LAO_DONG_REACT,
+    icon: FileText,
+    tone: 'bg-rose-50 text-rose-700'
   }
 ];
 

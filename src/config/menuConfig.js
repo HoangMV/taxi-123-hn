@@ -65,6 +65,12 @@ export const menuSections = [
         text: 'HĐLĐ nhân viên lái xe',
         path: config.ROUTES.HDLD_NHAN_VIEN_LAI_XE_REACT,
         icon: ScrollText
+      },
+      {
+        id: 'cham-dut-hop-dong-lao-dong',
+        text: 'Chấm dứt HĐLĐ',
+        path: config.ROUTES.CHAM_DUT_HOP_DONG_LAO_DONG_REACT,
+        icon: FileText
       }
     ]
   }

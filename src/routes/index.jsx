@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import config from '../config/config';
 import BanGiaoXePage from '../pages/BanGiaoXePage';
 import BanGiaoSoBHXHPage from '../pages/BanGiaoSoBHXHPage';
+import ChamDutHopDongLaoDongPage from '../pages/ChamDutHopDongLaoDongPage';
 import DeNghiCapPhuHieuXePage from '../pages/DeNghiCapPhuHieuXePage';
 import DashboardPage from '../pages/DashboardPage';
 import HdldNhanVienLaiXePage from '../pages/HdldNhanVienLaiXePage';
@@ -24,5 +25,6 @@ export const appRoutes = [
   { path: config.ROUTES.THANH_LY_KY_QUY_LAI_XE_REACT, element: <ThanhLyKyQuyLaiXePage /> },
   { path: config.ROUTES.BAN_GIAO_SO_BHXH_REACT, element: <BanGiaoSoBHXHPage /> },
   { path: config.ROUTES.HDLD_NHAN_VIEN_LAI_XE_REACT, element: <HdldNhanVienLaiXePage /> },
+  { path: config.ROUTES.CHAM_DUT_HOP_DONG_LAO_DONG_REACT, element: <ChamDutHopDongLaoDongPage /> },
   { path: '*', element: <Navigate to={config.ROUTES.DASHBOARD} replace /> }
 ];

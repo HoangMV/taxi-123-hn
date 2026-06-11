@@ -655,6 +655,103 @@ async function handleThanhLyKyQuyLaiXeBundle(request, response, url) {
   }
 }
 
+async function handleChamDutHopDongLaoDongBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idChamDutHD = cleanValue(
+      url.searchParams.get('ID_ChamDutHD') ||
+      url.searchParams.get('idChamDutHD') ||
+      body.ID_ChamDutHD ||
+      body.idChamDutHD
+    );
+    const includeRelated = cleanValue(
+      url.searchParams.get('includeRelated') ||
+      body.includeRelated ||
+      '1'
+    ) !== '0';
+
+    if (!idChamDutHD) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_ChamDutHD.' });
+      return;
+    }
+
+    const rows = await findAppSheetRows({
+      tableName: 'NHANSU_CHAMDUT_HOPDONG',
+      selector: buildEqualsSelector('NHANSU_CHAMDUT_HOPDONG', 'ID_ChamDutHD', idChamDutHD)
+    });
+    const row = rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Không tìm thấy quyết định chấm dứt HĐLĐ với ID_ChamDutHD = ${idChamDutHD}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, {
+        row,
+        related: {}
+      });
+      return;
+    }
+
+    const [hopDongRows, nhanSuRows] = await Promise.all([
+      findRowsByIds('NHANSU_HOPDONG_LAODONG', 'ID_HopDongLaoDong', [row.Ref_HopDongLD]),
+      findRowsByIds('NHANSU', 'ID_NhanSu', [row.Ref_NhanSu, row.Ref_NguoiKy])
+    ]);
+    const hopDong = hopDongRows[0] || null;
+    const nhanSu = nhanSuRows.find((item) => cleanValue(item.ID_NhanSu) === cleanValue(row.Ref_NhanSu));
+    const nguoiKy = nhanSuRows.find((item) => cleanValue(item.ID_NhanSu) === cleanValue(row.Ref_NguoiKy));
+    const donViId =
+      cleanValue(hopDong?.Ref_DonViLamViec) ||
+      cleanValue(nhanSu?.Ref_DonViLamViecHienTai) ||
+      cleanValue(nhanSu?.Ref_DonViChuQuan);
+
+    const [donViRows, chucDanhRows] = await Promise.all([
+      findRowsByIds('DONVI', 'ID_DonVi', [donViId]),
+      findRowsByIds('DM_CHUCDANH', 'ID_ChucDanh', [
+        nhanSu?.Ref_ChucDanh,
+        nguoiKy?.Ref_ChucDanh,
+        hopDong?.Ref_BoPhan,
+        nhanSu?.Ref_BoPhan
+      ])
+    ]);
+    const chucDanh =
+      chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nhanSu?.Ref_ChucDanh)) ||
+      chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(hopDong?.Ref_BoPhan));
+    const nguoiKyChucDanh = chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nguoiKy?.Ref_ChucDanh));
+    const boPhanRows = await findRowsByIds('DM_BOPHAN', 'ID_BoPhan', [
+      nhanSu?.Ref_BoPhan,
+      hopDong?.Ref_BoPhan,
+      chucDanh?.Ref_BoPhan,
+      nguoiKyChucDanh?.Ref_BoPhan
+    ]);
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        NHANSU_HOPDONG_LAODONG: hopDongRows,
+        NHANSU: nhanSuRows,
+        DONVI: donViRows,
+        DM_CHUCDANH: chucDanhRows,
+        DM_BOPHAN: boPhanRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu chấm dứt HĐLĐ.'
+    });
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
 
@@ -709,6 +806,15 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleThanhLyKyQuyLaiXeBundle(request, response, url);
+    return;
+  }
+
+  if (url.pathname === '/api/cham-dut-hop-dong-lao-dong') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleChamDutHopDongLaoDongBundle(request, response, url);
     return;
   }
 
