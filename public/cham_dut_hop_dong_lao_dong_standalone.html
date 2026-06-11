@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Chấm dứt HĐLĐ</title>
     <script src="/runtime-config.js"></script>
-    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
       :root { --brand: #be123c; --ink: #172033; --muted: #667085; --line: #e4e7ec; --bg: #f6f7f9; --danger: #b42318; }
       @page { size: A4; margin: 1.5cm; }
@@ -84,6 +81,11 @@
 
     <script>
       const TEMPLATE_URL = '/cham_dut_hop_dong_lao_dong_template.docx?v=20260610';
+      const DOCX_SCRIPT_URLS = [
+        'https://unpkg.com/pizzip@3.1.4/dist/pizzip.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'
+      ];
       const idChamDutHD = new URLSearchParams(window.location.search).get('ID_ChamDutHD') || '';
       const elements = {
         message: document.getElementById('message'),
@@ -94,6 +96,7 @@
         exportButton: document.getElementById('exportButton')
       };
       let currentPayload = null;
+      let docxLibraryPromise = null;
 
       function cleanValue(value) {
         if (value === null || value === undefined) return '';
@@ -211,9 +214,12 @@
         return appSheetFind(tableName, selector);
       }
 
-      async function fetchFallbackBundle(includeRelated = true) {
-        const rows = await appSheetFind('NHANSU_CHAMDUT_HOPDONG', buildEqualsSelector('NHANSU_CHAMDUT_HOPDONG', 'ID_ChamDutHD', idChamDutHD));
-        const row = rows[0] || null;
+      async function fetchFallbackBundle(includeRelated = true, sourceRow = null) {
+        const hasSourceRow = sourceRow && cleanValue(sourceRow.ID_ChamDutHD) === cleanValue(idChamDutHD);
+        const rows = hasSourceRow
+          ? []
+          : await appSheetFind('NHANSU_CHAMDUT_HOPDONG', buildEqualsSelector('NHANSU_CHAMDUT_HOPDONG', 'ID_ChamDutHD', idChamDutHD));
+        const row = hasSourceRow ? sourceRow : rows[0] || null;
         if (!row) throw new Error(`Không tìm thấy quyết định chấm dứt HĐLĐ với ID_ChamDutHD = ${idChamDutHD}.`);
         if (!includeRelated) return { row, related: {} };
 
@@ -238,12 +244,14 @@
           chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nhanSu?.Ref_ChucDanh)) ||
           chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(hopDong?.Ref_BoPhan));
         const nguoiKyChucDanh = chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nguoiKy?.Ref_ChucDanh));
-        const boPhanRows = await findRowsByIds('DM_BOPHAN', 'ID_BoPhan', [
-          nhanSu?.Ref_BoPhan,
-          hopDong?.Ref_BoPhan,
-          chucDanh?.Ref_BoPhan,
-          nguoiKyChucDanh?.Ref_BoPhan
-        ]);
+        const boPhanRows = chucDanh
+          ? []
+          : await findRowsByIds('DM_BOPHAN', 'ID_BoPhan', [
+              nhanSu?.Ref_BoPhan,
+              hopDong?.Ref_BoPhan,
+              chucDanh?.Ref_BoPhan,
+              nguoiKyChucDanh?.Ref_BoPhan
+            ]);
 
         return {
           row,
@@ -257,22 +265,26 @@
         };
       }
 
-      async function fetchBundle(includeRelated = true) {
+      async function fetchBundle(includeRelated = true, sourceRow = null) {
         const params = new URLSearchParams({ ID_ChamDutHD: idChamDutHD });
         if (!includeRelated) params.set('includeRelated', '0');
+        const hasSourceRow = sourceRow && cleanValue(sourceRow.ID_ChamDutHD) === cleanValue(idChamDutHD);
         const response = await fetch(`/api/cham-dut-hop-dong-lao-dong?${params.toString()}`, {
-          method: 'GET',
-          headers: { Accept: 'application/json' }
+          method: hasSourceRow ? 'POST' : 'GET',
+          headers: hasSourceRow
+            ? { Accept: 'application/json', 'Content-Type': 'application/json' }
+            : { Accept: 'application/json' },
+          body: hasSourceRow ? JSON.stringify({ ID_ChamDutHD: idChamDutHD, row: sourceRow }) : undefined
         });
         const contentType = response.headers.get('content-type') || '';
         const text = await response.text();
         if (!contentType.includes('application/json')) {
-          return fetchFallbackBundle(includeRelated);
+          return fetchFallbackBundle(includeRelated, sourceRow);
         }
         const data = text ? JSON.parse(text) : {};
         if (!response.ok) {
           if (response.status === 404 || response.status === 405) {
-            return fetchFallbackBundle(includeRelated);
+            return fetchFallbackBundle(includeRelated, sourceRow);
           }
           throw new Error(data.error || `Không tải được dữ liệu chấm dứt HĐLĐ (${response.status}).`);
         }
@@ -341,6 +353,33 @@
 
       function sanitizeFileName(value) {
         return cleanValue(value).replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_');
+      }
+
+      function loadExternalScript(src) {
+        if (document.querySelector(`script[src="${src}"]`)) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error(`Không tải được thư viện ${src}.`));
+          document.head.appendChild(script);
+        });
+      }
+
+      function ensureDocxLibraries() {
+        if (window.PizZip && window.docxtemplater && window.saveAs) return Promise.resolve();
+        if (!docxLibraryPromise) {
+          docxLibraryPromise = DOCX_SCRIPT_URLS.reduce(
+            (promise, src) => promise.then(() => loadExternalScript(src)),
+            Promise.resolve()
+          ).then(() => {
+            if (!window.PizZip || !window.docxtemplater || !window.saveAs) {
+              throw new Error('Thư viện xuất Word chưa sẵn sàng.');
+            }
+          });
+        }
+        return docxLibraryPromise;
       }
 
       function normalizeDocxZipEntryNames(zip) {
@@ -424,7 +463,7 @@
           elements.statusText.textContent = `Đã lên quyết định ${idChamDutHD}.`;
 
           try {
-            const fullBundle = await fetchBundle(true);
+            const fullBundle = await fetchBundle(true, row);
             const fullPayload = buildPayload(fullBundle.row || row, fullBundle.related || {});
             render(fullPayload);
             elements.message.hidden = true;
@@ -451,6 +490,7 @@
         if (!currentPayload) return;
         elements.exportButton.disabled = true;
         try {
+          await ensureDocxLibraries();
           const response = await fetch(TEMPLATE_URL);
           if (!response.ok) throw new Error('Không thể tải template Word.');
           const content = await response.arrayBuffer();

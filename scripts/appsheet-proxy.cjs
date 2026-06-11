@@ -682,11 +682,19 @@ async function handleChamDutHopDongLaoDongBundle(request, response, url) {
       return;
     }
 
-    const rows = await findAppSheetRows({
-      tableName: 'NHANSU_CHAMDUT_HOPDONG',
-      selector: buildEqualsSelector('NHANSU_CHAMDUT_HOPDONG', 'ID_ChamDutHD', idChamDutHD)
-    });
-    const row = rows[0] || null;
+    const providedRow =
+      body.row &&
+      typeof body.row === 'object' &&
+      cleanValue(body.row.ID_ChamDutHD) === idChamDutHD
+        ? body.row
+        : null;
+    const rows = providedRow
+      ? []
+      : await findAppSheetRows({
+          tableName: 'NHANSU_CHAMDUT_HOPDONG',
+          selector: buildEqualsSelector('NHANSU_CHAMDUT_HOPDONG', 'ID_ChamDutHD', idChamDutHD)
+        });
+    const row = providedRow || rows[0] || null;
 
     if (!row) {
       sendJson(response, 404, {
@@ -728,12 +736,14 @@ async function handleChamDutHopDongLaoDongBundle(request, response, url) {
       chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nhanSu?.Ref_ChucDanh)) ||
       chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(hopDong?.Ref_BoPhan));
     const nguoiKyChucDanh = chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nguoiKy?.Ref_ChucDanh));
-    const boPhanRows = await findRowsByIds('DM_BOPHAN', 'ID_BoPhan', [
-      nhanSu?.Ref_BoPhan,
-      hopDong?.Ref_BoPhan,
-      chucDanh?.Ref_BoPhan,
-      nguoiKyChucDanh?.Ref_BoPhan
-    ]);
+    const boPhanRows = chucDanh
+      ? []
+      : await findRowsByIds('DM_BOPHAN', 'ID_BoPhan', [
+          nhanSu?.Ref_BoPhan,
+          hopDong?.Ref_BoPhan,
+          chucDanh?.Ref_BoPhan,
+          nguoiKyChucDanh?.Ref_BoPhan
+        ]);
 
     sendJson(response, 200, {
       row,

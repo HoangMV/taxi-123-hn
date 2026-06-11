@@ -57,12 +57,16 @@ async function fetchChamDutBundle(idChamDutHD, options = {}) {
   if (options.includeRelated === false) {
     params.set('includeRelated', '0');
   }
+  const sourceRow = options.sourceRow || null;
+  const hasSourceRow = sourceRow && cleanValue(sourceRow.ID_ChamDutHD) === cleanValue(idChamDutHD);
 
   const response = await fetch(`/api/cham-dut-hop-dong-lao-dong?${params.toString()}`, {
-    method: 'GET',
+    method: hasSourceRow ? 'POST' : 'GET',
     headers: {
-      Accept: 'application/json'
-    }
+      Accept: 'application/json',
+      ...(hasSourceRow ? { 'Content-Type': 'application/json' } : {})
+    },
+    body: hasSourceRow ? JSON.stringify({ ID_ChamDutHD: idChamDutHD, row: sourceRow }) : undefined
   });
 
   const contentType = response.headers.get('content-type') || '';
@@ -147,6 +151,23 @@ export async function fetchChamDutHopDongRow(appSheetService, idChamDutHD) {
 }
 
 export async function fetchChamDutHopDongRelated(appSheetService, row) {
+  const idChamDutHD = cleanValue(row?.ID_ChamDutHD);
+
+  if (idChamDutHD) {
+    try {
+      const bundle = await fetchChamDutBundle(idChamDutHD, { sourceRow: row });
+      return {
+        hopDongLaoDongById: buildMap(bundle.related?.NHANSU_HOPDONG_LAODONG, 'ID_HopDongLaoDong'),
+        nhanSuById: buildMap(bundle.related?.NHANSU, 'ID_NhanSu'),
+        donViById: buildMap(bundle.related?.DONVI, 'ID_DonVi'),
+        chucDanhById: buildMap(bundle.related?.DM_CHUCDANH, 'ID_ChucDanh'),
+        boPhanById: buildMap(bundle.related?.DM_BOPHAN, 'ID_BoPhan')
+      };
+    } catch {
+      // Giữ fallback cũ để trang vẫn chạy được nếu môi trường chưa có bundle API.
+    }
+  }
+
   if (!appSheetService) {
     return {
       hopDongLaoDongById: new Map(),
@@ -177,12 +198,14 @@ export async function fetchChamDutHopDongRelated(appSheetService, row) {
   ]);
   const chucDanh = chucDanhById.get(cleanValue(nhanSu?.Ref_ChucDanh)) || chucDanhById.get(cleanValue(hopDongLaoDong?.Ref_BoPhan));
   const nguoiKyChucDanh = chucDanhById.get(cleanValue(nguoiKy?.Ref_ChucDanh));
-  const boPhanById = await fetchRelatedMap(appSheetService, TABLE_BO_PHAN, 'ID_BoPhan', [
-    nhanSu?.Ref_BoPhan,
-    hopDongLaoDong?.Ref_BoPhan,
-    chucDanh?.Ref_BoPhan,
-    nguoiKyChucDanh?.Ref_BoPhan
-  ]);
+  const boPhanById = chucDanh
+    ? new Map()
+    : await fetchRelatedMap(appSheetService, TABLE_BO_PHAN, 'ID_BoPhan', [
+        nhanSu?.Ref_BoPhan,
+        hopDongLaoDong?.Ref_BoPhan,
+        chucDanh?.Ref_BoPhan,
+        nguoiKyChucDanh?.Ref_BoPhan
+      ]);
 
   return { hopDongLaoDongById, nhanSuById, donViById, chucDanhById, boPhanById };
 }

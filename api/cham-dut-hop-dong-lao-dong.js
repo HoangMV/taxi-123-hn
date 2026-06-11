@@ -108,12 +108,20 @@ module.exports = async function handler(request, response) {
     }
 
     const config = { appId, accessKey, region };
-    const rows = await findAppSheetRows({
-      ...config,
-      tableName: 'NHANSU_CHAMDUT_HOPDONG',
-      selector: buildEqualsSelector('NHANSU_CHAMDUT_HOPDONG', 'ID_ChamDutHD', idChamDutHD)
-    });
-    const row = rows[0] || null;
+    const providedRow =
+      request.body?.row &&
+      typeof request.body.row === 'object' &&
+      cleanValue(request.body.row.ID_ChamDutHD) === idChamDutHD
+        ? request.body.row
+        : null;
+    const rows = providedRow
+      ? []
+      : await findAppSheetRows({
+          ...config,
+          tableName: 'NHANSU_CHAMDUT_HOPDONG',
+          selector: buildEqualsSelector('NHANSU_CHAMDUT_HOPDONG', 'ID_ChamDutHD', idChamDutHD)
+        });
+    const row = providedRow || rows[0] || null;
 
     if (!row) {
       sendJson(response, 404, {
@@ -152,12 +160,14 @@ module.exports = async function handler(request, response) {
       chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nhanSu?.Ref_ChucDanh)) ||
       chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(hopDong?.Ref_BoPhan));
     const nguoiKyChucDanh = chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nguoiKy?.Ref_ChucDanh));
-    const boPhanRows = await findRowsByIds(config, 'DM_BOPHAN', 'ID_BoPhan', [
-      nhanSu?.Ref_BoPhan,
-      hopDong?.Ref_BoPhan,
-      chucDanh?.Ref_BoPhan,
-      nguoiKyChucDanh?.Ref_BoPhan
-    ]);
+    const boPhanRows = chucDanh
+      ? []
+      : await findRowsByIds(config, 'DM_BOPHAN', 'ID_BoPhan', [
+          nhanSu?.Ref_BoPhan,
+          hopDong?.Ref_BoPhan,
+          chucDanh?.Ref_BoPhan,
+          nguoiKyChucDanh?.Ref_BoPhan
+        ]);
 
     sendJson(response, 200, {
       row,
