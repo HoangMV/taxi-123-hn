@@ -29,6 +29,8 @@ const env = { ...parseEnvFile(envPath), ...process.env };
 const appId = env.REACT_APP_APP_ID || '';
 const accessKey = env.REACT_APP_ACCESS_KEY || '';
 const region = env.REACT_APP_REGION || 'www';
+const findCache = new Map();
+const findCacheTtlMs = 5 * 60 * 1000;
 
 function sendJson(response, statusCode, data) {
   response.writeHead(statusCode, {
@@ -156,6 +158,11 @@ async function findAppSheetRows({ tableName, selector }) {
         }
       }
     : {};
+  const cacheKey = JSON.stringify({ tableName, selector: selector || '' });
+  const cached = findCache.get(cacheKey);
+  if (cached && Date.now() - cached.createdAt < findCacheTtlMs) {
+    return cached.rows;
+  }
 
   const appSheetResponse = await fetch(`https://${region}.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(tableName)}/Action`, {
     method: 'POST',
@@ -175,7 +182,9 @@ async function findAppSheetRows({ tableName, selector }) {
   }
 
   const rows = text ? JSON.parse(text) : [];
-  return Array.isArray(rows) ? rows : [];
+  const safeRows = Array.isArray(rows) ? rows : [];
+  findCache.set(cacheKey, { createdAt: Date.now(), rows: safeRows });
+  return safeRows;
 }
 
 function buildNhanSuSelector(ids) {
@@ -199,6 +208,7 @@ async function findNhanSuByIds(ids) {
 function buildRefSelector(tableName, keyName, ids) {
   const uniqueIds = getUniqueIds(ids);
   if (uniqueIds.length === 0) return '';
+  if (uniqueIds.length === 1) return buildEqualsSelector(tableName, keyName, uniqueIds[0]);
 
   const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
   return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
@@ -762,6 +772,93 @@ async function handleChamDutHopDongLaoDongBundle(request, response, url) {
   }
 }
 
+async function handleThanhLyHopDongLaoDongBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idThanhLyHD = cleanValue(
+      url.searchParams.get('ID_ThanhLyHD') ||
+      url.searchParams.get('idThanhLyHD') ||
+      body.ID_ThanhLyHD ||
+      body.idThanhLyHD
+    );
+    const includeRelated = cleanValue(
+      url.searchParams.get('includeRelated') ||
+      body.includeRelated ||
+      '1'
+    ) !== '0';
+
+    if (!idThanhLyHD) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_ThanhLyHD.' });
+      return;
+    }
+
+    const providedRow =
+      body.row &&
+      typeof body.row === 'object' &&
+      cleanValue(body.row.ID_ThanhLyHD) === idThanhLyHD
+        ? body.row
+        : null;
+    const rows = providedRow
+      ? []
+      : await findAppSheetRows({
+          tableName: 'NHANSU_THANHLY_HOPDONG',
+          selector: buildEqualsSelector('NHANSU_THANHLY_HOPDONG', 'ID_ThanhLyHD', idThanhLyHD)
+        });
+    const row = providedRow || rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Không tìm thấy biên bản thanh lý HĐLĐ với ID_ThanhLyHD = ${idThanhLyHD}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, {
+        row,
+        related: {}
+      });
+      return;
+    }
+
+    const [nhanSuRows, hopDongRows, chamDutRows, donViRowsAll] = await Promise.all([
+      findRowsByIds('NHANSU', 'ID_NhanSu', [row.Ref_NhanSu]),
+      findRowsByIds('NHANSU_HOPDONG_LAODONG', 'ID_HopDongLaoDong', [row.Ref_HopDongLD]),
+      findRowsByIds('NHANSU_CHAMDUT_HOPDONG', 'ID_ChamDutHD', [row.Ref_ChamDutHD]),
+      findAppSheetRows({ tableName: 'DONVI' })
+    ]);
+    const nhanSu = nhanSuRows.find((item) => cleanValue(item.ID_NhanSu) === cleanValue(row.Ref_NhanSu));
+    const hopDong = hopDongRows.find((item) => cleanValue(item.ID_HopDongLaoDong) === cleanValue(row.Ref_HopDongLD));
+    const donViId =
+      cleanValue(hopDong?.Ref_DonViLamViec) ||
+      cleanValue(nhanSu?.Ref_DonViLamViecHienTai) ||
+      cleanValue(nhanSu?.Ref_DonViChuQuan);
+    const donViRows = donViRowsAll.filter((item) => cleanValue(item.ID_DonVi) === donViId);
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        NHANSU_THANHLY_HOPDONG: [row],
+        NHANSU: nhanSuRows,
+        NHANSU_HOPDONG_LAODONG: hopDongRows,
+        NHANSU_CHAMDUT_HOPDONG: chamDutRows,
+        DONVI: donViRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu thanh lý HĐLĐ.'
+    });
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
 
@@ -825,6 +922,15 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleChamDutHopDongLaoDongBundle(request, response, url);
+    return;
+  }
+
+  if (url.pathname === '/api/thanh-ly-hop-dong-lao-dong') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleThanhLyHopDongLaoDongBundle(request, response, url);
     return;
   }
 

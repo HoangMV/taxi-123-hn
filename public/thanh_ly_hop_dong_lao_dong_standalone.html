@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thanh lý HĐLĐ</title>
+    <script src="/runtime-config.js"></script>
+    <style>
+      :root { --brand: #0e7490; --ink: #172033; --muted: #667085; --line: #e4e7ec; --bg: #f6f7f9; --danger: #b42318; }
+      @page { size: A4; margin: 1.5cm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: Arial, sans-serif; }
+      .shell { width: 100%; margin: 0 auto; padding: 12px; }
+      .toolbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.96); padding: 14px; box-shadow: 0 10px 28px rgba(16,24,40,.06); backdrop-filter: blur(10px); }
+      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .brand img { width: 42px; height: 42px; border-radius: 10px; object-fit: contain; }
+      h1 { margin: 0; font-size: 18px; }
+      .status { margin-top: 4px; color: var(--muted); font-size: 13px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      button { min-height: 40px; border: 0; border-radius: 10px; background: var(--brand); color: #fff; cursor: pointer; font-weight: 700; padding: 0 14px; }
+      button.secondary { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+      button:disabled { cursor: not-allowed; opacity: .55; }
+      .message { margin-top: 16px; border: 1px dashed var(--line); border-radius: 12px; background: #fff; padding: 24px; color: var(--muted); text-align: center; }
+      .message.error { border-color: #fecdca; background: #fffbfa; color: var(--danger); }
+      .message.warn { border-color: #f59e0b; background: #fffbeb; color: #92400e; }
+      .preview { margin-top: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #eef2f7; padding: 0; }
+      .page { width: 21cm; min-height: 29.7cm; margin: 0 auto; padding: 1.85cm 2.1cm 1.8cm 2.45cm; background: #fff; color: #000; font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.45; box-shadow: none; }
+      .header { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 18px; align-items: start; }
+      .center { text-align: center; }
+      .bold { font-weight: 700; }
+      .company, .national { font-weight: 700; text-transform: uppercase; }
+      .motto { font-weight: 700; }
+      .row { margin: 6px 0; text-align: justify; }
+      .number { margin-top: 10px; }
+      .title { margin: 24px 0 18px; text-align: center; font-size: 18pt; font-weight: 700; text-transform: uppercase; }
+      .section { margin-top: 10px; }
+      .section-title { margin-bottom: 4px; font-weight: 700; }
+      .party-table, .sign-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      .party-table { margin: 8px 0 10px; }
+      .party-table td { padding: 2px 0; vertical-align: top; }
+      .party-table .label { width: 72px; font-weight: 700; }
+      .party-table .sub-label { width: 104px; }
+      .party-table .colon { width: 14px; }
+      .list { margin: 4px 0 4px 30px; padding: 0; list-style: none; }
+      .list li { margin: 3px 0; text-indent: -16px; padding-left: 16px; }
+      .list li::before { content: "- "; }
+      .signatures { margin-top: 30px; }
+      .sign-table td { text-align: center; vertical-align: top; }
+      .sign-title { font-weight: 700; text-transform: uppercase; }
+      .sign-note { margin-top: 4px; font-style: italic; }
+      .sign-space { height: 100px; }
+      @media print {
+        html, body { width: auto !important; height: auto !important; overflow: visible !important; background: #fff !important; }
+        .toolbar, .message { display: none !important; }
+        .shell, .preview { margin: 0 !important; padding: 0 !important; border: 0 !important; background: #fff !important; overflow: visible !important; }
+        .page { width: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="toolbar">
+        <div class="brand">
+          <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
+          <div>
+            <h1>Thanh lý HĐLĐ</h1>
+            <div class="status" id="statusText">Đang kiểm tra tham số ID_ThanhLyHD.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="secondary" type="button" onclick="window.print()" id="printButton" disabled>In tài liệu</button>
+          <button type="button" id="exportButton" disabled>Xuất Word</button>
+        </div>
+      </section>
+      <div id="message" class="message">Đang tải dữ liệu...</div>
+      <section class="preview" id="previewWrap" hidden>
+        <article class="page" id="preview"></article>
+      </section>
+    </main>
+
+    <script>
+      const TEMPLATE_URL = '/thanh_ly_hop_dong_lao_dong_template.docx?v=20260611';
+      const DOCX_SCRIPT_URLS = [
+        'https://unpkg.com/pizzip@3.1.4/dist/pizzip.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'
+      ];
+      const idThanhLyHD = new URLSearchParams(window.location.search).get('ID_ThanhLyHD') || '';
+      const elements = {
+        message: document.getElementById('message'),
+        preview: document.getElementById('preview'),
+        previewWrap: document.getElementById('previewWrap'),
+        statusText: document.getElementById('statusText'),
+        printButton: document.getElementById('printButton'),
+        exportButton: document.getElementById('exportButton')
+      };
+      let currentPayload = null;
+      let docxLibraryPromise = null;
+
+      function cleanValue(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).trim();
+      }
+
+      function escapeHtml(value) {
+        return cleanValue(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function parseDateValue(value) {
+        if (!value) return null;
+        const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+
+      function formatAdministrativeDate(value) {
+        const date = parseDateValue(value);
+        if (!date) return { day: '', month: '', year: '' };
+        const day = String(date.getDate()).padStart(2, '0');
+        const monthValue = date.getMonth() + 1;
+        const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+        return { day, month, year: String(date.getFullYear()) };
+      }
+
+      function formatAdministrativeDateString(value) {
+        const date = formatAdministrativeDate(value);
+        return date.day && date.month && date.year ? `${date.day}/${date.month}/${date.year}` : '';
+      }
+
+      function buildMap(rows, keyName) {
+        return new Map((Array.isArray(rows) ? rows : []).map((row) => [cleanValue(row?.[keyName]), row]).filter(([id]) => id));
+      }
+
+      function buildPayload(row, related = {}) {
+        const nhanSuById = buildMap(related.NHANSU, 'ID_NhanSu');
+        const hopDongById = buildMap(related.NHANSU_HOPDONG_LAODONG, 'ID_HopDongLaoDong');
+        const chamDutById = buildMap(related.NHANSU_CHAMDUT_HOPDONG, 'ID_ChamDutHD');
+        const donViById = buildMap(related.DONVI, 'ID_DonVi');
+        const nhanSu = nhanSuById.get(cleanValue(row?.Ref_NhanSu));
+        const hopDong = hopDongById.get(cleanValue(row?.Ref_HopDongLD));
+        const chamDut = chamDutById.get(cleanValue(row?.Ref_ChamDutHD));
+        const donViId = cleanValue(hopDong?.Ref_DonViLamViec) || cleanValue(nhanSu?.Ref_DonViLamViecHienTai) || cleanValue(nhanSu?.Ref_DonViChuQuan);
+        const donVi = donViById.get(donViId);
+        const ngayLap = formatAdministrativeDate(row?.NgayThanhLy);
+        const matchedHopDongLaoDong = Boolean(hopDong) && cleanValue(hopDong?.Ref_NhanSu) === cleanValue(row?.Ref_NhanSu);
+        const soHopDong = matchedHopDongLaoDong ? cleanValue(hopDong?.SoHopDong) : '';
+        const tenDonVi = cleanValue(donVi?.TenDonVi) || cleanValue(donVi?.Display);
+        const payload = {
+          idThanhLyHD: cleanValue(row?.ID_ThanhLyHD),
+          soBienBan: cleanValue(row?.SoBienBan) || cleanValue(row?.ID_ThanhLyHD),
+          ngayLap,
+          tenDonVi,
+          tenDonViUpper: tenDonVi.toUpperCase(),
+          diaChiDonVi: cleanValue(donVi?.DiaChi),
+          maSoThueDonVi: cleanValue(donVi?.MaSoThue) || cleanValue(donVi?.MaDonVi),
+          daiDienDonVi: cleanValue(donVi?.NguoiDaiDien),
+          chucVuDaiDien: cleanValue(donVi?.ChucVuNguoiDaiDien),
+          hoTenNhanSu: cleanValue(nhanSu?.HoTen) || cleanValue(nhanSu?.Display),
+          diaChiNhanSu: cleanValue(nhanSu?.Dia_Chi_Day_Du) || cleanValue(nhanSu?.Address),
+          soCccd: cleanValue(nhanSu?.CCCD),
+          ngayCapCccd: formatAdministrativeDateString(nhanSu?.NgayCapCCCD),
+          noiCapCccd: cleanValue(nhanSu?.NoiCapCCCD),
+          matchedHopDongLaoDong,
+          soHopDongLaoDong: soHopDong,
+          ngayKyHopDongLaoDong: matchedHopDongLaoDong ? formatAdministrativeDateString(hopDong?.NgayKy) : '',
+          ngayChamDutText: formatAdministrativeDateString(row?.NgayChamDut || chamDut?.NgayChamDut),
+          lyDoThanhLy: cleanValue(row?.LyDoThanhLy) || cleanValue(chamDut?.LyDoChamDut),
+          trangThaiThanhLy: cleanValue(row?.TrangThaiThanhLy),
+          fileBienBan: cleanValue(row?.FileBienBan)
+        };
+        payload.missingRequiredFields = getMissingRequiredFields(payload);
+        return payload;
+      }
+
+      function getMissingRequiredFields(payload) {
+        const requiredFields = [
+          ['Số biên bản', payload.soBienBan],
+          ['Ngày lập biên bản', payload.ngayLap?.day && payload.ngayLap?.month && payload.ngayLap?.year],
+          ['Tên đơn vị', payload.tenDonVi],
+          ['Địa chỉ đơn vị', payload.diaChiDonVi],
+          ['Mã số thuế đơn vị', payload.maSoThueDonVi],
+          ['Đại diện đơn vị', payload.daiDienDonVi],
+          ['Chức vụ đại diện', payload.chucVuDaiDien],
+          ['Họ tên người lao động', payload.hoTenNhanSu],
+          ['Địa chỉ người lao động', payload.diaChiNhanSu],
+          ['Số CCCD', payload.soCccd],
+          ['Ngày cấp CCCD', payload.ngayCapCccd],
+          ['Nơi cấp CCCD', payload.noiCapCccd],
+          ['Hợp đồng lao động khớp nhân sự', payload.matchedHopDongLaoDong ? 'Y' : ''],
+          ['Ngày ký hợp đồng lao động', payload.ngayKyHopDongLaoDong],
+          ['Ngày chấm dứt HĐLĐ', payload.ngayChamDutText],
+          ['Lý do thanh lý', payload.lyDoThanhLy]
+        ];
+        return requiredFields.filter(([, value]) => !cleanValue(value)).map(([label]) => label);
+      }
+
+      function buildTemplateData(payload) {
+        return {
+          so_bien_ban: payload.soBienBan,
+          ngay_lap: payload.ngayLap.day,
+          thang_lap: payload.ngayLap.month,
+          nam_lap: payload.ngayLap.year,
+          ten_don_vi: payload.tenDonVi,
+          ten_don_vi_upper: payload.tenDonViUpper,
+          dia_chi_don_vi: payload.diaChiDonVi,
+          ma_so_thue_don_vi: payload.maSoThueDonVi,
+          dai_dien_don_vi: payload.daiDienDonVi,
+          chuc_vu_dai_dien: payload.chucVuDaiDien,
+          ho_ten_nhan_su: payload.hoTenNhanSu,
+          dia_chi_nhan_su: payload.diaChiNhanSu,
+          so_cccd: payload.soCccd,
+          ngay_cap_cccd: payload.ngayCapCccd,
+          noi_cap_cccd: payload.noiCapCccd,
+          so_hop_dong_lao_dong: payload.soHopDongLaoDong,
+          ngay_ky_hop_dong_lao_dong: payload.ngayKyHopDongLaoDong,
+          ngay_cham_dut: payload.ngayChamDutText,
+          ly_do_thanh_ly: payload.lyDoThanhLy,
+          trang_thai_thanh_ly: payload.trangThaiThanhLy
+        };
+      }
+
+      async function fetchBundle(includeRelated, sourceRow = null) {
+        const params = new URLSearchParams({ ID_ThanhLyHD: idThanhLyHD });
+        if (!includeRelated) params.set('includeRelated', '0');
+        const hasSourceRow = sourceRow && cleanValue(sourceRow.ID_ThanhLyHD) === cleanValue(idThanhLyHD);
+        const response = await fetch(`/api/thanh-ly-hop-dong-lao-dong?${params.toString()}`, {
+          method: hasSourceRow ? 'POST' : 'GET',
+          headers: hasSourceRow
+            ? { Accept: 'application/json', 'Content-Type': 'application/json' }
+            : { Accept: 'application/json' },
+          body: hasSourceRow ? JSON.stringify({ ID_ThanhLyHD: idThanhLyHD, row: sourceRow }) : undefined
+        });
+        const contentType = response.headers.get('content-type') || '';
+        const text = await response.text();
+        if (!contentType.includes('application/json')) {
+          throw new Error('API thanh lý HĐLĐ chưa trả JSON. Hãy chạy proxy local bằng `npm run proxy` hoặc dùng `npm run serve:proxy`.');
+        }
+        const data = text ? JSON.parse(text) : {};
+        if (!response.ok) throw new Error(data.error || 'Không tải được dữ liệu thanh lý HĐLĐ.');
+        return data;
+      }
+
+      function renderPreview(payload) {
+        currentPayload = payload;
+        const missing = payload.missingRequiredFields || [];
+        elements.preview.innerHTML = `
+          <div class="header">
+            <div class="center company">${escapeHtml(payload.tenDonViUpper || 'CÔNG TY')}</div>
+            <div class="center"><div class="national">CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</div><div class="motto">Độc lập - Tự do - Hạnh phúc</div></div>
+          </div>
+          <div class="row number">Số: ${escapeHtml(payload.soBienBan || '...')}</div>
+          <div class="title">Biên bản thanh lý hợp đồng lao động</div>
+          <div class="row">Hôm nay, ngày ${escapeHtml(payload.ngayLap.day || '...')} tháng ${escapeHtml(payload.ngayLap.month || '...')} năm ${escapeHtml(payload.ngayLap.year || '...')}, tại ${escapeHtml(payload.tenDonVi || '................................')}, chúng tôi gồm:</div>
+          <table class="party-table" aria-hidden="true"><tbody>
+            <tr><td class="label">BÊN A</td><td class="colon">:</td><td><strong>${escapeHtml(payload.tenDonViUpper)}</strong></td></tr>
+            <tr><td class="sub-label">- Địa chỉ</td><td class="colon">:</td><td>${escapeHtml(payload.diaChiDonVi)}</td></tr>
+            <tr><td class="sub-label">- MST</td><td class="colon">:</td><td>${escapeHtml(payload.maSoThueDonVi)}</td></tr>
+            <tr><td class="sub-label">- Đại diện</td><td class="colon">:</td><td>Ông/Bà <strong>${escapeHtml(payload.daiDienDonVi)}</strong> ${payload.chucVuDaiDien ? `Chức danh: ${escapeHtml(payload.chucVuDaiDien)}` : ''}</td></tr>
+            <tr><td colspan="3">(“Người sử dụng lao động” hoặc “NSDLĐ”)</td></tr>
+            <tr><td class="label">BÊN B</td><td class="colon">:</td><td>Ông/Bà <strong>${escapeHtml(payload.hoTenNhanSu)}</strong></td></tr>
+            <tr><td class="sub-label">- Địa chỉ</td><td class="colon">:</td><td>${escapeHtml(payload.diaChiNhanSu)}</td></tr>
+            <tr><td class="sub-label">- CCCD</td><td class="colon">:</td><td>${escapeHtml(payload.soCccd)}</td></tr>
+            <tr><td></td><td></td><td>Ngày cấp: ${escapeHtml(payload.ngayCapCccd)} &nbsp;&nbsp; Nơi cấp: ${escapeHtml(payload.noiCapCccd)}</td></tr>
+            <tr><td colspan="3">(“Người lao động” hoặc “NLĐ”)</td></tr>
+          </tbody></table>
+          <div class="row">Cùng nhau lập và ký biên bản này để thực hiện việc thanh lý Hợp đồng lao động số: <strong>${escapeHtml(payload.soHopDongLaoDong)}</strong> ký ngày <strong>${escapeHtml(payload.ngayKyHopDongLaoDong)}</strong> theo các thoả thuận sau đây:</div>
+          <div class="section"><div class="section-title">Điều 1. Lý do thanh lý hợp đồng</div><ul class="list"><li>${escapeHtml(payload.lyDoThanhLy || 'Người lao động đã có đơn xin nghỉ việc và được Công ty chấp thuận chấm dứt hợp đồng lao động.')}</li><li>Hợp đồng lao động chấm dứt kể từ ngày ${escapeHtml(payload.ngayChamDutText || '...')}.</li></ul></div>
+          <div class="section"><div class="section-title">Điều 2. Cam kết các bên</div><ul class="list"><li>Người lao động có trách nhiệm bàn giao đầy đủ công việc, phương tiện, trang thiết bị kèm theo phương tiện cho Công ty, đồng thời thanh toán các khoản nghĩa vụ tài chính còn tồn đọng với Công ty (nếu có).</li><li>Công ty có trách nhiệm thanh toán đầy đủ tiền lương, thưởng và các quyền lợi hợp pháp khác cho người lao động theo quy định (nếu có).</li><li>Các phòng ban liên quan có trách nhiệm xác nhận việc hoàn tất nghĩa vụ của người lao động để làm căn cứ thanh lý.</li><li>Sau khi hoàn tất việc thanh toán và bàn giao, hai bên không còn khiếu nại, tranh chấp liên quan đến Hợp đồng lao động đã ký.</li></ul></div>
+          <div class="section"><div class="section-title">Điều 3. Hiệu lực biên bản</div><ul class="list"><li>Các bên đã đọc kỹ, hiểu rõ và đồng ý ký vào biên bản thanh lý này.</li><li>Biên bản này có hiệu lực kể từ ngày ký. Biên bản được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</li></ul></div>
+          <div class="signatures"><table class="sign-table" aria-hidden="true"><tbody><tr><td><div class="sign-title">Người sử dụng lao động</div><div class="sign-note">(Ký và đóng dấu)</div></td><td><div class="sign-title">Người lao động</div><div class="sign-note">(Ký và ghi rõ họ tên)</div></td></tr><tr><td><div class="sign-space"></div></td><td><div class="sign-space"></div></td></tr></tbody></table></div>
+        `;
+        elements.previewWrap.hidden = false;
+        elements.printButton.disabled = false;
+        elements.exportButton.disabled = missing.length > 0;
+      }
+
+      function loadExternalScript(src) {
+        if (document.querySelector(`script[src="${src}"]`)) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error(`Không tải được thư viện ${src}.`));
+          document.head.appendChild(script);
+        });
+      }
+
+      function ensureDocxLibraries() {
+        if (window.PizZip && window.docxtemplater && window.saveAs) return Promise.resolve();
+        if (!docxLibraryPromise) {
+          docxLibraryPromise = DOCX_SCRIPT_URLS.reduce((promise, src) => promise.then(() => loadExternalScript(src)), Promise.resolve()).then(() => {
+            if (!window.PizZip || !window.docxtemplater || !window.saveAs) throw new Error('Thư viện xuất Word chưa sẵn sàng.');
+          });
+        }
+        return docxLibraryPromise;
+      }
+
+      function normalizeDocxZipEntryNames(zip) {
+        const normalizedZip = new PizZip();
+        Object.entries(zip.files).forEach(([entryName, file]) => {
+          if (file.dir) return;
+          normalizedZip.file(entryName.replace(/\\/g, '/'), file.asUint8Array());
+        });
+        return normalizedZip;
+      }
+
+      function sanitizeFileName(value) {
+        return cleanValue(value).replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_');
+      }
+
+      async function loadData() {
+        elements.message.className = 'message';
+        elements.message.textContent = 'Đang tải biên bản thanh lý HĐLĐ...';
+        elements.statusText.textContent = `Đang tải biên bản ${idThanhLyHD}.`;
+        elements.message.hidden = false;
+        elements.previewWrap.hidden = true;
+        elements.printButton.disabled = true;
+        elements.exportButton.disabled = true;
+
+        try {
+          if (!idThanhLyHD) throw new Error('Thiếu tham số ID_ThanhLyHD trên URL.');
+          const firstBundle = await fetchBundle(false);
+          const row = firstBundle.row || null;
+          if (!row) throw new Error(`Không tìm thấy biên bản thanh lý HĐLĐ với ID_ThanhLyHD = ${idThanhLyHD}.`);
+          renderPreview(buildPayload(row));
+          elements.message.textContent = 'Đã tải biên bản chính, đang tải thêm thông tin nhân sự, hợp đồng lao động, quyết định chấm dứt và đơn vị...';
+
+          const fullBundle = await fetchBundle(true, row);
+          const payload = buildPayload(fullBundle.row || row, fullBundle.related || {});
+          renderPreview(payload);
+          if (payload.missingRequiredFields.length > 0) {
+            elements.message.hidden = false;
+            elements.message.className = 'message warn';
+            elements.message.textContent = `Thiếu dữ liệu để xuất Word: ${payload.missingRequiredFields.join(', ')}.`;
+            elements.statusText.textContent = `Đã tải biên bản ${idThanhLyHD}, còn thiếu dữ liệu.`;
+            return;
+          }
+          elements.message.hidden = true;
+          elements.statusText.textContent = `Đã tải biên bản ${idThanhLyHD}.`;
+        } catch (error) {
+          currentPayload = null;
+          elements.previewWrap.hidden = true;
+          elements.message.hidden = false;
+          elements.message.className = 'message error';
+          elements.message.textContent = error.message || 'Không tải được dữ liệu.';
+          elements.statusText.textContent = 'Không tải được dữ liệu.';
+        }
+      }
+
+      async function exportWord() {
+        if (!currentPayload || currentPayload.missingRequiredFields.length > 0) return;
+        elements.exportButton.disabled = true;
+        try {
+          await ensureDocxLibraries();
+          const response = await fetch(TEMPLATE_URL);
+          if (!response.ok) throw new Error('Không thể tải template Word.');
+          const content = await response.arrayBuffer();
+          const sourceZip = new PizZip(content);
+          const zip = normalizeDocxZipEntryNames(sourceZip);
+          const Docxtemplater = window.docxtemplater?.Docxtemplater || window.docxtemplater;
+          const doc = new Docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+            nullGetter: () => ''
+          });
+          doc.render(buildTemplateData(currentPayload));
+          const blob = doc.getZip().generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          });
+          window.saveAs(blob, `Thanh_ly_HDLD_${sanitizeFileName(currentPayload.soBienBan || currentPayload.idThanhLyHD || 'new')}.docx`);
+        } catch (error) {
+          elements.message.hidden = false;
+          elements.message.className = 'message error';
+          elements.message.textContent = `Xuất Word thất bại: ${error.message}`;
+        } finally {
+          elements.exportButton.disabled = !currentPayload || currentPayload.missingRequiredFields.length > 0;
+        }
+      }
+
+      elements.exportButton.addEventListener('click', exportWord);
+      loadData();
+    </script>
+  </body>
+</html>

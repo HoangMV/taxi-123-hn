@@ -75,6 +75,13 @@ const actions = [
     path: config.ROUTES.CHAM_DUT_HOP_DONG_LAO_DONG_REACT,
     icon: FileText,
     tone: 'bg-rose-50 text-rose-700'
+  },
+  {
+    title: 'Thanh lý HĐLĐ',
+    description: 'Xem trước, in và xuất biên bản thanh lý hợp đồng lao động từ AppSheet.',
+    path: config.ROUTES.THANH_LY_HOP_DONG_LAO_DONG_REACT,
+    icon: FileText,
+    tone: 'bg-cyan-50 text-cyan-700'
   }
 ];
 

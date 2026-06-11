@@ -116,3 +116,13 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 
 Khi render quyết định chấm dứt HĐLĐ hoặc xuất Word, không hiển thị trực tiếp mã Ref như `Ref_NhanSu`, `Ref_HopDongLD`, `Ref_NguoiKy`. Phải resolve sang thông tin thật của nhân sự, hợp đồng lao động, đơn vị, chức danh và người ký trước khi đưa vào chứng từ.
 
+## Nghiệp vụ thanh lý hợp đồng lao động
+
+| Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |
+| --- | --- | --- | --- | --- |
+| `NHANSU_THANHLY_HOPDONG` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, dự phòng `Display`; lấy thêm `CCCD`, `NgayCapCCCD`, `NoiCapCCCD`, `Dia_Chi_Day_Du` |
+| `NHANSU_THANHLY_HOPDONG` | `Ref_HopDongLD` | `NHANSU_HOPDONG_LAODONG` | `ID_HopDongLaoDong` | `SoHopDong`, `NgayKy`, `Ref_DonViLamViec` |
+| `NHANSU_THANHLY_HOPDONG` | `Ref_ChamDutHD` | `NHANSU_CHAMDUT_HOPDONG` | `ID_ChamDutHD` | `NgayChamDut`, `LyDoChamDut`, `TrangThaiChamDut` |
+| `NHANSU_HOPDONG_LAODONG` | `Ref_DonViLamViec` | `DONVI` | `ID_DonVi` | `TenDonVi`, `DiaChi`, `MaSoThue`, `NguoiDaiDien`, `ChucVuNguoiDaiDien` |
+
+Khi render biên bản thanh lý HĐLĐ hoặc xuất Word, không hiển thị trực tiếp mã Ref như `Ref_NhanSu`, `Ref_HopDongLD`, `Ref_ChamDutHD`. Chỉ dùng dòng `NHANSU_HOPDONG_LAODONG` khi `Ref_NhanSu` của hợp đồng khớp với `Ref_NhanSu` của biên bản thanh lý. Số hợp đồng lao động chỉ lấy từ `NHANSU_HOPDONG_LAODONG.SoHopDong`; nếu cột này trống thì để trống, không dùng `CCCD`, không dùng mã Ref, không tự ghép thêm năm hoặc hậu tố `HĐLĐ`.

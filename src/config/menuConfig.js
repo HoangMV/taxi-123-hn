@@ -71,6 +71,12 @@ export const menuSections = [
         text: 'Chấm dứt HĐLĐ',
         path: config.ROUTES.CHAM_DUT_HOP_DONG_LAO_DONG_REACT,
         icon: FileText
+      },
+      {
+        id: 'thanh-ly-hop-dong-lao-dong',
+        text: 'Thanh lý HĐLĐ',
+        path: config.ROUTES.THANH_LY_HOP_DONG_LAO_DONG_REACT,
+        icon: FileText
       }
     ]
   }
