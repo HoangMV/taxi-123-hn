@@ -19,6 +19,7 @@ const config = {
     THONG_KE_PHU_HIEU_REACT: '/thong-ke-phu-hieu-don-vi',
     DE_NGHI_CAP_PHU_HIEU_XE_REACT: '/de-nghi-cap-phu-hieu-xe',
     THONG_BAO_NGUNG_PHU_HIEU_REACT: '/thong-bao-ngung-phu-hieu',
+    DE_NGHI_DAO_TAO_LAI_XE_REACT: '/de-nghi-dao-tao-lai-xe',
     QUYET_DINH_THU_HOI_GPKD_REACT: '/quyet-dinh-thu-hoi-gpkd',
     BAN_GIAO_XE_REACT: '/ban-giao-xe',
     KY_QUY_LAI_XE_REACT: '/ky-quy-lai-xe',

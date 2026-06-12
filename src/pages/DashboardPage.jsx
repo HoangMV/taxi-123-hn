@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, BookMarked, Car, FileText, HandCoins, IdCard, ScrollText } from 'lucide-react';
+import { ArrowRight, BookMarked, Car, FileText, GraduationCap, HandCoins, IdCard, ScrollText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -26,6 +26,13 @@ const actions = [
     path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT,
     icon: IdCard,
     tone: 'bg-rose-50 text-rose-700'
+  },
+  {
+    title: 'Đề nghị đào tạo lái xe',
+    description: 'Xem trước, in và xuất Excel danh sách lái xe đề nghị đào tạo từ hồ sơ AppSheet.',
+    path: config.ROUTES.DE_NGHI_DAO_TAO_LAI_XE_REACT,
+    icon: GraduationCap,
+    tone: 'bg-emerald-50 text-emerald-700'
   },
   {
     title: 'Thu hồi GPKD',

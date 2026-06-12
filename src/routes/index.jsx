@@ -4,6 +4,7 @@ import config from '../config/config';
 import BanGiaoXePage from '../pages/BanGiaoXePage';
 import BanGiaoSoBHXHPage from '../pages/BanGiaoSoBHXHPage';
 import ChamDutHopDongLaoDongPage from '../pages/ChamDutHopDongLaoDongPage';
+import DeNghiDaoTaoLaiXePage from '../pages/DeNghiDaoTaoLaiXePage';
 import DeNghiCapPhuHieuXePage from '../pages/DeNghiCapPhuHieuXePage';
 import DashboardPage from '../pages/DashboardPage';
 import HdldNhanVienLaiXePage from '../pages/HdldNhanVienLaiXePage';
@@ -20,6 +21,7 @@ export const appRoutes = [
   { path: config.ROUTES.THONG_KE_PHU_HIEU_REACT, element: <ThongKePhuHieuDonViPage /> },
   { path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT, element: <DeNghiCapPhuHieuXePage /> },
   { path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT, element: <ThongBaoNgungPhuHieuPage /> },
+  { path: config.ROUTES.DE_NGHI_DAO_TAO_LAI_XE_REACT, element: <DeNghiDaoTaoLaiXePage /> },
   { path: config.ROUTES.QUYET_DINH_THU_HOI_GPKD_REACT, element: <QuyetDinhThuHoiGPKDPage /> },
   { path: config.ROUTES.BAN_GIAO_XE_REACT, element: <BanGiaoXePage /> },
   { path: config.ROUTES.KY_QUY_LAI_XE_REACT, element: <KyQuyLaiXePage /> },

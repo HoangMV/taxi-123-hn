@@ -126,3 +126,13 @@ Khi render quyết định chấm dứt HĐLĐ hoặc xuất Word, không hiển
 | `NHANSU_HOPDONG_LAODONG` | `Ref_DonViLamViec` | `DONVI` | `ID_DonVi` | `TenDonVi`, `DiaChi`, `MaSoThue`, `NguoiDaiDien`, `ChucVuNguoiDaiDien` |
 
 Khi render biên bản thanh lý HĐLĐ hoặc xuất Word, không hiển thị trực tiếp mã Ref như `Ref_NhanSu`, `Ref_HopDongLD`, `Ref_ChamDutHD`. Chỉ dùng dòng `NHANSU_HOPDONG_LAODONG` khi `Ref_NhanSu` của hợp đồng khớp với `Ref_NhanSu` của biên bản thanh lý. Số hợp đồng lao động chỉ lấy từ `NHANSU_HOPDONG_LAODONG.SoHopDong`; nếu cột này trống thì để trống, không dùng `CCCD`, không dùng mã Ref, không tự ghép thêm năm hoặc hậu tố `HĐLĐ`.
+
+## Nghiệp vụ đề nghị đào tạo lái xe
+
+| Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |
+| --- | --- | --- | --- | --- |
+| `HS_DAOTAO` | `Ref_DonViDeNghi` | `DONVI` | `ID_DonVi` | `TenDonVi`, dự phòng `Display`; lấy thêm `DiaChi`, `NguoiDaiDien`, `ChucVuNguoiDaiDien` |
+| `CT_HS_DAOTAO` | `Ref_HoSoDaoTao` | `HS_DAOTAO` | `ID_HoSoDaoTao` | Dùng để lọc danh sách chi tiết của hồ sơ đào tạo |
+| `CT_HS_DAOTAO` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `NgaySinh`, `Dia_Chi_Day_Du`, `CCCD`, `NgayCapCCCD` |
+
+Khi render giao diện, HTML standalone hoặc xuất Excel danh sách lái xe đề nghị đào tạo, không hiển thị trực tiếp `Ref_DonViDeNghi`, `Ref_HoSoDaoTao`, `Ref_NhanSu`. Danh sách Excel phải lấy tên và thông tin cá nhân thật từ `NHANSU`; nếu không resolve được nhân sự thì để trống thông tin cá nhân, không đưa mã Ref vào cột họ tên hoặc các cột người dùng đọc.

@@ -310,10 +310,10 @@ const HdldNhanVienLaiXePage = () => {
       {payload && !loading && (
         <>
           {loadingRelated && (
-            <Card className="hdld-actions border-indigo-200 bg-indigo-50/80">
+            <Card className="hdld-actions border-slate-200 bg-white">
               <CardContent className="p-4">
-                <div className="flex items-center gap-3 text-indigo-900">
-                  <RefreshCw className="h-4 w-4 animate-spin text-indigo-700" />
+                <div className="flex items-center gap-3 text-slate-700">
+                  <RefreshCw className="h-4 w-4 animate-spin text-slate-500" />
                   <p className="text-sm">Đã lên hợp đồng chính, đang tải thêm thông tin nhân sự, đơn vị, chức danh và lương...</p>
                 </div>
               </CardContent>

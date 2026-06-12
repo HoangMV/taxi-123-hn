@@ -314,10 +314,10 @@ const ChamDutHopDongLaoDongPage = () => {
       {payload && !loading && (
         <>
           {loadingRelated && (
-            <Card className="cdhd-actions border-rose-200 bg-rose-50/80">
+            <Card className="cdhd-actions border-slate-200 bg-white">
               <CardContent className="p-4">
-                <div className="flex items-center gap-3 text-rose-900">
-                  <RefreshCw className="h-4 w-4 animate-spin text-rose-700" />
+                <div className="flex items-center gap-3 text-slate-700">
+                  <RefreshCw className="h-4 w-4 animate-spin text-slate-500" />
                   <p className="text-sm">Đã lên quyết định chính, đang tải thêm thông tin nhân sự, hợp đồng lao động, đơn vị và người ký...</p>
                 </div>
               </CardContent>

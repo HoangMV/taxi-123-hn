@@ -309,10 +309,10 @@ const ThanhLyKyQuyLaiXePage = () => {
       {payload && !loading && (
         <>
           {loadingRelated && (
-            <Card className="tlkq-actions border-emerald-200 bg-emerald-50/80">
+            <Card className="tlkq-actions border-slate-200 bg-white">
               <CardContent className="p-4">
-                <div className="flex items-center gap-3 text-emerald-900">
-                  <RefreshCw className="h-4 w-4 animate-spin text-emerald-700" />
+                <div className="flex items-center gap-3 text-slate-700">
+                  <RefreshCw className="h-4 w-4 animate-spin text-slate-500" />
                   <p className="text-sm">Đã lên biên bản chính, đang tải thêm thông tin ký quỹ và hợp đồng lao động...</p>
                 </div>
               </CardContent>
