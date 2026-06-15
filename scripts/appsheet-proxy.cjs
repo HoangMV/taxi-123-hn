@@ -342,6 +342,84 @@ async function handleBanGiaoXeBundle(request, response, url) {
   }
 }
 
+async function handleDeNghiDaoTaoLaiXeBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thi\u1ebfu c\u1ea5u h\u00ecnh AppSheet trong .env c\u1ee7a backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idHoSoDaoTao = cleanValue(
+      url.searchParams.get('ID_HoSoDaoTao') ||
+      url.searchParams.get('idHoSoDaoTao') ||
+      body.ID_HoSoDaoTao ||
+      body.idHoSoDaoTao
+    );
+    const includeRelated = cleanValue(url.searchParams.get('includeRelated') || body.includeRelated || '1') !== '0';
+
+    if (!idHoSoDaoTao) {
+      sendJson(response, 400, { error: 'Thi\u1ebfu tham s\u1ed1 ID_HoSoDaoTao.' });
+      return;
+    }
+
+    const providedRow =
+      body.row &&
+      typeof body.row === 'object' &&
+      cleanValue(body.row.ID_HoSoDaoTao) === idHoSoDaoTao
+        ? body.row
+        : null;
+    const rows = providedRow
+      ? []
+      : await findAppSheetRows({
+          tableName: 'HS_DAOTAO',
+          selector: buildEqualsSelector('HS_DAOTAO', 'ID_HoSoDaoTao', idHoSoDaoTao)
+        });
+    const row = providedRow || rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Kh\u00f4ng t\u00ecm th\u1ea5y h\u1ed3 s\u01a1 \u0111\u1ec1 ngh\u1ecb \u0111\u00e0o t\u1ea1o v\u1edbi ID_HoSoDaoTao = ${idHoSoDaoTao}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, { row, related: {} });
+      return;
+    }
+
+    const chiTietPromise = findAppSheetRows({
+      tableName: 'CT_HS_DAOTAO',
+      selector: buildEqualsSelector('CT_HS_DAOTAO', 'Ref_HoSoDaoTao', row.ID_HoSoDaoTao)
+    });
+    const donViPromise = findRowsByIds('DONVI', 'ID_DonVi', [row.Ref_DonViDeNghi]);
+    const chiTietRows = await chiTietPromise;
+    const nhanSuPromise = findRowsByIds(
+      'NHANSU',
+      'ID_NhanSu',
+      chiTietRows.map((item) => item.Ref_NhanSu)
+    );
+    const [donViRows, nhanSuRows] = await Promise.all([donViPromise, nhanSuPromise]);
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        HS_DAOTAO: [row],
+        CT_HS_DAOTAO: chiTietRows,
+        DONVI: donViRows,
+        NHANSU: nhanSuRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c d\u1eef li\u1ec7u \u0111\u1ec1 ngh\u1ecb \u0111\u00e0o t\u1ea1o l\u00e1i xe.'
+    });
+  }
+}
+
 async function handleKyQuyLaiXeBundle(request, response, url) {
   if (!appId || !accessKey || !region) {
     sendJson(response, 500, {
@@ -877,6 +955,15 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleBanGiaoXeBundle(request, response, url);
+    return;
+  }
+
+  if (url.pathname === '/api/de-nghi-dao-tao-lai-xe') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleDeNghiDaoTaoLaiXeBundle(request, response, url);
     return;
   }
 

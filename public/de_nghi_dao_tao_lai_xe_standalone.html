@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Danh sách lái xe đề nghị đào tạo</title>
     <script src="/runtime-config.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
       :root {
         --brand: #b91c1c;
@@ -296,6 +294,8 @@
     <script>
       const runtimeConfig = window.__APPSHEET_RUNTIME_CONFIG__ || {};
       const EXCEL_TEMPLATE_URL = '/de_nghi_dao_tao_lai_xe_template.xlsx?v=20260612';
+      const EXCELJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+      const FILE_SAVER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js';
       const params = new URLSearchParams(window.location.search);
       const elements = {
         statusText: document.getElementById('statusText'),
@@ -307,6 +307,7 @@
         exportExcelButton: document.getElementById('exportExcelButton')
       };
       let currentPayload = null;
+      let exportLibrariesPromise = null;
       const idHoSoDaoTaoFromUrl = cleanValue(params.get('ID_HoSoDaoTao'));
 
       function cleanValue(value) {
@@ -366,6 +367,29 @@
         return new Map((Array.isArray(rows) ? rows : []).map((row) => [cleanValue(row?.[keyName]), row]).filter(([id]) => id));
       }
 
+      async function readJsonResponse(response, fallbackMessage) {
+        const text = await response.text();
+        let data = {};
+
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (error) {
+            const preview = text.trim().slice(0, 40).toLowerCase();
+            if (preview.startsWith('<!doctype') || preview.startsWith('<html') || preview.startsWith('<')) {
+              throw new Error('API trả về HTML thay vì JSON. Khi chạy local, hãy chạy thêm npm run proxy cùng với npm start, rồi tải lại trang.');
+            }
+            throw new Error(fallbackMessage || 'Không đọc được phản hồi JSON từ API.');
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || fallbackMessage || `Yêu cầu thất bại (${response.status}).`);
+        }
+
+        return data;
+      }
+
       function getDonViDisplayName(donVi) {
         if (!donVi) return '';
         return cleanValue(donVi.TenDonVi) || cleanValue(donVi.Display) || '';
@@ -396,9 +420,7 @@
             payload: selector ? { Properties: { Selector: selector } } : {}
           })
         });
-        const text = await response.text();
-        if (!response.ok) throw new Error(`AppSheet ${response.status}: ${text || 'Yêu cầu thất bại'}`);
-        const rows = text ? JSON.parse(text) : [];
+        const rows = await readJsonResponse(response, `AppSheet ${response.status}: Yêu cầu thất bại.`);
         return Array.isArray(rows) ? rows : [];
       }
 
@@ -410,17 +432,38 @@
       }
 
       async function fetchHoSo(idHoSoDaoTao) {
-        const rows = await appSheetFind('HS_DAOTAO', buildEqualsSelector('HS_DAOTAO', 'ID_HoSoDaoTao', idHoSoDaoTao));
-        return Array.isArray(rows) ? rows[0] : null;
+        const params = new URLSearchParams({
+          ID_HoSoDaoTao: idHoSoDaoTao,
+          includeRelated: '0'
+        });
+        const response = await fetch(`/api/de-nghi-dao-tao-lai-xe?${params.toString()}`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' }
+        });
+        const data = await readJsonResponse(response, `Không tải được hồ sơ đề nghị đào tạo (${response.status}).`);
+        return data.row || null;
       }
 
       async function fetchRelated(row) {
-        const chiTietRows = await appSheetFind('CT_HS_DAOTAO', buildEqualsSelector('CT_HS_DAOTAO', 'Ref_HoSoDaoTao', row?.ID_HoSoDaoTao));
-        const [donViById, nhanSuById] = await Promise.all([
-          fetchMap('DONVI', 'ID_DonVi', [row?.Ref_DonViDeNghi]),
-          fetchMap('NHANSU', 'ID_NhanSu', chiTietRows.map((item) => item?.Ref_NhanSu))
-        ]);
-        return { chiTietRows, donViById, nhanSuById };
+        const idHoSoDaoTao = cleanValue(row?.ID_HoSoDaoTao);
+        const response = await fetch(`/api/de-nghi-dao-tao-lai-xe?ID_HoSoDaoTao=${encodeURIComponent(idHoSoDaoTao)}`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ID_HoSoDaoTao: idHoSoDaoTao,
+            row
+          })
+        });
+        const data = await readJsonResponse(response, `Không tải được dữ liệu liên kết (${response.status}).`);
+        const related = data.related || {};
+        return {
+          chiTietRows: Array.isArray(related.CT_HS_DAOTAO) ? related.CT_HS_DAOTAO : [],
+          donViById: buildMap(related.DONVI || [], 'ID_DonVi'),
+          nhanSuById: buildMap(related.NHANSU || [], 'ID_NhanSu')
+        };
       }
 
       function buildLaiXeItems(chiTietRows, nhanSuById) {
@@ -474,7 +517,43 @@
         return cleanValue(value || 'new').replace(/[\\/:*?"<>|]/g, '_');
       }
 
+      function loadScriptOnce(src) {
+        const existingScript = document.querySelector(`script[data-src="${src}"]`);
+        if (existingScript?.dataset.loaded === 'true') return Promise.resolve();
+
+        return new Promise((resolve, reject) => {
+          if (existingScript) {
+            existingScript.addEventListener('load', resolve, { once: true });
+            existingScript.addEventListener('error', () => reject(new Error(`Không tải được thư viện ${src}.`)), { once: true });
+            return;
+          }
+
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = true;
+          script.dataset.src = src;
+          script.addEventListener('load', () => {
+            script.dataset.loaded = 'true';
+            resolve();
+          }, { once: true });
+          script.addEventListener('error', () => reject(new Error(`Không tải được thư viện ${src}.`)), { once: true });
+          document.head.appendChild(script);
+        });
+      }
+
+      async function ensureExportLibraries() {
+        if (!exportLibrariesPromise) {
+          exportLibrariesPromise = Promise.all([
+            loadScriptOnce(EXCELJS_URL),
+            loadScriptOnce(FILE_SAVER_URL)
+          ]);
+        }
+
+        await exportLibrariesPromise;
+      }
+
       async function buildExcelWorkbook(payload) {
+        await ensureExportLibraries();
         if (!window.ExcelJS?.Workbook) throw new Error('Thư viện ExcelJS chưa sẵn sàng.');
         const response = await fetch(EXCEL_TEMPLATE_URL);
         if (!response.ok) throw new Error('Không thể tải file mẫu Excel danh sách lái xe đề nghị đào tạo.');

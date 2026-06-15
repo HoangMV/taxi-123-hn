@@ -83,6 +83,29 @@ function copyRowStyle(sourceRow, targetRow, columnCount) {
   }
 }
 
+async function readJsonResponse(response, fallbackMessage) {
+  const text = await response.text();
+  let data = {};
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      const preview = text.trim().slice(0, 40).toLowerCase();
+      if (preview.startsWith('<!doctype') || preview.startsWith('<html') || preview.startsWith('<')) {
+        throw new Error('API trả về HTML thay vì JSON. Khi chạy local, hãy chạy thêm npm run proxy cùng với npm start, rồi tải lại trang.');
+      }
+      throw new Error(fallbackMessage || 'Không đọc được phản hồi JSON từ API.');
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || fallbackMessage || `Yêu cầu thất bại (${response.status}).`);
+  }
+
+  return data;
+}
+
 export async function fetchDeNghiDaoTaoRow(appSheetService, idHoSoDaoTao) {
   if (!idHoSoDaoTao) {
     throw new Error('Thiếu tham số ID_HoSoDaoTao trên URL.');
@@ -97,6 +120,59 @@ export async function fetchDeNghiDaoTaoRow(appSheetService, idHoSoDaoTao) {
   }
 
   return row;
+}
+
+export async function fetchDeNghiDaoTaoBundleRow(idHoSoDaoTao) {
+  if (!idHoSoDaoTao) {
+    throw new Error('Thiếu tham số ID_HoSoDaoTao trên URL.');
+  }
+
+  const params = new URLSearchParams({
+    ID_HoSoDaoTao: idHoSoDaoTao,
+    includeRelated: '0'
+  });
+  const response = await fetch(`/api/de-nghi-dao-tao-lai-xe?${params.toString()}`, {
+    method: 'GET',
+    headers: { Accept: 'application/json' }
+  });
+  const data = await readJsonResponse(response, `Không tải được hồ sơ đề nghị đào tạo (${response.status}).`);
+
+  if (!data.row) {
+    throw new Error(`Không tìm thấy hồ sơ đề nghị đào tạo với ID_HoSoDaoTao = ${idHoSoDaoTao}.`);
+  }
+
+  return data.row;
+}
+
+export async function fetchDeNghiDaoTaoBundleRelated(row) {
+  const idHoSoDaoTao = cleanValue(row?.ID_HoSoDaoTao);
+  if (!idHoSoDaoTao) {
+    return {
+      chiTietRows: [],
+      donViById: new Map(),
+      nhanSuById: new Map()
+    };
+  }
+
+  const response = await fetch(`/api/de-nghi-dao-tao-lai-xe?ID_HoSoDaoTao=${encodeURIComponent(idHoSoDaoTao)}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      ID_HoSoDaoTao: idHoSoDaoTao,
+      row
+    })
+  });
+  const data = await readJsonResponse(response, `Không tải được dữ liệu liên kết (${response.status}).`);
+
+  const related = data.related || {};
+  return {
+    chiTietRows: Array.isArray(related.CT_HS_DAOTAO) ? related.CT_HS_DAOTAO : [],
+    donViById: buildMap(related.DONVI || [], 'ID_DonVi'),
+    nhanSuById: buildMap(related.NHANSU || [], 'ID_NhanSu')
+  };
 }
 
 export async function fetchDeNghiDaoTaoRelated(appSheetService, row) {

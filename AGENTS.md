@@ -24,7 +24,7 @@
 - Cột bắt đầu bằng `Related ` là kết nối ngược do AppSheet tự sinh, dùng để hiểu quan hệ bảng. Không coi đây là dữ liệu nhập chính.
 - Khi render giao diện, chứng từ, Word, PDF hoặc HTML, nếu dữ liệu đang là mã Ref như `V3B3GM6D` thì phải gọi bảng được tham chiếu và lấy thông tin thật như `HoTen`, `Display`, `Ten...`, `CCCD`, `SoGPLX` theo nghiệp vụ.
 - Với nghiệp vụ bàn giao xe: `XE_BANGIAO.DaiDienBenGiao1`, `XE_BANGIAO.DaiDienBenGiao2`, `XE_BANGIAO.Ref_LaiXe` liên kết tới `NHANSU.ID_NhanSu`; khi hiển thị phải lấy tên từ `NHANSU.HoTen` hoặc dự phòng `NHANSU.Display`.
-- Tập trung tái sử dụng `src/services/appSheetService.js` cho mọi kết nối AppSheet trong React.
+- Nếu React cần gọi AppSheet trực tiếp thì tái sử dụng `src/services/appSheetService.js`; với nghiệp vụ đọc nhiều bảng hoặc cần resolve Ref phức tạp, ưu tiên API bundle theo `docs/appsheet-feature-standard.md`.
 
 ## Quy tắc định dạng ngày
 
@@ -40,3 +40,14 @@
 - Ưu tiên sửa ở tầng gom dữ liệu hoặc feature helper trước khi sửa nhiều component render.
 - Nếu thêm bảng AppSheet mới vào `.env`, chạy `npm run schema:appsheet -- --output=docs/appsheet-schema.md` để cập nhật schema.
 - Nếu phát hiện thêm quan hệ Ref quan trọng, cập nhật `docs/appsheet-relationships.md` để AI lần sau hiểu ngay.
+
+## Quy chuẩn trang nghiệp vụ AppSheet
+
+- Trước khi tạo hoặc sửa trang nghiệp vụ có đọc nhiều bảng AppSheet, phải đọc `docs/appsheet-feature-standard.md` cùng với `docs/appsheet-schema.md` và `docs/appsheet-relationships.md`.
+- Với nghiệp vụ mới cần hồ sơ chính, chi tiết và dữ liệu Ref, ưu tiên tạo API bundle trong `api/` và route local tương ứng trong `scripts/appsheet-proxy.cjs`; React page và HTML standalone chỉ gọi API bundle thay vì gọi nhiều bảng AppSheet rời rạc từ trình duyệt.
+- Nếu trang cần hiển thị nhanh, dùng luồng tải hai pha: tải hồ sơ chính với `includeRelated=0`, render preview ngay, sau đó tải dữ liệu liên kết và cập nhật preview.
+- Trong backend bundle, các bảng không phụ thuộc nhau phải chạy song song bằng `Promise.all`; tránh `await` tuần tự làm cộng dồn thời gian AppSheet.
+- API bundle nên có cache memory ngắn cho các selector AppSheet hay gọi lại, mặc định khoảng 5 phút nếu nghiệp vụ không yêu cầu dữ liệu tức thời tuyệt đối.
+- Các thư viện xuất file nặng như `exceljs`, `FileSaver`, `docxtemplater`, `pizzip` phải lazy load khi người dùng bấm xuất file, không tải ngay khi mở trang.
+- Mọi fetch tới API bundle phải đọc JSON an toàn để phát hiện trường hợp server trả HTML thay vì JSON, và báo lỗi tiếng Việt dễ hiểu như cần chạy `npm run proxy` khi test local.
+- Sau khi thêm API bundle mới, phải kiểm tra cả endpoint production trong `api/` và route local proxy trong `scripts/appsheet-proxy.cjs`.

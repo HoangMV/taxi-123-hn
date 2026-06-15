@@ -10,11 +10,10 @@ import {
   buildDeNghiDaoTaoExcelFileName,
   buildDeNghiDaoTaoExcelWorkbook,
   buildDeNghiDaoTaoPayload,
-  fetchDeNghiDaoTaoRelated,
-  fetchDeNghiDaoTaoRow,
+  fetchDeNghiDaoTaoBundleRelated,
+  fetchDeNghiDaoTaoBundleRow,
   getDeNghiDaoTaoIdFromSearch
 } from '../features/deNghiDaoTaoLaiXe';
-import appSheetService from '../services/appSheetService';
 
 const previewStyles = `
   @page { size: A4 landscape; margin: 1.2cm; }
@@ -141,7 +140,7 @@ const DeNghiDaoTaoLaiXePage = () => {
 
     try {
       setErrorMessage('');
-      const row = await fetchDeNghiDaoTaoRow(appSheetService, idHoSoDaoTao);
+      const row = await fetchDeNghiDaoTaoBundleRow(idHoSoDaoTao);
       if (loadRequestIdRef.current !== requestId) return;
 
       setPayload(buildDeNghiDaoTaoPayload(row));
@@ -149,7 +148,7 @@ const DeNghiDaoTaoLaiXePage = () => {
       setLoadingRelated(true);
 
       try {
-        const related = await fetchDeNghiDaoTaoRelated(appSheetService, row);
+        const related = await fetchDeNghiDaoTaoBundleRelated(row);
         if (loadRequestIdRef.current !== requestId) return;
         setPayload(buildDeNghiDaoTaoPayload(row, related));
       } catch (relatedError) {
