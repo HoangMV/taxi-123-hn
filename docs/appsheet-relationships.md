@@ -136,3 +136,36 @@ Khi render biên bản thanh lý HĐLĐ hoặc xuất Word, không hiển thị 
 | `CT_HS_DAOTAO` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `NgaySinh`, `Dia_Chi_Day_Du`, `CCCD`, `NgayCapCCCD` |
 
 Khi render giao diện, HTML standalone hoặc xuất Excel danh sách lái xe đề nghị đào tạo, không hiển thị trực tiếp `Ref_DonViDeNghi`, `Ref_HoSoDaoTao`, `Ref_NhanSu`. Danh sách Excel phải lấy tên và thông tin cá nhân thật từ `NHANSU`; nếu không resolve được nhân sự thì để trống thông tin cá nhân, không đưa mã Ref vào cột họ tên hoặc các cột người dùng đọc.
+
+## Nghiệp vụ đề nghị cấp bảo hiểm
+
+| Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |
+| --- | --- | --- | --- | --- |
+| `HS_DE_NGHI_BAOHIEM` | `Ref_CongTyBaoHiem` | `DM_CTY_BAOHIEM` | `ID_CongTyBaoHiem` | `TenCongTyBaoHiem`, dự phòng `TenVietTat`, `Display` |
+| `CT_HS_DE_NGHI_BAOHIEM` | `Ref_HoSoBaoHiem` | `HS_DE_NGHI_BAOHIEM` | `ID_HoSoBaoHiem` | Dùng để lọc danh sách chi tiết của hồ sơ bảo hiểm |
+| `CT_HS_DE_NGHI_BAOHIEM` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, dự phòng `Display` |
+
+Khi render giao diện, HTML standalone hoặc xuất Excel danh sách xe đề nghị cấp bảo hiểm, không hiển thị trực tiếp `Ref_CongTyBaoHiem`, `Ref_HoSoBaoHiem`, `Ref_Xe`. Danh sách Excel chỉ dùng 4 cột người dùng đọc: `STT`, `Biển số xe`, `Ngày hết hạn cũ`, `Ghi chú`. Schema hiện tại của nghiệp vụ này không có `Ref_NhanSu`, vì vậy không gọi hoặc hiển thị `NHANSU` cho trang đề nghị cấp bảo hiểm; nếu không resolve được xe thì để trống biển số thay vì đưa mã Ref vào chứng từ.
+
+## Nghiệp vụ đề nghị kiểm định taximet
+
+| Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |
+| --- | --- | --- | --- | --- |
+| `HS_DE_NGHI_KIEMDINH_TAXIMET` | `Ref_DonViKiemDinh` | `DM_CQKD_TAXIMET` | `ID_CQKD` | `TenDonVI`, dự phòng `Display` |
+| `CT_HS_KIEMDINH_TAXIMET` | `Ref_HoSoTaximet` | `HS_DE_NGHI_KIEMDINH_TAXIMET` | `ID_HoSoTaximet` | Dùng để lọc danh sách chi tiết của hồ sơ kiểm định taximet |
+| `CT_HS_KIEMDINH_TAXIMET` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, dự phòng `Display` |
+
+Khi render giao diện, HTML standalone hoặc xuất Excel danh sách xe đề nghị kiểm định taximet, không hiển thị trực tiếp `Ref_DonViKiemDinh`, `Ref_HoSoTaximet`, `Ref_Xe`. `Ref_DonViKiemDinh` liên kết tới danh mục cơ quan kiểm định taximet `DM_CQKD_TAXIMET`, không phải `DONVI`. Danh sách Excel chỉ dùng 4 cột người dùng đọc: `STT`, `Biển số`, `Ngày hết hạn cũ`, `Ghi chú`. Schema hiện tại của nghiệp vụ này không có `Ref_NhanSu`, vì vậy không gọi hoặc hiển thị `NHANSU` cho trang đề nghị kiểm định taximet; nếu không resolve được xe thì để trống biển số thay vì đưa mã Ref vào chứng từ.
+
+## Nghiệp vụ đề nghị thế chấp
+
+| Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |
+| --- | --- | --- | --- | --- |
+| `XE_THECHAP_HOSO_CHITIET` | `Ref_HoSoTheChap` | `XE_THECHAP_HOSO` | `ID_HoSoTheChap` | Dùng để lọc danh sách chi tiết của hồ sơ thế chấp |
+| `XE_THECHAP_HOSO_CHITIET` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, dự phòng `Display` |
+| `XE_THECHAP_HOSO_CHITIET` | `Ref_NganHangMoi` | `DM_NGANHANG` | `ID_NganHang` | `TenNganHang`, dự phòng `TenVietTat`, `Display` |
+| `XE_THECHAP_HOSO_CHITIET` | `Ref_XeTheChapNganHang` | `XE_THECHAP_NGANHANG` | `ID_TheChap` | Dùng để đối chiếu bản ghi thế chấp hiện tại, không hiển thị mã Ref |
+| `XE` | `Ref_DonViQuanLyHienTai`, `Ref_DonViChuQuan` | `DONVI` | `ID_DonVi` | Resolve ẩn để không đưa mã đơn vị ra nội dung người dùng đọc |
+| `NHANSU` | `Ref_XeHienTai` | `XE` | `ID_Xe` | Resolve ẩn tài xế hiện tại theo xe, không thêm cột ngoài mẫu |
+
+Khi render giao diện, HTML standalone hoặc xuất Excel danh sách xe đề nghị thế chấp, không hiển thị trực tiếp `Ref_HoSoTheChap`, `Ref_Xe`, `Ref_NganHangMoi`, `Ref_XeTheChapNganHang`, `Ref_DonViQuanLyHienTai`, `Ref_DonViChuQuan` hoặc `Ref_XeHienTai`. Danh sách Excel chỉ dùng 5 cột người dùng đọc: `STT`, `Biển số xe`, `Ngày hết hạn`, `Ngân hàng thế chấp`, `Ghi chú`. Cột `Ngày hết hạn` lấy từ `XE_THECHAP_HOSO_CHITIET.HanTheChapCu`; cột `Ngân hàng thế chấp` lấy từ `XE_THECHAP_HOSO_CHITIET.Ref_NganHangMoi -> DM_NGANHANG.ID_NganHang`.

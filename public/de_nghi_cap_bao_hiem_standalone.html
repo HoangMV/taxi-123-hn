@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Danh sách xe đề nghị cấp bảo hiểm</title>
+    <script src="/runtime-config.js"></script>
+    <style>
+      :root {
+        --brand: #b91c1c;
+        --ink: #172033;
+        --muted: #667085;
+        --line: #e4e7ec;
+        --bg: #f6f7f9;
+      }
+
+      @page {
+        size: A4 landscape;
+        margin: 1.2cm;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Arial, sans-serif;
+      }
+
+      .shell {
+        width: 100%;
+        margin: 0 auto;
+        padding: 12px;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.96);
+        padding: 14px;
+        box-shadow: 0 10px 28px rgba(16, 24, 40, 0.06);
+        backdrop-filter: blur(10px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand img {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        object-fit: contain;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .status {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: end;
+      }
+
+      button {
+        min-height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--brand);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 700;
+        padding: 0 14px;
+      }
+
+      button.secondary {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .message {
+        margin-top: 16px;
+        border: 1px dashed var(--line);
+        border-radius: 12px;
+        background: #fff;
+        padding: 24px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .message.error {
+        border-color: #f59e0b;
+        background: #fffbeb;
+        color: #92400e;
+      }
+
+      .message.loading {
+        border-style: solid;
+        border-color: var(--line);
+        background: #fff;
+        color: var(--muted);
+        text-align: left;
+      }
+
+      .preview {
+        margin-top: 16px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #eef2f7;
+        padding: 8px;
+      }
+
+      .page {
+        width: 29.7cm;
+        min-height: 21cm;
+        margin: 0 auto;
+        background: #fff;
+        padding: 1.2cm;
+        color: #000;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 13pt;
+        line-height: 1.35;
+        box-shadow: 0 16px 34px rgba(16, 24, 40, 0.2);
+      }
+
+      .doc-title {
+        margin: 0 0 12px;
+        font-size: 16pt;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px 18px;
+        margin-bottom: 12px;
+        font-size: 12.5pt;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+
+      th,
+      td {
+        border: 1px solid #000;
+        padding: 5px 6px;
+        vertical-align: middle;
+        font-size: 12pt;
+      }
+
+      th {
+        text-align: center;
+        font-weight: 700;
+      }
+
+      td {
+        text-align: center;
+      }
+
+      td.left {
+        text-align: left;
+      }
+
+      @media (max-width: 900px) {
+        .toolbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .actions,
+        .actions button {
+          width: 100%;
+        }
+
+        .page {
+          transform: scale(calc((100vw - 44px) / 1122.5));
+          transform-origin: top left;
+          margin-left: 0;
+          margin-bottom: calc(-21cm + (21cm * ((100vw - 44px) / 1122.5)) + 16px);
+        }
+      }
+
+      @media print {
+        html,
+        body {
+          width: auto !important;
+          height: auto !important;
+          overflow: visible !important;
+          background: #fff !important;
+        }
+
+        .toolbar,
+        .message {
+          display: none !important;
+        }
+
+        .shell,
+        .preview {
+          margin: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          background: #fff !important;
+          overflow: visible !important;
+        }
+
+        .page {
+          width: auto !important;
+          min-height: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="toolbar">
+        <div class="brand">
+          <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
+          <div>
+            <h1>Danh sách xe đề nghị cấp bảo hiểm</h1>
+            <div class="status" id="statusText">Đang kiểm tra tham số ID_HoSoBaoHiem.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="secondary" type="button" onclick="window.print()" id="printButton" disabled>In danh sách</button>
+          <button type="button" id="exportExcelButton" disabled>Xuất Excel</button>
+        </div>
+      </section>
+
+      <div class="message" id="messageBox" hidden></div>
+      <div class="message loading" id="relatedMessage" hidden>Đã tải hồ sơ chính, đang tải thêm thông tin công ty bảo hiểm và danh sách xe...</div>
+      <section class="preview" id="preview" hidden>
+        <article class="page" id="documentPage"></article>
+      </section>
+    </main>
+
+    <script>
+      const EXCEL_TEMPLATE_URL = '/de_nghi_cap_bao_hiem_template.xlsx?v=20260615';
+      const EXCELJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+      const FILE_SAVER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js';
+      const params = new URLSearchParams(window.location.search);
+      const elements = {
+        statusText: document.getElementById('statusText'),
+        messageBox: document.getElementById('messageBox'),
+        relatedMessage: document.getElementById('relatedMessage'),
+        preview: document.getElementById('preview'),
+        page: document.getElementById('documentPage'),
+        printButton: document.getElementById('printButton'),
+        exportExcelButton: document.getElementById('exportExcelButton')
+      };
+      let currentPayload = null;
+      let exportLibrariesPromise = null;
+      const idHoSoBaoHiemFromUrl = cleanValue(params.get('ID_HoSoBaoHiem'));
+
+      function cleanValue(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).trim();
+      }
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, (char) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[char]));
+      }
+
+      function parseDateValue(value) {
+        if (!value) return null;
+        const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+
+      function formatAdministrativeDate(value) {
+        const date = parseDateValue(value);
+        if (!date) return { day: '', month: '', year: '' };
+        const day = String(date.getDate()).padStart(2, '0');
+        const monthValue = date.getMonth() + 1;
+        const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+        return { day, month, year: String(date.getFullYear()) };
+      }
+
+      function formatAdministrativeDateString(value) {
+        const date = formatAdministrativeDate(value);
+        if (!date.day || !date.month || !date.year) return '';
+        return `${date.day}/${date.month}/${date.year}`;
+      }
+
+      function buildMap(rows, keyName) {
+        return new Map((Array.isArray(rows) ? rows : []).map((row) => [cleanValue(row?.[keyName]), row]).filter(([id]) => id));
+      }
+
+      async function readJsonResponse(response, fallbackMessage) {
+        const text = await response.text();
+        let data = {};
+
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (error) {
+            const preview = text.trim().slice(0, 40).toLowerCase();
+            if (preview.startsWith('<!doctype') || preview.startsWith('<html') || preview.startsWith('<')) {
+              throw new Error('API trả về HTML thay vì JSON. Khi chạy local, hãy chạy thêm npm run proxy cùng với npm start, rồi tải lại trang.');
+            }
+            throw new Error(fallbackMessage || 'Không đọc được phản hồi JSON từ API.');
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || fallbackMessage || `Yêu cầu thất bại (${response.status}).`);
+        }
+
+        return data;
+      }
+
+      function getCongTyBaoHiemDisplayName(congTyBaoHiem) {
+        if (!congTyBaoHiem) return '';
+        return cleanValue(congTyBaoHiem.TenCongTyBaoHiem) || cleanValue(congTyBaoHiem.TenVietTat) || cleanValue(congTyBaoHiem.Display) || '';
+      }
+
+      function findCongTyBaoHiemByReference(refValue, congTyBaoHiemById, congTyBaoHiemRows) {
+        const ref = cleanValue(refValue);
+        if (!ref) return null;
+        return congTyBaoHiemById.get(ref) || (Array.isArray(congTyBaoHiemRows) ? congTyBaoHiemRows : []).find((congTyBaoHiem) => (
+          cleanValue(congTyBaoHiem?.TenCongTyBaoHiem) === ref ||
+          cleanValue(congTyBaoHiem?.TenVietTat) === ref ||
+          cleanValue(congTyBaoHiem?.Display) === ref ||
+          cleanValue(congTyBaoHiem?.MaBaoHiem) === ref
+        )) || null;
+      }
+
+      function getXeBienSo(xe) {
+        if (!xe) return '';
+        return cleanValue(xe.BienSo) || cleanValue(xe.Display) || '';
+      }
+
+      async function fetchHoSo(idHoSoBaoHiem) {
+        const query = new URLSearchParams({
+          ID_HoSoBaoHiem: idHoSoBaoHiem,
+          includeRelated: '0'
+        });
+        const response = await fetch(`/api/de-nghi-cap-bao-hiem?${query.toString()}`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' }
+        });
+        const data = await readJsonResponse(response, `Không tải được hồ sơ đề nghị cấp bảo hiểm (${response.status}).`);
+        return data.row || null;
+      }
+
+      async function fetchRelated(row) {
+        const idHoSoBaoHiem = cleanValue(row?.ID_HoSoBaoHiem);
+        const response = await fetch(`/api/de-nghi-cap-bao-hiem?ID_HoSoBaoHiem=${encodeURIComponent(idHoSoBaoHiem)}`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ID_HoSoBaoHiem: idHoSoBaoHiem,
+            row
+          })
+        });
+        const data = await readJsonResponse(response, `Không tải được dữ liệu liên kết (${response.status}).`);
+        const related = data.related || {};
+        return {
+          chiTietRows: Array.isArray(related.CT_HS_DE_NGHI_BAOHIEM) ? related.CT_HS_DE_NGHI_BAOHIEM : [],
+          congTyBaoHiemById: buildMap(related.DM_CTY_BAOHIEM || [], 'ID_CongTyBaoHiem'),
+          congTyBaoHiemRows: Array.isArray(related.DM_CTY_BAOHIEM) ? related.DM_CTY_BAOHIEM : [],
+          xeById: buildMap(related.XE || [], 'ID_Xe')
+        };
+      }
+
+      function buildBaoHiemItems(chiTietRows, xeById) {
+        return (Array.isArray(chiTietRows) ? chiTietRows : []).map((row, index) => {
+          const xe = xeById.get(cleanValue(row?.Ref_Xe));
+          return {
+            stt: String(index + 1),
+            bienSo: getXeBienSo(xe),
+            ngayHetHanCu: formatAdministrativeDateString(row?.NgayHetHanCu),
+            ghiChu: cleanValue(row?.GhiChu),
+            daResolveXe: Boolean(xe)
+          };
+        });
+      }
+
+      function buildPayload(row, related) {
+        const safeRelated = related || { chiTietRows: [], congTyBaoHiemById: new Map(), congTyBaoHiemRows: [], xeById: new Map() };
+        const congTyBaoHiem = findCongTyBaoHiemByReference(row?.Ref_CongTyBaoHiem, safeRelated.congTyBaoHiemById, safeRelated.congTyBaoHiemRows);
+        const tenCongTyBaoHiem = getCongTyBaoHiemDisplayName(congTyBaoHiem);
+        const danhSachXe = buildBaoHiemItems(safeRelated.chiTietRows, safeRelated.xeById);
+        return {
+          idHoSoBaoHiem: cleanValue(row?.ID_HoSoBaoHiem),
+          soHoSo: cleanValue(row?.SoHoSo),
+          ngayLapText: formatAdministrativeDateString(row?.NgayLap),
+          loaiBaoHiem: cleanValue(row?.LoaiBaoHiem),
+          ngayCapMoi: formatAdministrativeDateString(row?.NgayCapMoi),
+          ngayHetHanMoi: formatAdministrativeDateString(row?.NgayHetHanMoi),
+          trangThaiHoSo: cleanValue(row?.TrangThaiHoSo),
+          tenCongTyBaoHiem,
+          danhSachXe,
+          soLuongXe: danhSachXe.length,
+          soLuongXeChuaResolve: danhSachXe.filter((item) => !item.daResolveXe).length
+        };
+      }
+
+      function cloneStyle(style) {
+        return style ? JSON.parse(JSON.stringify(style)) : {};
+      }
+
+      function copyRowStyle(sourceRow, targetRow, columnCount) {
+        targetRow.height = sourceRow.height;
+        for (let columnIndex = 1; columnIndex <= columnCount; columnIndex += 1) {
+          targetRow.getCell(columnIndex).style = cloneStyle(sourceRow.getCell(columnIndex).style);
+        }
+      }
+
+      function sanitizeFileName(value) {
+        return cleanValue(value || 'new').replace(/[\\/:*?"<>|]/g, '_');
+      }
+
+      function loadScriptOnce(src) {
+        const existingScript = document.querySelector(`script[data-src="${src}"]`);
+        if (existingScript?.dataset.loaded === 'true') return Promise.resolve();
+
+        return new Promise((resolve, reject) => {
+          if (existingScript) {
+            existingScript.addEventListener('load', resolve, { once: true });
+            existingScript.addEventListener('error', () => reject(new Error(`Không tải được thư viện ${src}.`)), { once: true });
+            return;
+          }
+
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = true;
+          script.dataset.src = src;
+          script.addEventListener('load', () => {
+            script.dataset.loaded = 'true';
+            resolve();
+          }, { once: true });
+          script.addEventListener('error', () => reject(new Error(`Không tải được thư viện ${src}.`)), { once: true });
+          document.head.appendChild(script);
+        });
+      }
+
+      async function ensureExportLibraries() {
+        if (!exportLibrariesPromise) {
+          exportLibrariesPromise = Promise.all([
+            loadScriptOnce(EXCELJS_URL),
+            loadScriptOnce(FILE_SAVER_URL)
+          ]);
+        }
+
+        await exportLibrariesPromise;
+      }
+
+      async function buildExcelWorkbook(payload) {
+        await ensureExportLibraries();
+        if (!window.ExcelJS?.Workbook) throw new Error('Thư viện ExcelJS chưa sẵn sàng.');
+        const response = await fetch(EXCEL_TEMPLATE_URL);
+        if (!response.ok) throw new Error('Không thể tải file mẫu Excel danh sách xe đề nghị cấp bảo hiểm.');
+        const templateContent = await response.arrayBuffer();
+        const workbook = new window.ExcelJS.Workbook();
+        await workbook.xlsx.load(templateContent);
+        const worksheet = workbook.worksheets[0];
+        if (!worksheet) throw new Error('File mẫu Excel không có sheet dữ liệu.');
+
+        worksheet.getCell('A1').value = `TÊN CÔNG TY BẢO HIỂM: ${payload.tenCongTyBaoHiem || ''}`;
+        const columnCount = Math.max(worksheet.columnCount || 4, 4);
+        const templateRow = worksheet.getRow(3);
+        const totalRows = Math.max(worksheet.rowCount, payload.danhSachXe.length + 2, 3);
+
+        for (let rowNumber = 3; rowNumber <= totalRows; rowNumber += 1) {
+          const row = worksheet.getRow(rowNumber);
+          copyRowStyle(templateRow, row, columnCount);
+          for (let columnIndex = 1; columnIndex <= columnCount; columnIndex += 1) {
+            row.getCell(columnIndex).value = null;
+          }
+          row.commit();
+        }
+
+        payload.danhSachXe.forEach((item, index) => {
+          const row = worksheet.getRow(index + 3);
+          copyRowStyle(templateRow, row, columnCount);
+          [item.stt, item.bienSo, item.ngayHetHanCu, item.ghiChu].forEach((value, valueIndex) => {
+            row.getCell(valueIndex + 1).value = value;
+          });
+          row.commit();
+        });
+
+        worksheet.views = [{ state: 'frozen', ySplit: 2 }];
+        return workbook;
+      }
+
+      function showMessage(message, isError = false) {
+        elements.messageBox.hidden = false;
+        elements.messageBox.textContent = message;
+        elements.messageBox.className = isError ? 'message error' : 'message';
+        elements.relatedMessage.hidden = true;
+        elements.preview.hidden = true;
+        elements.printButton.disabled = true;
+        elements.exportExcelButton.disabled = true;
+      }
+
+      function renderPreview(payload) {
+        const rows = payload.danhSachXe.length
+          ? payload.danhSachXe.map((item) => `
+            <tr>
+              <td>${escapeHtml(item.stt)}</td>
+              <td>${escapeHtml(item.bienSo)}</td>
+              <td>${escapeHtml(item.ngayHetHanCu)}</td>
+              <td class="left">${escapeHtml(item.ghiChu)}</td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="4" class="left">Hồ sơ này chưa có xe đề nghị cấp bảo hiểm.</td></tr>';
+
+        elements.page.innerHTML = `
+          <h2 class="doc-title">TÊN CÔNG TY BẢO HIỂM: ${escapeHtml(payload.tenCongTyBaoHiem)}</h2>
+          <div class="meta">
+            <div><strong>Số hồ sơ:</strong> ${escapeHtml(payload.soHoSo)}</div>
+            <div><strong>Ngày lập:</strong> ${escapeHtml(payload.ngayLapText)}</div>
+            <div><strong>Trạng thái:</strong> ${escapeHtml(payload.trangThaiHoSo)}</div>
+            <div><strong>Loại bảo hiểm:</strong> ${escapeHtml(payload.loaiBaoHiem)}</div>
+            <div><strong>Ngày cấp mới:</strong> ${escapeHtml(payload.ngayCapMoi)}</div>
+            <div><strong>Ngày hết hạn mới:</strong> ${escapeHtml(payload.ngayHetHanMoi)}</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 8%;">STT</th>
+                <th style="width: 32%;">Biển số xe</th>
+                <th style="width: 24%;">Ngày hết hạn cũ</th>
+                <th style="width: 36%;">Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+
+        elements.messageBox.hidden = true;
+        elements.preview.hidden = false;
+        elements.printButton.disabled = false;
+        elements.exportExcelButton.disabled = payload.danhSachXe.length === 0;
+      }
+
+      async function loadData(idHoSoBaoHiem) {
+        currentPayload = null;
+        elements.printButton.disabled = true;
+        elements.exportExcelButton.disabled = true;
+        elements.statusText.textContent = 'Đang tải hồ sơ đề nghị cấp bảo hiểm từ AppSheet...';
+        showMessage('Đang tải dữ liệu...', false);
+
+        try {
+          if (!idHoSoBaoHiem) throw new Error('Thiếu tham số ID_HoSoBaoHiem trên URL.');
+          const row = await fetchHoSo(idHoSoBaoHiem);
+          if (!row) throw new Error(`Không tìm thấy hồ sơ đề nghị cấp bảo hiểm với ID_HoSoBaoHiem = ${idHoSoBaoHiem}.`);
+
+          currentPayload = buildPayload(row);
+          elements.statusText.textContent = `Đã tải hồ sơ ${idHoSoBaoHiem}. Đang tải thông tin công ty bảo hiểm và danh sách xe...`;
+          renderPreview(currentPayload);
+          elements.relatedMessage.className = 'message loading';
+          elements.relatedMessage.textContent = 'Đã tải hồ sơ chính, đang tải thêm thông tin công ty bảo hiểm và danh sách xe...';
+          elements.relatedMessage.hidden = false;
+          elements.messageBox.hidden = true;
+
+          try {
+            const related = await fetchRelated(row);
+            currentPayload = buildPayload(row, related);
+            elements.statusText.textContent = `Đã tải hồ sơ ${idHoSoBaoHiem}.`;
+            if (currentPayload.soLuongXeChuaResolve > 0) {
+              elements.statusText.textContent += ` Có ${currentPayload.soLuongXeChuaResolve} xe chưa resolve được từ XE.`;
+            }
+            renderPreview(currentPayload);
+            elements.relatedMessage.hidden = true;
+          } catch (relatedError) {
+            elements.statusText.textContent = 'Đã tải hồ sơ chính, nhưng chưa tải được thông tin công ty bảo hiểm hoặc danh sách xe.';
+            elements.relatedMessage.className = 'message error';
+            elements.relatedMessage.textContent = 'Đã tải hồ sơ chính, nhưng chưa tải được thông tin công ty bảo hiểm hoặc danh sách xe.';
+            elements.relatedMessage.hidden = false;
+            console.error(relatedError);
+          }
+        } catch (error) {
+          elements.statusText.textContent = 'Không tải được hồ sơ đề nghị cấp bảo hiểm.';
+          showMessage(error.message || 'Không tải được hồ sơ đề nghị cấp bảo hiểm.', true);
+        }
+      }
+
+      async function exportExcel() {
+        if (!currentPayload) return;
+        if (!currentPayload.danhSachXe.length) {
+          showMessage('Không có dữ liệu để xuất Excel.', true);
+          return;
+        }
+
+        elements.exportExcelButton.disabled = true;
+        elements.exportExcelButton.textContent = 'Đang xuất...';
+        try {
+          const workbook = await buildExcelWorkbook(currentPayload);
+          const buffer = await workbook.xlsx.writeBuffer();
+          const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          saveAs(blob, `Danh_sach_xe_de_nghi_cap_bao_hiem_${sanitizeFileName(currentPayload.soHoSo || currentPayload.idHoSoBaoHiem)}.xlsx`);
+        } catch (error) {
+          showMessage(`Xuất Excel thất bại: ${error.message}`, true);
+        } finally {
+          elements.exportExcelButton.disabled = !currentPayload || !currentPayload.danhSachXe.length;
+          elements.exportExcelButton.textContent = 'Xuất Excel';
+        }
+      }
+
+      elements.exportExcelButton.addEventListener('click', exportExcel);
+
+      if (idHoSoBaoHiemFromUrl) {
+        loadData(idHoSoBaoHiemFromUrl);
+      } else {
+        showMessage('Thiếu tham số ID_HoSoBaoHiem trên URL.', true);
+        elements.statusText.textContent = 'Chưa có ID_HoSoBaoHiem để tải hồ sơ.';
+      }
+    </script>
+  </body>
+</html>

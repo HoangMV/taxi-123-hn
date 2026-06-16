@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, BookMarked, Car, FileText, GraduationCap, HandCoins, IdCard, ScrollText } from 'lucide-react';
+import { ArrowRight, BookMarked, Car, FileText, Gauge, GraduationCap, Landmark, HandCoins, IdCard, ScrollText, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -33,6 +33,27 @@ const actions = [
     path: config.ROUTES.DE_NGHI_DAO_TAO_LAI_XE_REACT,
     icon: GraduationCap,
     tone: 'bg-emerald-50 text-emerald-700'
+  },
+  {
+    title: 'Đề nghị cấp bảo hiểm',
+    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị cấp bảo hiểm từ hồ sơ AppSheet.',
+    path: config.ROUTES.DE_NGHI_CAP_BAO_HIEM_REACT,
+    icon: ShieldCheck,
+    tone: 'bg-sky-50 text-sky-700'
+  },
+  {
+    title: 'Đề nghị kiểm định taximet',
+    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị kiểm định taximet từ hồ sơ AppSheet.',
+    path: config.ROUTES.DE_NGHI_KIEM_DINH_TAXIMET_REACT,
+    icon: Gauge,
+    tone: 'bg-violet-50 text-violet-700'
+  },
+  {
+    title: 'Đề nghị thế chấp',
+    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị thế chấp từ hồ sơ AppSheet.',
+    path: config.ROUTES.DE_NGHI_THE_CHAP_REACT,
+    icon: Landmark,
+    tone: 'bg-amber-50 text-amber-700'
   },
   {
     title: 'Thu hồi GPKD',

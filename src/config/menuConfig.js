@@ -1,4 +1,4 @@
-import { BookMarked, Car, FileText, GraduationCap, HandCoins, IdCard, LayoutDashboard, ScrollText } from 'lucide-react';
+import { BookMarked, Car, FileText, Gauge, GraduationCap, Landmark, HandCoins, IdCard, LayoutDashboard, ScrollText, ShieldCheck } from 'lucide-react';
 import config from './config';
 
 export const menuSections = [
@@ -35,6 +35,24 @@ export const menuSections = [
         text: 'Đề nghị đào tạo lái xe',
         path: config.ROUTES.DE_NGHI_DAO_TAO_LAI_XE_REACT,
         icon: GraduationCap
+      },
+      {
+        id: 'de-nghi-cap-bao-hiem',
+        text: 'Đề nghị cấp bảo hiểm',
+        path: config.ROUTES.DE_NGHI_CAP_BAO_HIEM_REACT,
+        icon: ShieldCheck
+      },
+      {
+        id: 'de-nghi-kiem-dinh-taximet',
+        text: 'Đề nghị kiểm định taximet',
+        path: config.ROUTES.DE_NGHI_KIEM_DINH_TAXIMET_REACT,
+        icon: Gauge
+      },
+      {
+        id: 'de-nghi-the-chap',
+        text: 'Đề nghị thế chấp',
+        path: config.ROUTES.DE_NGHI_THE_CHAP_REACT,
+        icon: Landmark
       },
       {
         id: 'quyet-dinh-thu-hoi-gpkd',

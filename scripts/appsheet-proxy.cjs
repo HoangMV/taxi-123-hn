@@ -31,6 +31,7 @@ const accessKey = env.REACT_APP_ACCESS_KEY || '';
 const region = env.REACT_APP_REGION || 'www';
 const findCache = new Map();
 const findCacheTtlMs = 5 * 60 * 1000;
+const refSelectorBatchSize = 30;
 
 function sendJson(response, statusCode, data) {
   response.writeHead(statusCode, {
@@ -52,6 +53,14 @@ function escapeSelectorValue(value) {
 function getUniqueIds(ids) {
   const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
   return uniqueIds;
+}
+
+function chunkItems(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
 }
 
 function getDonViRefId(row) {
@@ -128,6 +137,7 @@ function getContentType(filePath) {
     '.json': 'application/json; charset=utf-8',
     '.png': 'image/png',
     '.ico': 'image/x-icon',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   }[ext] || 'application/octet-stream';
 }
@@ -221,7 +231,20 @@ function buildEqualsSelector(tableName, keyName, value) {
 }
 
 async function findRowsByIds(tableName, keyName, ids) {
-  const selector = buildRefSelector(tableName, keyName, ids);
+  const uniqueIds = getUniqueIds(ids);
+  if (uniqueIds.length === 0) return [];
+
+  if (uniqueIds.length > refSelectorBatchSize) {
+    const rowsByBatch = await Promise.all(
+      chunkItems(uniqueIds, refSelectorBatchSize).map((idBatch) => findAppSheetRows({
+        tableName,
+        selector: buildRefSelector(tableName, keyName, idBatch)
+      }))
+    );
+    return rowsByBatch.flat();
+  }
+
+  const selector = buildRefSelector(tableName, keyName, uniqueIds);
   if (!selector) return [];
 
   return findAppSheetRows({
@@ -416,6 +439,292 @@ async function handleDeNghiDaoTaoLaiXeBundle(request, response, url) {
   } catch (error) {
     sendJson(response, 500, {
       error: error.message || 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c d\u1eef li\u1ec7u \u0111\u1ec1 ngh\u1ecb \u0111\u00e0o t\u1ea1o l\u00e1i xe.'
+    });
+  }
+}
+
+async function handleDeNghiCapBaoHiemBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idHoSoBaoHiem = cleanValue(
+      url.searchParams.get('ID_HoSoBaoHiem') ||
+      url.searchParams.get('idHoSoBaoHiem') ||
+      body.ID_HoSoBaoHiem ||
+      body.idHoSoBaoHiem
+    );
+    const includeRelated = cleanValue(url.searchParams.get('includeRelated') || body.includeRelated || '1') !== '0';
+
+    if (!idHoSoBaoHiem) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_HoSoBaoHiem.' });
+      return;
+    }
+
+    const providedRow =
+      body.row &&
+      typeof body.row === 'object' &&
+      cleanValue(body.row.ID_HoSoBaoHiem) === idHoSoBaoHiem
+        ? body.row
+        : null;
+    const rows = providedRow
+      ? []
+      : await findAppSheetRows({
+          tableName: 'HS_DE_NGHI_BAOHIEM',
+          selector: buildEqualsSelector('HS_DE_NGHI_BAOHIEM', 'ID_HoSoBaoHiem', idHoSoBaoHiem)
+        });
+    const row = providedRow || rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Không tìm thấy hồ sơ đề nghị cấp bảo hiểm với ID_HoSoBaoHiem = ${idHoSoBaoHiem}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, { row, related: {} });
+      return;
+    }
+
+    const chiTietPromise = findAppSheetRows({
+      tableName: 'CT_HS_DE_NGHI_BAOHIEM',
+      selector: buildEqualsSelector('CT_HS_DE_NGHI_BAOHIEM', 'Ref_HoSoBaoHiem', row.ID_HoSoBaoHiem)
+    });
+    const congTyBaoHiemPromise = findRowsByIds('DM_CTY_BAOHIEM', 'ID_CongTyBaoHiem', [row.Ref_CongTyBaoHiem]);
+    const chiTietRows = await chiTietPromise;
+    const xePromise = findRowsByIds(
+      'XE',
+      'ID_Xe',
+      chiTietRows.map((item) => item.Ref_Xe)
+    );
+    let [congTyBaoHiemRows, xeRows] = await Promise.all([congTyBaoHiemPromise, xePromise]);
+    if (congTyBaoHiemRows.length === 0 && cleanValue(row.Ref_CongTyBaoHiem)) {
+      congTyBaoHiemRows = await findAppSheetRows({
+        tableName: 'DM_CTY_BAOHIEM'
+      });
+    }
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        HS_DE_NGHI_BAOHIEM: [row],
+        CT_HS_DE_NGHI_BAOHIEM: chiTietRows,
+        DM_CTY_BAOHIEM: congTyBaoHiemRows,
+        XE: xeRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu đề nghị cấp bảo hiểm.'
+    });
+  }
+}
+
+async function handleDeNghiKiemDinhTaximetBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idHoSoTaximet = cleanValue(
+      url.searchParams.get('ID_HoSoTaximet') ||
+      url.searchParams.get('idHoSoTaximet') ||
+      body.ID_HoSoTaximet ||
+      body.idHoSoTaximet
+    );
+    const includeRelated = cleanValue(url.searchParams.get('includeRelated') || body.includeRelated || '1') !== '0';
+
+    if (!idHoSoTaximet) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_HoSoTaximet.' });
+      return;
+    }
+
+    const providedRow =
+      body.row &&
+      typeof body.row === 'object' &&
+      cleanValue(body.row.ID_HoSoTaximet) === idHoSoTaximet
+        ? body.row
+        : null;
+    const rows = providedRow
+      ? []
+      : await findAppSheetRows({
+          tableName: 'HS_DE_NGHI_KIEMDINH_TAXIMET',
+          selector: buildEqualsSelector('HS_DE_NGHI_KIEMDINH_TAXIMET', 'ID_HoSoTaximet', idHoSoTaximet)
+        });
+    const row = providedRow || rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: `Không tìm thấy hồ sơ đề nghị kiểm định taximet với ID_HoSoTaximet = ${idHoSoTaximet}.`
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, { row, related: {} });
+      return;
+    }
+
+    const chiTietPromise = findAppSheetRows({
+      tableName: 'CT_HS_KIEMDINH_TAXIMET',
+      selector: buildEqualsSelector('CT_HS_KIEMDINH_TAXIMET', 'Ref_HoSoTaximet', row.ID_HoSoTaximet)
+    });
+    const donViPromise = findRowsByIds('DM_CQKD_TAXIMET', 'ID_CQKD', [row.Ref_DonViKiemDinh]);
+    const chiTietRows = await chiTietPromise;
+    const xePromise = findRowsByIds(
+      'XE',
+      'ID_Xe',
+      chiTietRows.map((item) => item.Ref_Xe)
+    );
+    let [donViRows, xeRows] = await Promise.all([donViPromise, xePromise]);
+    if (donViRows.length === 0 && cleanValue(row.Ref_DonViKiemDinh)) {
+      donViRows = await findAppSheetRows({
+        tableName: 'DM_CQKD_TAXIMET'
+      });
+    }
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        HS_DE_NGHI_KIEMDINH_TAXIMET: [row],
+        CT_HS_KIEMDINH_TAXIMET: chiTietRows,
+        DM_CQKD_TAXIMET: donViRows,
+        XE: xeRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu đề nghị kiểm định taximet.'
+    });
+  }
+}
+
+function getTheChapDonViIds(xeRows) {
+  return getUniqueIds(
+    (Array.isArray(xeRows) ? xeRows : []).flatMap((xe) => [xe.Ref_DonViQuanLyHienTai, xe.Ref_DonViChuQuan])
+  );
+}
+
+async function handleDeNghiTheChapBundle(request, response, url) {
+  if (!appId || !accessKey || !region) {
+    sendJson(response, 500, {
+      error: 'Thiếu cấu hình AppSheet trong .env của backend proxy.'
+    });
+    return;
+  }
+
+  try {
+    const body = request.method === 'POST' ? await readJson(request) : {};
+    const idHoSoTheChap = cleanValue(
+      url.searchParams.get('ID_HoSoTheChap') ||
+      url.searchParams.get('idHoSoTheChap') ||
+      body.ID_HoSoTheChap ||
+      body.idHoSoTheChap
+    );
+    const includeRelated = cleanValue(url.searchParams.get('includeRelated') || body.includeRelated || '1') !== '0';
+    const includeVisibleRefs = cleanValue(url.searchParams.get('includeVisibleRefs') || body.includeVisibleRefs || '1') !== '0';
+    const includeHiddenRefs = cleanValue(url.searchParams.get('includeHiddenRefs') || body.includeHiddenRefs || '1') !== '0';
+
+    if (!idHoSoTheChap) {
+      sendJson(response, 400, { error: 'Thiếu tham số ID_HoSoTheChap.' });
+      return;
+    }
+
+    const providedRow =
+      body.row &&
+      typeof body.row === 'object' &&
+      cleanValue(body.row.ID_HoSoTheChap) === idHoSoTheChap
+        ? body.row
+        : null;
+    const rows = providedRow
+      ? []
+      : await findAppSheetRows({
+          tableName: 'XE_THECHAP_HOSO',
+          selector: buildEqualsSelector('XE_THECHAP_HOSO', 'ID_HoSoTheChap', idHoSoTheChap)
+        });
+    const row = providedRow || rows[0] || null;
+
+    if (!row) {
+      sendJson(response, 404, {
+        error: 'Không tìm thấy hồ sơ đề nghị thế chấp với ID_HoSoTheChap = ' + idHoSoTheChap + '.'
+      });
+      return;
+    }
+
+    if (!includeRelated) {
+      sendJson(response, 200, { row, related: {} });
+      return;
+    }
+
+    const chiTietRows = Array.isArray(body.chiTietRows)
+      ? body.chiTietRows
+      : await findAppSheetRows({
+          tableName: 'XE_THECHAP_HOSO_CHITIET',
+          selector: buildEqualsSelector('XE_THECHAP_HOSO_CHITIET', 'Ref_HoSoTheChap', row.ID_HoSoTheChap)
+        });
+
+    if (!includeVisibleRefs) {
+      sendJson(response, 200, {
+        row,
+        related: {
+          XE_THECHAP_HOSO: [row],
+          XE_THECHAP_HOSO_CHITIET: chiTietRows,
+          XE_THECHAP_NGANHANG: [],
+          DM_NGANHANG: [],
+          XE: [],
+          DONVI: [],
+          NHANSU: []
+        }
+      });
+      return;
+    }
+
+    const xeIds = chiTietRows.map((item) => item.Ref_Xe);
+    const nganHangIds = [row.Ref_NganHang, ...chiTietRows.map((item) => item.Ref_NganHangMoi)];
+
+    const [xeRows, nganHangRows] = await Promise.all([
+      findRowsByIds('XE', 'ID_Xe', xeIds),
+      findRowsByIds('DM_NGANHANG', 'ID_NganHang', nganHangIds)
+    ]);
+
+    let theChapRows = [];
+    let donViRows = [];
+    let nhanSuRows = [];
+
+    if (includeHiddenRefs) {
+      const theChapIds = chiTietRows.map((item) => item.Ref_XeTheChapNganHang);
+      [theChapRows, donViRows, nhanSuRows] = await Promise.all([
+        findRowsByIds('XE_THECHAP_NGANHANG', 'ID_TheChap', theChapIds),
+        findRowsByIds('DONVI', 'ID_DonVi', getTheChapDonViIds(xeRows)),
+        findRowsByIds('NHANSU', 'Ref_XeHienTai', xeIds)
+      ]);
+    }
+
+    sendJson(response, 200, {
+      row,
+      related: {
+        XE_THECHAP_HOSO: [row],
+        XE_THECHAP_HOSO_CHITIET: chiTietRows,
+        XE_THECHAP_NGANHANG: theChapRows,
+        DM_NGANHANG: nganHangRows,
+        XE: xeRows,
+        DONVI: donViRows,
+        NHANSU: nhanSuRows
+      }
+    });
+  } catch (error) {
+    sendJson(response, 500, {
+      error: error.message || 'Không tải được dữ liệu đề nghị thế chấp.'
     });
   }
 }
@@ -964,6 +1273,34 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleDeNghiDaoTaoLaiXeBundle(request, response, url);
+    return;
+  }
+
+  if (url.pathname === '/api/de-nghi-cap-bao-hiem') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleDeNghiCapBaoHiemBundle(request, response, url);
+    return;
+  }
+
+  if (url.pathname === '/api/de-nghi-kiem-dinh-taximet') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleDeNghiKiemDinhTaximetBundle(request, response, url);
+    return;
+  }
+
+
+  if (url.pathname === '/api/de-nghi-the-chap') {
+    if (request.method !== 'GET' && request.method !== 'POST') {
+      sendJson(response, 405, { error: 'Chỉ hỗ trợ phương thức GET hoặc POST.' });
+      return;
+    }
+    await handleDeNghiTheChapBundle(request, response, url);
     return;
   }
 

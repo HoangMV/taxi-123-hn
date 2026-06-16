@@ -4,6 +4,9 @@ import config from '../config/config';
 import BanGiaoXePage from '../pages/BanGiaoXePage';
 import BanGiaoSoBHXHPage from '../pages/BanGiaoSoBHXHPage';
 import ChamDutHopDongLaoDongPage from '../pages/ChamDutHopDongLaoDongPage';
+import DeNghiCapBaoHiemPage from '../pages/DeNghiCapBaoHiemPage';
+import DeNghiKiemDinhTaximetPage from '../pages/DeNghiKiemDinhTaximetPage';
+import DeNghiTheChapPage from '../pages/DeNghiTheChapPage';
 import DeNghiDaoTaoLaiXePage from '../pages/DeNghiDaoTaoLaiXePage';
 import DeNghiCapPhuHieuXePage from '../pages/DeNghiCapPhuHieuXePage';
 import DashboardPage from '../pages/DashboardPage';
@@ -22,6 +25,9 @@ export const appRoutes = [
   { path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT, element: <DeNghiCapPhuHieuXePage /> },
   { path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT, element: <ThongBaoNgungPhuHieuPage /> },
   { path: config.ROUTES.DE_NGHI_DAO_TAO_LAI_XE_REACT, element: <DeNghiDaoTaoLaiXePage /> },
+  { path: config.ROUTES.DE_NGHI_CAP_BAO_HIEM_REACT, element: <DeNghiCapBaoHiemPage /> },
+  { path: config.ROUTES.DE_NGHI_KIEM_DINH_TAXIMET_REACT, element: <DeNghiKiemDinhTaximetPage /> },
+  { path: config.ROUTES.DE_NGHI_THE_CHAP_REACT, element: <DeNghiTheChapPage /> },
   { path: config.ROUTES.QUYET_DINH_THU_HOI_GPKD_REACT, element: <QuyetDinhThuHoiGPKDPage /> },
   { path: config.ROUTES.BAN_GIAO_XE_REACT, element: <BanGiaoXePage /> },
   { path: config.ROUTES.KY_QUY_LAI_XE_REACT, element: <KyQuyLaiXePage /> },
