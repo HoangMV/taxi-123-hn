@@ -128,7 +128,10 @@ export async function fetchDeNghiTheChapBundleRelated(row) {
 
   const params = new URLSearchParams({
     ID_HoSoTheChap: idHoSoTheChap,
-    includeHiddenRefs: '1'
+    includeHiddenRefs: '1',
+    includeBankRefs: '0',
+    includeLoanStatusRefs: '1',
+    includeOwnerRefs: '0'
   });
   const response = await fetch('/api/de-nghi-the-chap?' + params.toString(), {
     method: 'POST',
@@ -139,6 +142,9 @@ export async function fetchDeNghiTheChapBundleRelated(row) {
     body: JSON.stringify({
       ID_HoSoTheChap: idHoSoTheChap,
       includeHiddenRefs: '1',
+      includeBankRefs: '0',
+      includeLoanStatusRefs: '1',
+      includeOwnerRefs: '0',
       row
     })
   });
@@ -214,7 +220,10 @@ export async function fetchDeNghiTheChapBundleVisibleRefs(row, chiTietRows = [])
 
   const params = new URLSearchParams({
     ID_HoSoTheChap: idHoSoTheChap,
-    includeHiddenRefs: '1'
+    includeHiddenRefs: '1',
+    includeBankRefs: '0',
+    includeLoanStatusRefs: '1',
+    includeOwnerRefs: '0'
   });
   const response = await fetch('/api/de-nghi-the-chap?' + params.toString(), {
     method: 'POST',
@@ -225,6 +234,9 @@ export async function fetchDeNghiTheChapBundleVisibleRefs(row, chiTietRows = [])
     body: JSON.stringify({
       ID_HoSoTheChap: idHoSoTheChap,
       includeHiddenRefs: '1',
+      includeBankRefs: '0',
+      includeLoanStatusRefs: '1',
+      includeOwnerRefs: '0',
       row,
       chiTietRows
     })
@@ -308,7 +320,7 @@ export function buildDeNghiTheChapPayload(row, relatedData = {}) {
     danhSachXe,
     soLuongXe: danhSachXe.length,
     soLuongXeChuaResolve: danhSachXe.filter((item) => !item.daResolveXe).length,
-    soLuongNganHangChuaResolve: danhSachXe.filter((item) => !item.daResolveNganHang).length
+    soLuongNganHangChuaResolve: 0
   };
 }
 

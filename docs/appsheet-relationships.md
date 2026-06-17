@@ -163,9 +163,9 @@ Khi render giao diện, HTML standalone hoặc xuất Excel danh sách xe đề 
 | --- | --- | --- | --- | --- |
 | `XE_THECHAP_HOSO_CHITIET` | `Ref_HoSoTheChap` | `XE_THECHAP_HOSO` | `ID_HoSoTheChap` | Dùng để lọc danh sách chi tiết của hồ sơ thế chấp |
 | `XE_THECHAP_HOSO_CHITIET` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, dự phòng `Display` |
-| `XE_THECHAP_HOSO_CHITIET` | `Ref_NganHangMoi` | `DM_NGANHANG` | `ID_NganHang` | `TenNganHang`, dự phòng `TenVietTat`, `Display` |
-| `XE_THECHAP_HOSO_CHITIET` | `Ref_XeTheChapNganHang` | `XE_THECHAP_NGANHANG` | `ID_TheChap` | Dùng để đối chiếu bản ghi thế chấp hiện tại, không hiển thị mã Ref |
-| `XE` | `Ref_DonViQuanLyHienTai`, `Ref_DonViChuQuan` | `DONVI` | `ID_DonVi` | Resolve ẩn để không đưa mã đơn vị ra nội dung người dùng đọc |
-| `NHANSU` | `Ref_XeHienTai` | `XE` | `ID_Xe` | Resolve ẩn tài xế hiện tại theo xe, không thêm cột ngoài mẫu |
+| `XE_THECHAP_HOSO_CHITIET` | `Ref_NganHangMoi` | `DM_NGANHANG` | `ID_NganHang` | Chỉ gọi khi cần mẫu cũ có tên ngân hàng; mẫu báo cáo hết hạn mới không hiển thị ngân hàng |
+| `XE_THECHAP_HOSO_CHITIET` | `Ref_XeTheChapNganHang` | `XE_THECHAP_NGANHANG` | `ID_TheChap` | Lấy `TrangThaiKhoanVay`, không hiển thị mã Ref |
+| `XE` | `Ref_DonViQuanLyHienTai`, `Ref_DonViChuQuan` | `DONVI` | `ID_DonVi` | Chỉ gọi khi nghiệp vụ cũ cần thông tin đơn vị, mẫu báo cáo hết hạn mới không cần |
+| `NHANSU` | `Ref_XeHienTai` | `XE` | `ID_Xe` | Chỉ gọi khi nghiệp vụ cũ cần tài xế hiện tại, mẫu báo cáo hết hạn mới không cần |
 
-Khi render giao diện, HTML standalone hoặc xuất Excel danh sách xe đề nghị thế chấp, không hiển thị trực tiếp `Ref_HoSoTheChap`, `Ref_Xe`, `Ref_NganHangMoi`, `Ref_XeTheChapNganHang`, `Ref_DonViQuanLyHienTai`, `Ref_DonViChuQuan` hoặc `Ref_XeHienTai`. Danh sách Excel chỉ dùng 5 cột người dùng đọc: `STT`, `Biển số xe`, `Ngày hết hạn`, `Ngân hàng thế chấp`, `Ghi chú`. Cột `Ngày hết hạn` lấy từ `XE_THECHAP_HOSO_CHITIET.HanTheChapCu`; cột `Ngân hàng thế chấp` lấy từ `XE_THECHAP_HOSO_CHITIET.Ref_NganHangMoi -> DM_NGANHANG.ID_NganHang`.
+Khi render giao diện, HTML standalone hoặc xuất Excel danh sách xe đề nghị thế chấp, không hiển thị trực tiếp `Ref_HoSoTheChap`, `Ref_Xe`, `Ref_NganHangMoi`, `Ref_XeTheChapNganHang`, `Ref_DonViQuanLyHienTai`, `Ref_DonViChuQuan` hoặc `Ref_XeHienTai`. Mẫu báo cáo hết hạn thế chấp mới dùng 15 cột người dùng đọc: `STT`, `BIỂN SỐ`, `MÃ ĐÀM`, `TRẠNG THÁI KHOAN VAY`, `THỜI HẠN`, `SỐ ĐĂNG KÝ`, `SỐ KHUNG`, `SỐ MÁY`, `NHÃN HIỆU`, `NĂM SX`, `SỐ CHỖ`, `NƯỚC SX`, `NGÀY ĐĂNG KÝ XE LẦN ĐẦU`, `TÊN ĐĂNG KÝ XE`, `GHI CHÚ`. Cột `THỜI HẠN` lấy từ `XE_THECHAP_HOSO_CHITIET.HanTheChapCu`, cột `TRẠNG THÁI KHOAN VAY` lấy từ `XE_THECHAP_NGANHANG.TrangThaiKhoanVay`, các thông tin xe còn lại lấy từ bảng `XE`. Với mẫu mới, request frontend nên chỉ resolve `XE` và `XE_THECHAP_NGANHANG`; không gọi `DM_NGANHANG`, `DONVI`, `NHANSU` nếu không có nhu cầu khác.

@@ -257,7 +257,7 @@
       </section>
 
       <div class="message" id="messageBox" hidden></div>
-      <div class="message loading" id="relatedMessage" hidden>Đã tải hồ sơ chính, đang tải thêm thông tin ngân hàng thế chấp và danh sách xe...</div>
+      <div class="message loading" id="relatedMessage" hidden>Đã tải hồ sơ chính, đang tải thêm thông tin xe và trạng thái khoản vay...</div>
       <section class="preview" id="preview" hidden>
         <article class="page" id="documentPage"></article>
       </section>
@@ -389,12 +389,18 @@
         const includeVisibleRefs = options.includeVisibleRefs !== false;
         const query = new URLSearchParams({
           ID_HoSoTheChap: idHoSoTheChap,
-          includeHiddenRefs: includeVisibleRefs ? '1' : '0'
+          includeHiddenRefs: includeVisibleRefs ? '1' : '0',
+          includeBankRefs: '0',
+          includeLoanStatusRefs: includeVisibleRefs ? '1' : '0',
+          includeOwnerRefs: '0'
         });
         if (!includeVisibleRefs) query.set('includeVisibleRefs', '0');
         const body = {
           ID_HoSoTheChap: idHoSoTheChap,
           includeHiddenRefs: includeVisibleRefs ? '1' : '0',
+          includeBankRefs: '0',
+          includeLoanStatusRefs: includeVisibleRefs ? '1' : '0',
+          includeOwnerRefs: '0',
           row
         };
         if (!includeVisibleRefs) body.includeVisibleRefs = '0';
@@ -465,7 +471,7 @@
           danhSachXe,
           soLuongXe: danhSachXe.length,
           soLuongXeChuaResolve: danhSachXe.filter((item) => !item.daResolveXe).length,
-          soLuongNganHangChuaResolve: danhSachXe.filter((item) => !item.daResolveNganHang).length
+          soLuongNganHangChuaResolve: 0
         };
       }
 
@@ -662,7 +668,7 @@
             const details = await fetchRelated(row, { includeVisibleRefs: false });
             currentPayload = buildPayload(row, details);
             renderPreview(currentPayload);
-            elements.relatedMessage.textContent = 'Đang tải thêm biển số xe và ngân hàng thế chấp...';
+            elements.relatedMessage.textContent = 'Đang tải thêm thông tin xe và trạng thái khoản vay...';
 
             const related = await fetchRelated(row, { chiTietRows: details.chiTietRows });
             currentPayload = buildPayload(row, related);
@@ -670,15 +676,12 @@
             if (currentPayload.soLuongXeChuaResolve > 0) {
               elements.statusText.textContent += ` Có ${currentPayload.soLuongXeChuaResolve} xe chưa resolve được từ XE.`;
             }
-            if (currentPayload.soLuongNganHangChuaResolve > 0) {
-              elements.statusText.textContent += ` Có ${currentPayload.soLuongNganHangChuaResolve} dòng chưa resolve được ngân hàng.`;
-            }
             renderPreview(currentPayload);
             elements.relatedMessage.hidden = true;
           } catch (relatedError) {
-            elements.statusText.textContent = 'Đã tải hồ sơ chính, nhưng chưa tải được thông tin ngân hàng thế chấp hoặc danh sách xe.';
+            elements.statusText.textContent = 'Đã tải hồ sơ chính, nhưng chưa tải được thông tin xe hoặc trạng thái khoản vay.';
             elements.relatedMessage.className = 'message error';
-            elements.relatedMessage.textContent = 'Đã tải hồ sơ chính, nhưng chưa tải được thông tin ngân hàng thế chấp hoặc danh sách xe.';
+            elements.relatedMessage.textContent = 'Đã tải hồ sơ chính, nhưng chưa tải được thông tin xe hoặc trạng thái khoản vay.';
             elements.relatedMessage.hidden = false;
             console.error(relatedError);
           }

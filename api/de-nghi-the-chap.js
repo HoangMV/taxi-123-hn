@@ -143,6 +143,9 @@ module.exports = async function handler(request, response) {
     const includeRelated = cleanValue(request.query?.includeRelated || request.body?.includeRelated || '1') !== '0';
     const includeVisibleRefs = cleanValue(request.query?.includeVisibleRefs || request.body?.includeVisibleRefs || '1') !== '0';
     const includeHiddenRefs = cleanValue(request.query?.includeHiddenRefs || request.body?.includeHiddenRefs || '1') !== '0';
+    const includeBankRefs = cleanValue(request.query?.includeBankRefs || request.body?.includeBankRefs || '1') !== '0';
+    const includeLoanStatusRefs = cleanValue(request.query?.includeLoanStatusRefs || request.body?.includeLoanStatusRefs || (includeHiddenRefs ? '1' : '0')) !== '0';
+    const includeOwnerRefs = cleanValue(request.query?.includeOwnerRefs || request.body?.includeOwnerRefs || (includeHiddenRefs ? '1' : '0')) !== '0';
 
     if (!idHoSoTheChap) {
       sendJson(response, 400, { error: 'Thiếu tham số ID_HoSoTheChap.' });
@@ -203,20 +206,19 @@ module.exports = async function handler(request, response) {
 
     const xeIds = chiTietRows.map((item) => item.Ref_Xe);
     const nganHangIds = [row.Ref_NganHang, ...chiTietRows.map((item) => item.Ref_NganHangMoi)];
+    const theChapIds = chiTietRows.map((item) => item.Ref_XeTheChapNganHang);
 
-    const [xeRows, nganHangRows] = await Promise.all([
+    const [xeRows, nganHangRows, theChapRows] = await Promise.all([
       findRowsByIds(config, 'XE', 'ID_Xe', xeIds),
-      findRowsByIds(config, 'DM_NGANHANG', 'ID_NganHang', nganHangIds)
+      includeBankRefs ? findRowsByIds(config, 'DM_NGANHANG', 'ID_NganHang', nganHangIds) : Promise.resolve([]),
+      includeLoanStatusRefs ? findRowsByIds(config, 'XE_THECHAP_NGANHANG', 'ID_TheChap', theChapIds) : Promise.resolve([])
     ]);
 
-    let theChapRows = [];
     let donViRows = [];
     let nhanSuRows = [];
 
-    if (includeHiddenRefs) {
-      const theChapIds = chiTietRows.map((item) => item.Ref_XeTheChapNganHang);
-      [theChapRows, donViRows, nhanSuRows] = await Promise.all([
-        findRowsByIds(config, 'XE_THECHAP_NGANHANG', 'ID_TheChap', theChapIds),
+    if (includeOwnerRefs) {
+      [donViRows, nhanSuRows] = await Promise.all([
         findRowsByIds(config, 'DONVI', 'ID_DonVi', getXeDonViIds(xeRows)),
         findRowsByIds(config, 'NHANSU', 'Ref_XeHienTai', xeIds)
       ]);
