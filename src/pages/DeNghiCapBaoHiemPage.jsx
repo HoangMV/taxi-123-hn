@@ -18,12 +18,11 @@ import {
 const previewStyles = `
   @page { size: A4 landscape; margin: 1.2cm; }
   .dncbh-actions { print-color-adjust: exact; }
-  .dncbh-page { box-sizing: border-box; width: 29.7cm; min-height: 21cm; margin: 0 auto; padding: 1.2cm; background: #fff; color: #000; font-family: "Times New Roman", Times, serif; font-size: 13pt; line-height: 1.35; }
-  .dncbh-title { margin: 0 0 12px; font-size: 16pt; font-weight: 700; text-transform: uppercase; }
-  .dncbh-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 18px; margin-bottom: 12px; font-size: 12.5pt; }
+  .dncbh-page { box-sizing: border-box; width: 29.7cm; min-height: 21cm; margin: 0 auto; padding: 0.7cm; background: #fff; color: #000; font-family: "Times New Roman", Times, serif; font-size: 9.5pt; line-height: 1.2; }
+  .dncbh-title { margin: 0 0 10px; font-size: 14pt; font-weight: 700; text-align: center; text-transform: uppercase; }
   .dncbh-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  .dncbh-table th, .dncbh-table td { border: 1px solid #000; padding: 5px 6px; vertical-align: middle; font-size: 12pt; }
-  .dncbh-table th { text-align: center; font-weight: 700; }
+  .dncbh-table th, .dncbh-table td { border: 1px solid #000; padding: 3px 4px; vertical-align: middle; font-size: 8.5pt; }
+  .dncbh-table th { background: #ffff00; text-align: center; font-weight: 700; }
   .dncbh-table td { text-align: center; }
   .dncbh-table td.left { text-align: left; }
   @media print {
@@ -53,10 +52,20 @@ function VehicleTable({ payload }) {
     <table className="dncbh-table">
       <thead>
         <tr>
-          <th className="w-[8%]">STT</th>
-          <th className="w-[32%]">Biển số xe</th>
-          <th className="w-[24%]">Ngày hết hạn cũ</th>
-          <th className="w-[36%]">Ghi chú</th>
+          <th style={{ width: '4%' }}>STT</th>
+          <th style={{ width: '6.5%' }}>BIỂN SỐ</th>
+          <th style={{ width: '5%' }}>MÃ ĐÀM</th>
+          <th style={{ width: '8%' }}>LOẠI BẢO HIỂM</th>
+          <th style={{ width: '7.5%' }}>THỜI HẠN</th>
+          <th style={{ width: '7%' }}>SỐ ĐĂNG KÝ</th>
+          <th style={{ width: '11%' }}>SỐ KHUNG</th>
+          <th style={{ width: '9.5%' }}>SỐ MÁY</th>
+          <th style={{ width: '9.5%' }}>NHÃN HIỆU</th>
+          <th style={{ width: '4.8%' }}>NĂM SX</th>
+          <th style={{ width: '4.4%' }}>SỐ CHỖ</th>
+          <th style={{ width: '5.8%' }}>NƯỚC SX</th>
+          <th style={{ width: '8.5%' }}>NGÀY ĐĂNG KÝ XE LẦN ĐẦU</th>
+          <th style={{ width: '8.5%' }}>TÊN ĐĂNG KÝ XE</th>
         </tr>
       </thead>
       <tbody>
@@ -65,13 +74,23 @@ function VehicleTable({ payload }) {
             <tr key={`${item.stt}-${item.bienSo || 'xe'}`}>
               <td>{item.stt}</td>
               <td>{item.bienSo}</td>
-              <td>{item.ngayHetHanCu}</td>
-              <td className="left">{item.ghiChu}</td>
+              <td>{item.maDam}</td>
+              <td>{item.loaiBaoHiem}</td>
+              <td>{item.thoiHan}</td>
+              <td>{item.soDangKy}</td>
+              <td className="left">{item.soKhung}</td>
+              <td className="left">{item.soMay}</td>
+              <td className="left">{item.nhanHieu}</td>
+              <td>{item.namSanXuat}</td>
+              <td>{item.soCho}</td>
+              <td>{item.nuocSanXuat}</td>
+              <td>{item.ngayDangKyLanDau}</td>
+              <td className="left">{item.tenDangKyXe}</td>
             </tr>
           ))
         ) : (
           <tr>
-            <td colSpan={4} className="left">Hồ sơ này chưa có xe đề nghị cấp bảo hiểm.</td>
+            <td colSpan={14} className="left">Hồ sơ này chưa có xe đề nghị cấp bảo hiểm.</td>
           </tr>
         )}
       </tbody>
@@ -324,15 +343,7 @@ const DeNghiCapBaoHiemPage = () => {
 
           <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-slate-100/80 p-3 shadow-sm">
             <article className="dncbh-page">
-              <h2 className="dncbh-title">TÊN CÔNG TY BẢO HIỂM: {payload.tenCongTyBaoHiem}</h2>
-              <div className="dncbh-meta">
-                <div><strong>Số hồ sơ:</strong> {payload.soHoSo}</div>
-                <div><strong>Ngày lập:</strong> {payload.ngayLapText}</div>
-                <div><strong>Trạng thái:</strong> {payload.trangThaiHoSo}</div>
-                <div><strong>Loại bảo hiểm:</strong> {payload.loaiBaoHiem}</div>
-                <div><strong>Ngày cấp mới:</strong> {payload.ngayCapMoi}</div>
-                <div><strong>Ngày hết hạn mới:</strong> {payload.ngayHetHanMoi}</div>
-              </div>
+              <h2 className="dncbh-title">{payload.tieuDeBaoCao}</h2>
               <VehicleTable payload={payload} />
             </article>
           </div>

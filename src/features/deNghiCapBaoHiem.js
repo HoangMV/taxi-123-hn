@@ -1,6 +1,9 @@
 import { formatAdministrativeDate, formatAdministrativeDateString } from '../lib/dateFormat';
 
-export const DE_NGHI_CAP_BAO_HIEM_EXCEL_TEMPLATE_URL = '/de_nghi_cap_bao_hiem_template.xlsx?v=20260615';
+export const DE_NGHI_CAP_BAO_HIEM_EXCEL_TEMPLATE_URL = '/de_nghi_cap_bao_hiem_template.xlsx?v=20260616';
+
+const BAO_HIEM_REPORT_BASE_TITLE = 'DANH SÁCH XE HẾT HẠN BẢO HIỂM';
+const BAO_HIEM_REPORT_COLUMNS = 14;
 
 export function getDeNghiCapBaoHiemIdFromSearch(search) {
   const params = new URLSearchParams(search || '');
@@ -44,6 +47,21 @@ function findCongTyBaoHiemByReference(refValue, congTyBaoHiemById, congTyBaoHiem
 function getXeBienSo(xe) {
   if (!xe) return '';
   return cleanValue(xe.BienSo) || cleanValue(xe.Display) || '';
+}
+
+function getReportMonthYear(chiTietRows) {
+  const firstDateRow = (Array.isArray(chiTietRows) ? chiTietRows : []).find((row) => {
+    const date = formatAdministrativeDate(row?.NgayHetHanCu);
+    return date.month && date.year;
+  });
+  const date = formatAdministrativeDate(firstDateRow?.NgayHetHanCu);
+  if (!date.month || !date.year) return '';
+  return `${date.month}/${date.year}`;
+}
+
+function buildReportTitle(monthYear) {
+  const cleanMonthYear = cleanValue(monthYear);
+  return cleanMonthYear ? `${BAO_HIEM_REPORT_BASE_TITLE} THÁNG ${cleanMonthYear}` : BAO_HIEM_REPORT_BASE_TITLE;
 }
 
 function cloneStyle(style) {
@@ -143,8 +161,18 @@ function buildBaoHiemItems(chiTietRows, xeById) {
     return {
       stt: String(index + 1),
       bienSo: getXeBienSo(xe),
-      ngayHetHanCu: formatAdministrativeDateString(row?.NgayHetHanCu),
-      ghiChu: cleanValue(row?.GhiChu),
+      maDam: xe ? cleanValue(xe.MaDam) : '',
+      loaiBaoHiem: cleanValue(row?.LoaiBaoHiem),
+      thoiHan: formatAdministrativeDateString(row?.NgayHetHanCu),
+      soDangKy: xe ? cleanValue(xe.SoGCNDangKyXe) : '',
+      soKhung: xe ? cleanValue(xe.SoKhung) : '',
+      soMay: xe ? cleanValue(xe.SoMay) : '',
+      nhanHieu: xe ? cleanValue(xe.NhanHieu) : '',
+      namSanXuat: xe ? cleanValue(xe.NamSanXuat) : '',
+      soCho: xe ? cleanValue(xe.SoCho) : '',
+      nuocSanXuat: xe ? cleanValue(xe.NuocSX) : '',
+      ngayDangKyLanDau: xe ? formatAdministrativeDateString(xe.NgayDangKyXeLanDau) : '',
+      tenDangKyXe: xe ? cleanValue(xe.TenDangKyXe) : '',
       daResolveXe: Boolean(xe)
     };
   });
@@ -158,6 +186,7 @@ export function buildDeNghiCapBaoHiemPayload(row, relatedData = {}) {
   const congTyBaoHiem = findCongTyBaoHiemByReference(row?.Ref_CongTyBaoHiem, congTyBaoHiemById, congTyBaoHiemRows);
   const tenCongTyBaoHiem = getCongTyBaoHiemDisplayName(congTyBaoHiem);
   const danhSachXe = buildBaoHiemItems(chiTietRows, xeById);
+  const thangNamBaoCao = getReportMonthYear(chiTietRows);
 
   return {
     raw: row,
@@ -174,6 +203,8 @@ export function buildDeNghiCapBaoHiemPayload(row, relatedData = {}) {
     diaChiCongTyBaoHiem: cleanValue(congTyBaoHiem?.DiaChi),
     nguoiDaiDienCongTyBaoHiem: cleanValue(congTyBaoHiem?.NguoiDaiDien),
     chucVuNguoiDaiDien: cleanValue(congTyBaoHiem?.ChucVuNguoiDaiDien),
+    thangNamBaoCao,
+    tieuDeBaoCao: buildReportTitle(thangNamBaoCao),
     danhSachXe,
     soLuongXe: danhSachXe.length,
     soLuongXeChuaResolve: danhSachXe.filter((item) => !item.daResolveXe).length
@@ -199,9 +230,9 @@ export async function buildDeNghiCapBaoHiemExcelWorkbook(ExcelJS, payload) {
     throw new Error('File mẫu Excel không có sheet dữ liệu.');
   }
 
-  worksheet.getCell('A1').value = `TÊN CÔNG TY BẢO HIỂM: ${payload.tenCongTyBaoHiem || ''}`;
+  worksheet.getCell('A1').value = payload.tieuDeBaoCao || BAO_HIEM_REPORT_BASE_TITLE;
 
-  const columnCount = Math.max(worksheet.columnCount || 4, 4);
+  const columnCount = Math.max(worksheet.columnCount || BAO_HIEM_REPORT_COLUMNS, BAO_HIEM_REPORT_COLUMNS);
   const templateRow = worksheet.getRow(3);
   const sourceStyleRow = templateRow;
   const totalRows = Math.max(worksheet.rowCount, payload.danhSachXe.length + 2, 3);
@@ -218,7 +249,22 @@ export async function buildDeNghiCapBaoHiemExcelWorkbook(ExcelJS, payload) {
   payload.danhSachXe.forEach((item, index) => {
     const row = worksheet.getRow(index + 3);
     copyRowStyle(sourceStyleRow, row, columnCount);
-    [item.stt, item.bienSo, item.ngayHetHanCu, item.ghiChu].forEach((value, valueIndex) => {
+    [
+      item.stt,
+      item.bienSo,
+      item.maDam,
+      item.loaiBaoHiem,
+      item.thoiHan,
+      item.soDangKy,
+      item.soKhung,
+      item.soMay,
+      item.nhanHieu,
+      item.namSanXuat,
+      item.soCho,
+      item.nuocSanXuat,
+      item.ngayDangKyLanDau,
+      item.tenDangKyXe
+    ].forEach((value, valueIndex) => {
       row.getCell(valueIndex + 1).value = value;
     });
     row.commit();
@@ -230,5 +276,5 @@ export async function buildDeNghiCapBaoHiemExcelWorkbook(ExcelJS, payload) {
 
 export function buildDeNghiCapBaoHiemExcelFileName(payload) {
   const fileToken = cleanValue(payload?.soHoSo || payload?.idHoSoBaoHiem || 'new').replace(/[\\/:*?"<>|]/g, '_');
-  return `Danh_sach_xe_de_nghi_cap_bao_hiem_${fileToken}.xlsx`;
+  return `Bao_cao_BAOHIEM_het_han_${fileToken}.xlsx`;
 }

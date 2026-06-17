@@ -144,27 +144,20 @@
         min-height: 21cm;
         margin: 0 auto;
         background: #fff;
-        padding: 1.2cm;
+        padding: 0.7cm;
         color: #000;
         font-family: "Times New Roman", Times, serif;
-        font-size: 13pt;
-        line-height: 1.35;
+        font-size: 9.5pt;
+        line-height: 1.2;
         box-shadow: 0 16px 34px rgba(16, 24, 40, 0.2);
       }
 
       .doc-title {
-        margin: 0 0 12px;
-        font-size: 16pt;
+        margin: 0 0 10px;
+        font-size: 14pt;
         font-weight: 700;
+        text-align: center;
         text-transform: uppercase;
-      }
-
-      .meta {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px 18px;
-        margin-bottom: 12px;
-        font-size: 12.5pt;
       }
 
       table {
@@ -176,12 +169,13 @@
       th,
       td {
         border: 1px solid #000;
-        padding: 5px 6px;
+        padding: 3px 4px;
         vertical-align: middle;
-        font-size: 12pt;
+        font-size: 8.5pt;
       }
 
       th {
+        background: #ffff00;
         text-align: center;
         font-weight: 700;
       }
@@ -270,9 +264,11 @@
     </main>
 
     <script>
-      const EXCEL_TEMPLATE_URL = '/de_nghi_kiem_dinh_taximet_template.xlsx?v=20260615';
+      const EXCEL_TEMPLATE_URL = '/de_nghi_kiem_dinh_taximet_template.xlsx?v=20260616';
       const EXCELJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
       const FILE_SAVER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js';
+      const TAXIMET_REPORT_BASE_TITLE = 'DANH SÁCH XE HẾT HẠN KIỂM ĐỊNH ĐỒNG HỒ TAXIMET';
+      const TAXIMET_REPORT_COLUMNS = 13;
       const params = new URLSearchParams(window.location.search);
       const elements = {
         statusText: document.getElementById('statusText'),
@@ -369,6 +365,21 @@
         return cleanValue(xe.BienSo) || cleanValue(xe.Display) || '';
       }
 
+      function getReportMonthYear(chiTietRows) {
+        const firstDateRow = (Array.isArray(chiTietRows) ? chiTietRows : []).find((row) => {
+          const date = formatAdministrativeDate(row?.NgayHetHanCu);
+          return date.month && date.year;
+        });
+        const date = formatAdministrativeDate(firstDateRow?.NgayHetHanCu);
+        if (!date.month || !date.year) return '';
+        return `${date.month}/${date.year}`;
+      }
+
+      function buildReportTitle(monthYear) {
+        const cleanMonthYear = cleanValue(monthYear);
+        return cleanMonthYear ? `${TAXIMET_REPORT_BASE_TITLE} THÁNG ${cleanMonthYear}` : TAXIMET_REPORT_BASE_TITLE;
+      }
+
       async function fetchHoSo(idHoSoTaximet) {
         const query = new URLSearchParams({
           ID_HoSoTaximet: idHoSoTaximet,
@@ -411,8 +422,17 @@
           return {
             stt: String(index + 1),
             bienSo: getXeBienSo(xe),
-            ngayHetHanCu: formatAdministrativeDateString(row?.NgayHetHanCu),
-            ghiChu: cleanValue(row?.GhiChu),
+            maDam: xe ? cleanValue(xe.MaDam) : '',
+            thoiHan: formatAdministrativeDateString(row?.NgayHetHanCu),
+            soDangKy: xe ? cleanValue(xe.SoGCNDangKyXe) : '',
+            soKhung: xe ? cleanValue(xe.SoKhung) : '',
+            soMay: xe ? cleanValue(xe.SoMay) : '',
+            nhanHieu: xe ? cleanValue(xe.NhanHieu) : '',
+            namSanXuat: xe ? cleanValue(xe.NamSanXuat) : '',
+            soCho: xe ? cleanValue(xe.SoCho) : '',
+            nuocSanXuat: xe ? cleanValue(xe.NuocSX) : '',
+            ngayDangKyLanDau: xe ? formatAdministrativeDateString(xe.NgayDangKyXeLanDau) : '',
+            tenDangKyXe: xe ? cleanValue(xe.TenDangKyXe) : '',
             daResolveXe: Boolean(xe)
           };
         });
@@ -423,6 +443,7 @@
         const donViKiemDinh = findDonViKiemDinhByReference(row?.Ref_DonViKiemDinh, safeRelated.donViKiemDinhById, safeRelated.donViKiemDinhRows);
         const tenDonViKiemDinh = getDonViKiemDinhDisplayName(donViKiemDinh);
         const danhSachXe = buildTaximetItems(safeRelated.chiTietRows, safeRelated.xeById);
+        const thangNamBaoCao = getReportMonthYear(safeRelated.chiTietRows);
         return {
           idHoSoTaximet: cleanValue(row?.ID_HoSoTaximet),
           soHoSo: cleanValue(row?.SoHoSo),
@@ -432,6 +453,8 @@
           ngayHetHanMoi: formatAdministrativeDateString(row?.NgayHetHanMoi),
           trangThaiHoSo: cleanValue(row?.TrangThaiHoSo),
           tenDonViKiemDinh,
+          thangNamBaoCao,
+          tieuDeBaoCao: buildReportTitle(thangNamBaoCao),
           danhSachXe,
           soLuongXe: danhSachXe.length,
           soLuongXeChuaResolve: danhSachXe.filter((item) => !item.daResolveXe).length
@@ -499,8 +522,8 @@
         const worksheet = workbook.worksheets[0];
         if (!worksheet) throw new Error('File mẫu Excel không có sheet dữ liệu.');
 
-        worksheet.getCell('A1').value = `TÊN ĐƠN VỊ KIỂM ĐỊNH: ${payload.tenDonViKiemDinh || ''}`;
-        const columnCount = Math.max(worksheet.columnCount || 4, 4);
+        worksheet.getCell('A1').value = payload.tieuDeBaoCao || TAXIMET_REPORT_BASE_TITLE;
+        const columnCount = Math.max(worksheet.columnCount || TAXIMET_REPORT_COLUMNS, TAXIMET_REPORT_COLUMNS);
         const templateRow = worksheet.getRow(3);
         const totalRows = Math.max(worksheet.rowCount, payload.danhSachXe.length + 2, 3);
 
@@ -516,7 +539,21 @@
         payload.danhSachXe.forEach((item, index) => {
           const row = worksheet.getRow(index + 3);
           copyRowStyle(templateRow, row, columnCount);
-          [item.stt, item.bienSo, item.ngayHetHanCu, item.ghiChu].forEach((value, valueIndex) => {
+          [
+            item.stt,
+            item.bienSo,
+            item.maDam,
+            item.thoiHan,
+            item.soDangKy,
+            item.soKhung,
+            item.soMay,
+            item.nhanHieu,
+            item.namSanXuat,
+            item.soCho,
+            item.nuocSanXuat,
+            item.ngayDangKyLanDau,
+            item.tenDangKyXe
+          ].forEach((value, valueIndex) => {
             row.getCell(valueIndex + 1).value = value;
           });
           row.commit();
@@ -542,29 +579,39 @@
             <tr>
               <td>${escapeHtml(item.stt)}</td>
               <td>${escapeHtml(item.bienSo)}</td>
-              <td>${escapeHtml(item.ngayHetHanCu)}</td>
-              <td class="left">${escapeHtml(item.ghiChu)}</td>
+              <td>${escapeHtml(item.maDam)}</td>
+              <td>${escapeHtml(item.thoiHan)}</td>
+              <td>${escapeHtml(item.soDangKy)}</td>
+              <td class="left">${escapeHtml(item.soKhung)}</td>
+              <td class="left">${escapeHtml(item.soMay)}</td>
+              <td class="left">${escapeHtml(item.nhanHieu)}</td>
+              <td>${escapeHtml(item.namSanXuat)}</td>
+              <td>${escapeHtml(item.soCho)}</td>
+              <td>${escapeHtml(item.nuocSanXuat)}</td>
+              <td>${escapeHtml(item.ngayDangKyLanDau)}</td>
+              <td class="left">${escapeHtml(item.tenDangKyXe)}</td>
             </tr>
           `).join('')
-          : '<tr><td colspan="4" class="left">Hồ sơ này chưa có xe đề nghị kiểm định taximet.</td></tr>';
+          : '<tr><td colspan="13" class="left">Hồ sơ này chưa có xe đề nghị kiểm định taximet.</td></tr>';
 
         elements.page.innerHTML = `
-          <h2 class="doc-title">TÊN ĐƠN VỊ KIỂM ĐỊNH: ${escapeHtml(payload.tenDonViKiemDinh)}</h2>
-          <div class="meta">
-            <div><strong>Số hồ sơ:</strong> ${escapeHtml(payload.soHoSo)}</div>
-            <div><strong>Ngày lập:</strong> ${escapeHtml(payload.ngayLapText)}</div>
-            <div><strong>Trạng thái:</strong> ${escapeHtml(payload.trangThaiHoSo)}</div>
-            <div><strong>Loại kiểm định:</strong> ${escapeHtml(payload.loaiKiemDinh)}</div>
-            <div><strong>Ngày kiểm định mới:</strong> ${escapeHtml(payload.ngayKiemDinhMoi)}</div>
-            <div><strong>Ngày hết hạn mới:</strong> ${escapeHtml(payload.ngayHetHanMoi)}</div>
-          </div>
+          <h2 class="doc-title">${escapeHtml(payload.tieuDeBaoCao)}</h2>
           <table>
             <thead>
               <tr>
-                <th style="width: 8%;">STT</th>
-                <th style="width: 32%;">Biển số</th>
-                <th style="width: 24%;">Ngày hết hạn cũ</th>
-                <th style="width: 36%;">Ghi chú</th>
+                <th style="width: 4%;">STT</th>
+                <th style="width: 7%;">BIỂN SỐ</th>
+                <th style="width: 5.5%;">MÃ ĐÀM</th>
+                <th style="width: 8%;">THỜI HẠN</th>
+                <th style="width: 7.5%;">SỐ ĐĂNG KÝ</th>
+                <th style="width: 12%;">SỐ KHUNG</th>
+                <th style="width: 10%;">SỐ MÁY</th>
+                <th style="width: 10%;">NHÃN HIỆU</th>
+                <th style="width: 5%;">NĂM SX</th>
+                <th style="width: 4.5%;">SỐ CHỖ</th>
+                <th style="width: 6%;">NƯỚC SX</th>
+                <th style="width: 9%;">NGÀY ĐĂNG KÝ XE LẦN ĐẦU</th>
+                <th style="width: 11.5%;">TÊN ĐĂNG KÝ XE</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -632,7 +679,7 @@
           const workbook = await buildExcelWorkbook(currentPayload);
           const buffer = await workbook.xlsx.writeBuffer();
           const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-          saveAs(blob, `Danh_sach_xe_de_nghi_kiem_dinh_taximet_${sanitizeFileName(currentPayload.soHoSo || currentPayload.idHoSoTaximet)}.xlsx`);
+          saveAs(blob, `Bao_cao_taximet_het_han_${sanitizeFileName(currentPayload.soHoSo || currentPayload.idHoSoTaximet)}.xlsx`);
         } catch (error) {
           showMessage(`Xuất Excel thất bại: ${error.message}`, true);
         } finally {

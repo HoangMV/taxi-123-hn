@@ -19,12 +19,11 @@ import {
 const previewStyles = `
   @page { size: A4 landscape; margin: 1.2cm; }
   .dntc-actions { print-color-adjust: exact; }
-  .dntc-page { box-sizing: border-box; width: 29.7cm; min-height: 21cm; margin: 0 auto; padding: 1.2cm; background: #fff; color: #000; font-family: "Times New Roman", Times, serif; font-size: 13pt; line-height: 1.35; }
-  .dntc-title { margin: 0 0 12px; font-size: 16pt; font-weight: 700; text-transform: uppercase; }
-  .dntc-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 18px; margin-bottom: 12px; font-size: 12.5pt; }
+  .dntc-page { box-sizing: border-box; width: 29.7cm; min-height: 21cm; margin: 0 auto; padding: 0.7cm; background: #fff; color: #000; font-family: "Times New Roman", Times, serif; font-size: 9.5pt; line-height: 1.2; }
+  .dntc-title { margin: 0 0 10px; font-size: 14pt; font-weight: 700; text-align: center; text-transform: uppercase; }
   .dntc-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  .dntc-table th, .dntc-table td { border: 1px solid #000; padding: 5px 6px; vertical-align: middle; font-size: 12pt; }
-  .dntc-table th { text-align: center; font-weight: 700; }
+  .dntc-table th, .dntc-table td { border: 1px solid #000; padding: 3px 4px; vertical-align: middle; font-size: 8.5pt; }
+  .dntc-table th { background: #ffff00; text-align: center; font-weight: 700; }
   .dntc-table td { text-align: center; }
   .dntc-table td.left { text-align: left; }
   @media print {
@@ -54,11 +53,21 @@ function VehicleTable({ payload }) {
     <table className="dntc-table">
       <thead>
         <tr>
-          <th className="w-[8%]">STT</th>
-          <th className="w-[24%]">Biển số xe</th>
-          <th className="w-[18%]">Ngày hết hạn</th>
-          <th className="w-[28%]">Ngân hàng thế chấp</th>
-          <th className="w-[22%]">Ghi chú</th>
+          <th style={{ width: '2.7%' }}>STT</th>
+          <th style={{ width: '4.6%' }}>BIỂN SỐ</th>
+          <th style={{ width: '3.5%' }}>MÃ ĐÀM</th>
+          <th style={{ width: '9.2%' }}>TRẠNG THÁI KHOAN VAY</th>
+          <th style={{ width: '5.3%' }}>THỜI HẠN</th>
+          <th style={{ width: '5.7%' }}>SỐ ĐĂNG KÝ</th>
+          <th style={{ width: '8.3%' }}>SỐ KHUNG</th>
+          <th style={{ width: '7.2%' }}>SỐ MÁY</th>
+          <th style={{ width: '7.7%' }}>NHÃN HIỆU</th>
+          <th style={{ width: '3.9%' }}>NĂM SX</th>
+          <th style={{ width: '3.5%' }}>SỐ CHỖ</th>
+          <th style={{ width: '4.8%' }}>NƯỚC SX</th>
+          <th style={{ width: '7.2%' }}>NGÀY ĐĂNG KÝ XE LẦN ĐẦU</th>
+          <th style={{ width: '13.1%' }}>TÊN ĐĂNG KÝ XE</th>
+          <th style={{ width: '13.1%' }}>GHI CHÚ</th>
         </tr>
       </thead>
       <tbody>
@@ -67,14 +76,24 @@ function VehicleTable({ payload }) {
             <tr key={`${item.stt}-${item.bienSo || 'xe'}`}>
               <td>{item.stt}</td>
               <td>{item.bienSo}</td>
-              <td>{item.ngayHetHan}</td>
-              <td className="left">{item.nganHangTheChap}</td>
+              <td>{item.maDam}</td>
+              <td>{item.trangThaiKhoanVay}</td>
+              <td>{item.thoiHan}</td>
+              <td>{item.soDangKy}</td>
+              <td className="left">{item.soKhung}</td>
+              <td className="left">{item.soMay}</td>
+              <td className="left">{item.nhanHieu}</td>
+              <td>{item.namSanXuat}</td>
+              <td>{item.soCho}</td>
+              <td>{item.nuocSanXuat}</td>
+              <td>{item.ngayDangKyLanDau}</td>
+              <td className="left">{item.tenDangKyXe}</td>
               <td className="left">{item.ghiChu}</td>
             </tr>
           ))
         ) : (
           <tr>
-            <td colSpan={5} className="left">Hồ sơ này chưa có xe đề nghị thế chấp.</td>
+            <td colSpan={15} className="left">Hồ sơ này chưa có xe đề nghị thế chấp.</td>
           </tr>
         )}
       </tbody>
@@ -309,7 +328,7 @@ const DeNghiTheChapPage = () => {
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 text-slate-700">
                   <RefreshCw className="h-4 w-4 animate-spin text-slate-500" />
-                  <p className="text-sm">Đang tải thêm biển số xe và ngân hàng thế chấp...</p>
+                  <p className="text-sm">Đang tải thêm thông tin xe và trạng thái khoản vay...</p>
                 </div>
               </CardContent>
             </Card>
@@ -328,25 +347,9 @@ const DeNghiTheChapPage = () => {
             </Card>
           )}
 
-          {payload.soLuongNganHangChuaResolve > 0 && !loadingRelated && (
-            <Card className="dntc-actions border-amber-200 bg-amber-50/80">
-              <CardContent className="p-4 text-sm text-amber-900">
-                Có {payload.soLuongNganHangChuaResolve} dòng chưa resolve được ngân hàng từ DM_NGANHANG. Các dòng này sẽ để trống ngân hàng thay vì hiển thị mã Ref.
-              </CardContent>
-            </Card>
-          )}
-
           <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-slate-100/80 p-3 shadow-sm">
             <article className="dntc-page">
-              <h2 className="dntc-title">ĐỀ NGHỊ THẾ CHẤP</h2>
-              <div className="dntc-meta">
-                <div><strong>Số hồ sơ:</strong> {payload.soHoSo}</div>
-                <div><strong>Ngày lập:</strong> {payload.ngayLapText}</div>
-                <div><strong>Trạng thái:</strong> {payload.trangThaiHoSo}</div>
-                <div><strong>Loại hồ sơ:</strong> {payload.loaiHoSo}</div>
-                <div><strong>Ngày gia hạn:</strong> {payload.ngayGiaHan}</div>
-                <div><strong>Ngân hàng hồ sơ:</strong> {payload.tenNganHangHoSo}</div>
-              </div>
+              <h2 className="dntc-title">{payload.tieuDeBaoCao}</h2>
               <VehicleTable payload={payload} />
             </article>
           </div>

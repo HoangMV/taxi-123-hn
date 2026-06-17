@@ -9,27 +9,58 @@ async function main() {
   workbook.creator = 'TAXI 123_HN';
   workbook.created = new Date();
 
-  const worksheet = workbook.addWorksheet('Danh sách xe');
+  const worksheet = workbook.addWorksheet('Bao_cao');
   worksheet.columns = [
-    { key: 'stt', width: 8 },
-    { key: 'bienSo', width: 24 },
-    { key: 'ngayHetHanCu', width: 22 },
-    { key: 'ghiChu', width: 34 }
+    { key: 'stt', width: 7.66 },
+    { key: 'bienSo', width: 13.22 },
+    { key: 'maDam', width: 10.11 },
+    { key: 'loaiBaoHiem', width: 18.11 },
+    { key: 'thoiHan', width: 15.11 },
+    { key: 'soDangKy', width: 16.33 },
+    { key: 'soKhung', width: 23.89 },
+    { key: 'soMay', width: 20.78 },
+    { key: 'nhanHieu', width: 22 },
+    { key: 'namSanXuat', width: 11.33 },
+    { key: 'soCho', width: 10.11 },
+    { key: 'nuocSanXuat', width: 13.89 },
+    { key: 'ngayDangKyLanDau', width: 20.78 },
+    { key: 'tenDangKyXe', width: 37.66 }
   ];
 
-  worksheet.mergeCells('A1:D1');
-  worksheet.getCell('A1').value = 'TÊN CÔNG TY BẢO HIỂM:';
+  worksheet.mergeCells('A1:N1');
+  worksheet.getCell('A1').value = 'DANH SÁCH XE HẾT HẠN BẢO HIỂM';
   worksheet.getCell('A1').font = { name: 'Times New Roman', size: 14, bold: true };
-  worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
-  worksheet.getRow(1).height = 24;
+  worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
+  worksheet.getRow(1).height = 25.5;
 
-  const headers = ['STT', 'Biển số xe', 'Ngày hết hạn cũ', 'Ghi chú'];
+  const headers = [
+    'STT',
+    'BIỂN SỐ',
+    'MÃ ĐÀM',
+    'LOẠI BẢO HIỂM',
+    'THỜI HẠN',
+    'SỐ ĐĂNG KÝ',
+    'SỐ KHUNG',
+    'SỐ MÁY',
+    'NHÃN HIỆU',
+    'NĂM SX',
+    'SỐ CHỖ',
+    'NƯỚC SX',
+    'NGÀY ĐĂNG KÝ XE LẦN ĐẦU',
+    'TÊN ĐĂNG KÝ XE'
+  ];
   const headerRow = worksheet.getRow(2);
   headers.forEach((header, index) => {
     const cell = headerRow.getCell(index + 1);
     cell.value = header;
-    cell.font = { name: 'Times New Roman', size: 12, bold: true };
+    cell.font = { name: 'Times New Roman', size: 11, bold: true };
     cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFFFFF00' },
+      bgColor: { argb: 'FFFFFF00' }
+    };
     cell.border = {
       top: { style: 'thin' },
       left: { style: 'thin' },
@@ -37,17 +68,18 @@ async function main() {
       right: { style: 'thin' }
     };
   });
-  headerRow.height = 28;
+  headerRow.height = 22.5;
   headerRow.commit();
 
   const templateRow = worksheet.getRow(3);
-  for (let columnIndex = 1; columnIndex <= 4; columnIndex += 1) {
+  for (let columnIndex = 1; columnIndex <= 14; columnIndex += 1) {
     const cell = templateRow.getCell(columnIndex);
-    cell.font = { name: 'Times New Roman', size: 12 };
+    cell.numFmt = '@';
+    cell.font = { name: 'Times New Roman', size: 11 };
     cell.alignment = {
       vertical: 'middle',
-      horizontal: columnIndex === 4 ? 'left' : 'center',
-      wrapText: true
+      horizontal: [7, 8, 9, 14].includes(columnIndex) ? 'left' : 'center',
+      wrapText: false
     };
     cell.border = {
       top: { style: 'thin' },
@@ -56,10 +88,24 @@ async function main() {
       right: { style: 'thin' }
     };
   }
-  templateRow.height = 24;
+  templateRow.height = 13.8;
   templateRow.commit();
 
   worksheet.views = [{ state: 'frozen', ySplit: 2 }];
+  worksheet.pageSetup = {
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    margins: {
+      left: 0.3,
+      right: 0.3,
+      top: 0.5,
+      bottom: 0.5,
+      header: 0.2,
+      footer: 0.2
+    }
+  };
   await workbook.xlsx.writeFile(outputPath);
   console.log(`Đã tạo template Excel: ${outputPath}`);
 }

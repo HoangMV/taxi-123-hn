@@ -1,6 +1,9 @@
 import { formatAdministrativeDate, formatAdministrativeDateString } from '../lib/dateFormat';
 
-export const DE_NGHI_THE_CHAP_EXCEL_TEMPLATE_URL = '/de_nghi_the_chap_template.xlsx?v=20260615';
+export const DE_NGHI_THE_CHAP_EXCEL_TEMPLATE_URL = '/de_nghi_the_chap_template.xlsx?v=20260616';
+
+const THE_CHAP_REPORT_BASE_TITLE = 'DANH SÁCH XE HẾT HẠN THẾ CHẤP';
+const THE_CHAP_REPORT_COLUMNS = 15;
 
 export function getDeNghiTheChapIdFromSearch(search) {
   const params = new URLSearchParams(search || '');
@@ -37,6 +40,21 @@ function getXeBienSo(xe) {
 function getNganHangDisplayName(nganHang) {
   if (!nganHang) return '';
   return cleanValue(nganHang.TenNganHang) || cleanValue(nganHang.TenVietTat) || cleanValue(nganHang.Display) || '';
+}
+
+function getReportMonthYear(chiTietRows) {
+  const firstDateRow = (Array.isArray(chiTietRows) ? chiTietRows : []).find((row) => {
+    const date = formatAdministrativeDate(row?.HanTheChapCu);
+    return date.month && date.year;
+  });
+  const date = formatAdministrativeDate(firstDateRow?.HanTheChapCu);
+  if (!date.month || !date.year) return '';
+  return `${date.month}/${date.year}`;
+}
+
+function buildReportTitle(monthYear) {
+  const cleanMonthYear = cleanValue(monthYear);
+  return cleanMonthYear ? `${THE_CHAP_REPORT_BASE_TITLE} THÁNG ${cleanMonthYear}` : THE_CHAP_REPORT_BASE_TITLE;
 }
 
 function cloneStyle(style) {
@@ -110,7 +128,7 @@ export async function fetchDeNghiTheChapBundleRelated(row) {
 
   const params = new URLSearchParams({
     ID_HoSoTheChap: idHoSoTheChap,
-    includeHiddenRefs: '0'
+    includeHiddenRefs: '1'
   });
   const response = await fetch('/api/de-nghi-the-chap?' + params.toString(), {
     method: 'POST',
@@ -120,7 +138,7 @@ export async function fetchDeNghiTheChapBundleRelated(row) {
     },
     body: JSON.stringify({
       ID_HoSoTheChap: idHoSoTheChap,
-      includeHiddenRefs: '0',
+      includeHiddenRefs: '1',
       row
     })
   });
@@ -196,7 +214,7 @@ export async function fetchDeNghiTheChapBundleVisibleRefs(row, chiTietRows = [])
 
   const params = new URLSearchParams({
     ID_HoSoTheChap: idHoSoTheChap,
-    includeHiddenRefs: '0'
+    includeHiddenRefs: '1'
   });
   const response = await fetch('/api/de-nghi-the-chap?' + params.toString(), {
     method: 'POST',
@@ -206,7 +224,7 @@ export async function fetchDeNghiTheChapBundleVisibleRefs(row, chiTietRows = [])
     },
     body: JSON.stringify({
       ID_HoSoTheChap: idHoSoTheChap,
-      includeHiddenRefs: '0',
+      includeHiddenRefs: '1',
       row,
       chiTietRows
     })
@@ -236,6 +254,18 @@ function buildTheChapItems(chiTietRows, xeById, nganHangById, theChapById, donVi
     return {
       stt: String(index + 1),
       bienSo: getXeBienSo(xe),
+      maDam: xe ? cleanValue(xe.MaDam) : '',
+      trangThaiKhoanVay: cleanValue(theChap?.TrangThaiKhoanVay),
+      thoiHan: formatAdministrativeDateString(row?.HanTheChapCu),
+      soDangKy: xe ? cleanValue(xe.SoGCNDangKyXe) : '',
+      soKhung: xe ? cleanValue(xe.SoKhung) : '',
+      soMay: xe ? cleanValue(xe.SoMay) : '',
+      nhanHieu: xe ? cleanValue(xe.NhanHieu) : '',
+      namSanXuat: xe ? cleanValue(xe.NamSanXuat) : '',
+      soCho: xe ? cleanValue(xe.SoCho) : '',
+      nuocSanXuat: xe ? cleanValue(xe.NuocSX) : '',
+      ngayDangKyLanDau: xe ? formatAdministrativeDateString(xe.NgayDangKyXeLanDau) : '',
+      tenDangKyXe: xe ? cleanValue(xe.TenDangKyXe) : '',
       ngayHetHan: formatAdministrativeDateString(row?.HanTheChapCu),
       nganHangTheChap: getNganHangDisplayName(nganHang),
       ghiChu: cleanValue(row?.GhiChu),
@@ -259,6 +289,7 @@ export function buildDeNghiTheChapPayload(row, relatedData = {}) {
   const chiTietRows = Array.isArray(relatedData.chiTietRows) ? relatedData.chiTietRows : [];
   const nganHangHoSo = nganHangById.get(cleanValue(row?.Ref_NganHang));
   const danhSachXe = buildTheChapItems(chiTietRows, xeById, nganHangById, theChapById, donViById, nhanSuByXeId);
+  const thangNamBaoCao = getReportMonthYear(chiTietRows);
 
   return {
     raw: row,
@@ -272,6 +303,8 @@ export function buildDeNghiTheChapPayload(row, relatedData = {}) {
     trangThaiHoSo: cleanValue(row?.TrangThaiHoSo),
     ghiChuHoSo: cleanValue(row?.GhiChu),
     tenNganHangHoSo: getNganHangDisplayName(nganHangHoSo),
+    thangNamBaoCao,
+    tieuDeBaoCao: buildReportTitle(thangNamBaoCao),
     danhSachXe,
     soLuongXe: danhSachXe.length,
     soLuongXeChuaResolve: danhSachXe.filter((item) => !item.daResolveXe).length,
@@ -298,9 +331,9 @@ export async function buildDeNghiTheChapExcelWorkbook(ExcelJS, payload) {
     throw new Error('File mẫu Excel không có sheet dữ liệu.');
   }
 
-  worksheet.getCell('A1').value = 'ĐỀ NGHỊ THẾ CHẤP' + (payload.soHoSo ? ' - ' + payload.soHoSo : '');
+  worksheet.getCell('A1').value = payload.tieuDeBaoCao || THE_CHAP_REPORT_BASE_TITLE;
 
-  const columnCount = Math.max(worksheet.columnCount || 5, 5);
+  const columnCount = Math.max(worksheet.columnCount || THE_CHAP_REPORT_COLUMNS, THE_CHAP_REPORT_COLUMNS);
   const templateRow = worksheet.getRow(3);
   const totalRows = Math.max(worksheet.rowCount, payload.danhSachXe.length + 2, 3);
 
@@ -316,7 +349,23 @@ export async function buildDeNghiTheChapExcelWorkbook(ExcelJS, payload) {
   payload.danhSachXe.forEach((item, index) => {
     const row = worksheet.getRow(index + 3);
     copyRowStyle(templateRow, row, columnCount);
-    [item.stt, item.bienSo, item.ngayHetHan, item.nganHangTheChap, item.ghiChu].forEach((value, valueIndex) => {
+    [
+      item.stt,
+      item.bienSo,
+      item.maDam,
+      item.trangThaiKhoanVay,
+      item.thoiHan,
+      item.soDangKy,
+      item.soKhung,
+      item.soMay,
+      item.nhanHieu,
+      item.namSanXuat,
+      item.soCho,
+      item.nuocSanXuat,
+      item.ngayDangKyLanDau,
+      item.tenDangKyXe,
+      item.ghiChu
+    ].forEach((value, valueIndex) => {
       row.getCell(valueIndex + 1).value = value;
     });
     row.commit();
@@ -328,5 +377,5 @@ export async function buildDeNghiTheChapExcelWorkbook(ExcelJS, payload) {
 
 export function buildDeNghiTheChapExcelFileName(payload) {
   const fileToken = cleanValue(payload?.soHoSo || payload?.idHoSoTheChap || 'new').replace(/[\\/:*?"<>|]/g, '_');
-  return 'Danh_sach_xe_de_nghi_the_chap_' + fileToken + '.xlsx';
+  return 'Bao_cao_the_chap_het_han_' + fileToken + '.xlsx';
 }
