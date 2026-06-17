@@ -277,7 +277,7 @@ export function buildHdldNhanVienLaiXePayload(row, relatedData = {}) {
     mucLuongBangChu: salaryWords,
     missingSalary,
     missingSalaryMessage: missingSalary
-      ? `Không tìm thấy mã lương ${mucLuongId} trong bảng DM_MUCLUONG_DONGBHXH. Hệ thống đã khóa xuất Word để tránh phát hành hợp đồng sai.`
+      ? `Không tìm thấy mã lương ${mucLuongId} trong bảng DM_MUCLUONG_DONGBHXH. Phần mức lương sẽ để trống khi xuất Word.`
       : '',
     trangThaiXuLy: cleanValue(row?.TrangThaiXuLy),
     canhBaoHopDong: cleanValue(row?.CanhBaoHopDong),

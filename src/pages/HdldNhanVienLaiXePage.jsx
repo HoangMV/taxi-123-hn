@@ -156,11 +156,6 @@ const HdldNhanVienLaiXePage = () => {
   async function exportToWordTemplate() {
     if (!payload) return;
 
-    if (payload.missingSalary) {
-      toast.error(payload.missingSalaryMessage);
-      return;
-    }
-
     setExporting(true);
     try {
       const response = await fetch(TEMPLATE_URL);
@@ -208,7 +203,7 @@ const HdldNhanVienLaiXePage = () => {
     window.open(`/hdld_nhan_vien_lai_xe_standalone.html?ID_HopDongLaoDong=${encodeURIComponent(nextId)}`, '_blank');
   }
 
-  const disableExport = exporting || loadingRelated || !payload || payload.missingSalary;
+  const disableExport = exporting || loadingRelated || !payload;
 
   return (
     <div className="space-y-6">
@@ -291,18 +286,6 @@ const HdldNhanVienLaiXePage = () => {
               Không tải được hợp đồng
             </CardTitle>
             <CardDescription className="text-amber-900">{errorMessage}</CardDescription>
-          </CardHeader>
-        </Card>
-      )}
-
-      {payload?.missingSalary && !loading && (
-        <Card className="hdld-actions border-red-200 bg-red-50/90">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-red-900">
-              <AlertCircle className="h-6 w-6 text-red-600" />
-              Thiếu dữ liệu mức lương
-            </CardTitle>
-            <CardDescription className="text-red-900">{payload.missingSalaryMessage}</CardDescription>
           </CardHeader>
         </Card>
       )}

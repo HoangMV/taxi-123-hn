@@ -269,7 +269,7 @@
           mucLuongText: formatMoney(mucLuong?.MucLuong),
           mucLuongBangChu: salaryDigits ? `${numberToWords(salaryDigits)} đồng` : '',
           missingSalary,
-          missingSalaryMessage: missingSalary ? `Không tìm thấy mã lương ${cleanValue(row.MucLuongCoBan)} trong bảng DM_MUCLUONG_DONGBHXH. Hệ thống đã khóa xuất Word để tránh phát hành hợp đồng sai.` : '',
+          missingSalaryMessage: missingSalary ? `Không tìm thấy mã lương ${cleanValue(row.MucLuongCoBan)} trong bảng DM_MUCLUONG_DONGBHXH. Phần mức lương sẽ để trống khi xuất Word.` : '',
           trangThaiXuLy: cleanValue(row.TrangThaiXuLy),
           ghiChu: cleanValue(row.GhiChu)
         };
@@ -323,7 +323,7 @@
         preview.hidden = false;
         message.hidden = true;
         printButton.disabled = false;
-        exportButton.disabled = payload.missingSalary;
+        exportButton.disabled = false;
         preview.innerHTML = `
           <div class="page">
             <div class="center bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
@@ -370,19 +370,10 @@
             </table>
           </div>
         `;
-        if (payload.missingSalary) {
-          message.hidden = false;
-          message.className = 'message danger';
-          message.textContent = payload.missingSalaryMessage;
-        }
       }
 
       async function exportWord() {
         if (!currentPayload) return;
-        if (currentPayload.missingSalary) {
-          alert(currentPayload.missingSalaryMessage);
-          return;
-        }
         exportButton.disabled = true;
         try {
           const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=utf8-20260529');
@@ -405,7 +396,7 @@
         } catch (error) {
           alert(`Xuất Word thất bại: ${error.message}`);
         } finally {
-          exportButton.disabled = currentPayload?.missingSalary || false;
+          exportButton.disabled = !currentPayload;
         }
       }
 
@@ -418,9 +409,7 @@
           if (!row) throw new Error(`Không tìm thấy HĐLĐ nhân viên lái xe với ID_HopDongLaoDong = ${idHopDongLaoDong}.`);
           const payload = buildPayload(row, bundle.related || {});
           render(payload);
-          statusText.textContent = payload.missingSalary
-            ? `Đã tải hợp đồng ${idHopDongLaoDong}, nhưng thiếu dữ liệu mức lương.`
-            : `Đã tải hợp đồng ${idHopDongLaoDong}.`;
+          statusText.textContent = `Đã tải hợp đồng ${idHopDongLaoDong}.`;
         } catch (error) {
           statusText.textContent = 'Không tải được HĐLĐ nhân viên lái xe.';
           message.hidden = false;

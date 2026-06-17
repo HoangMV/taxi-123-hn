@@ -281,7 +281,6 @@
 
       function renderPreview(payload) {
         currentPayload = payload;
-        const missing = payload.missingRequiredFields || [];
         elements.preview.innerHTML = `
           <div class="header">
             <div class="center company">${escapeHtml(payload.tenDonViUpper || 'CÔNG TY')}</div>
@@ -310,7 +309,7 @@
         `;
         elements.previewWrap.hidden = false;
         elements.printButton.disabled = false;
-        elements.exportButton.disabled = missing.length > 0;
+        elements.exportButton.disabled = false;
       }
 
       function loadExternalScript(src) {
@@ -368,13 +367,6 @@
           const fullBundle = await fetchBundle(true, row);
           const payload = buildPayload(fullBundle.row || row, fullBundle.related || {});
           renderPreview(payload);
-          if (payload.missingRequiredFields.length > 0) {
-            elements.message.hidden = false;
-            elements.message.className = 'message warn';
-            elements.message.textContent = `Thiếu dữ liệu để xuất Word: ${payload.missingRequiredFields.join(', ')}.`;
-            elements.statusText.textContent = `Đã tải biên bản ${idThanhLyHD}, còn thiếu dữ liệu.`;
-            return;
-          }
           elements.message.hidden = true;
           elements.statusText.textContent = `Đã tải biên bản ${idThanhLyHD}.`;
         } catch (error) {
@@ -388,7 +380,7 @@
       }
 
       async function exportWord() {
-        if (!currentPayload || currentPayload.missingRequiredFields.length > 0) return;
+        if (!currentPayload) return;
         elements.exportButton.disabled = true;
         try {
           await ensureDocxLibraries();
@@ -414,7 +406,7 @@
           elements.message.className = 'message error';
           elements.message.textContent = `Xuất Word thất bại: ${error.message}`;
         } finally {
-          elements.exportButton.disabled = !currentPayload || currentPayload.missingRequiredFields.length > 0;
+          elements.exportButton.disabled = !currentPayload;
         }
       }
 

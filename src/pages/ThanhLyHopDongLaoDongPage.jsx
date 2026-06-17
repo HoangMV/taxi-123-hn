@@ -98,8 +98,6 @@ const ThanhLyHopDongLaoDongPage = () => {
   const [exporting, setExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const loadRequestIdRef = useRef(0);
-  const missingRequiredFields = payload?.missingRequiredFields || [];
-  const canExport = payload && missingRequiredFields.length === 0;
 
   useEffect(() => {
     setIdInput(idThanhLyHD);
@@ -183,7 +181,7 @@ const ThanhLyHopDongLaoDongPage = () => {
   }
 
   async function exportToWordTemplate() {
-    if (!canExport) return;
+    if (!payload) return;
 
     setExporting(true);
     try {
@@ -274,7 +272,7 @@ const ThanhLyHopDongLaoDongPage = () => {
                 <Printer className="mr-2 h-4 w-4" />
                 In tài liệu
               </Button>
-              <Button type="button" className="w-full sm:w-auto" onClick={exportToWordTemplate} disabled={exporting || loadingRelated || !canExport}>
+              <Button type="button" className="w-full sm:w-auto" onClick={exportToWordTemplate} disabled={exporting || loadingRelated || !payload}>
                 {exporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                 Xuất Word
               </Button>
@@ -328,20 +326,6 @@ const ThanhLyHopDongLaoDongPage = () => {
                   <p className="text-sm">Đã tải biên bản chính, đang tải thêm thông tin nhân sự, hợp đồng lao động, quyết định chấm dứt và đơn vị...</p>
                 </div>
               </CardContent>
-            </Card>
-          )}
-
-          {!loadingRelated && missingRequiredFields.length > 0 && (
-            <Card className="tlhd-actions border-amber-200 bg-amber-50/80">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-amber-950">
-                  <AlertCircle className="h-6 w-6 text-amber-600" />
-                  Thiếu dữ liệu để xuất Word
-                </CardTitle>
-                <CardDescription className="text-amber-900">
-                  Cần bổ sung hoặc resolve các trường: {missingRequiredFields.join(', ')}.
-                </CardDescription>
-              </CardHeader>
             </Card>
           )}
 
