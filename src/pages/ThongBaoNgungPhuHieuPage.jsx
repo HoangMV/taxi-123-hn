@@ -13,7 +13,6 @@ import {
   fetchThongBaoNgungRow,
   getThongBaoNgungIdFromSearch
 } from '../features/thongBaoNgungPhuHieu';
-import appSheetService from '../services/appSheetService';
 
 function normalizeDocxZipEntryNames(zip, PizZip) {
   const normalizedZip = new PizZip();
@@ -60,10 +59,10 @@ function getFriendlyError(error) {
   if (!message) return 'Không thể tải thông báo ngừng phù hiệu. Vui lòng thử lại.';
   if (message.includes('Thiếu tham số') || message.includes('Không tìm thấy') || message.includes('Thiếu cấu hình')) return message;
   if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-    return 'Không kết nối được AppSheet. Vui lòng kiểm tra mạng hoặc cấu hình API.';
+    return 'Không kết nối được Google Sheets. Vui lòng kiểm tra mạng hoặc cấu hình API.';
   }
   if (message.length > 180) {
-    return 'AppSheet trả về lỗi khi tải thông báo ngừng phù hiệu. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
+    return 'Google Sheets trả về lỗi khi tải thông báo ngừng phù hiệu. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
   }
   return message;
 }
@@ -259,7 +258,7 @@ const ThongBaoNgungPhuHieuPage = () => {
 
     try {
       setErrorMessage('');
-      const row = await fetchThongBaoNgungRow(appSheetService, idThongBaoNgung);
+      const row = await fetchThongBaoNgungRow(idThongBaoNgung);
       if (loadRequestIdRef.current !== requestId) return;
 
       setPayload(buildThongBaoNgungPayload(row));
@@ -267,7 +266,7 @@ const ThongBaoNgungPhuHieuPage = () => {
       setLoadingRelated(true);
 
       try {
-        const related = await fetchThongBaoNgungRelated(appSheetService, row);
+        const related = await fetchThongBaoNgungRelated(row);
         if (loadRequestIdRef.current !== requestId) return;
         setPayload(buildThongBaoNgungPayload(row, related));
       } catch (relatedError) {
@@ -364,7 +363,7 @@ const ThongBaoNgungPhuHieuPage = () => {
                   Thông báo ngừng phù hiệu
                 </CardTitle>
                 <CardDescription className="mt-1 text-slate-500">
-                  {idThongBaoNgung ? `Đã tải thông báo ${idThongBaoNgung}.` : 'Nhập ID_ThongBaoNgung để tải dữ liệu từ AppSheet.'}
+                  {idThongBaoNgung ? `Đã tải thông báo ${idThongBaoNgung}.` : 'Nhập ID_ThongBaoNgung để tải dữ liệu từ Google Sheets.'}
                 </CardDescription>
               </div>
             </div>
@@ -413,7 +412,7 @@ const ThongBaoNgungPhuHieuPage = () => {
               <RefreshCw className="h-5 w-5 animate-spin text-red-700" />
               <div>
                 <p className="font-semibold">Đang tải thông báo ngừng phù hiệu</p>
-                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ AppSheet, vui lòng chờ trong giây lát.</p>
+                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ Google Sheets, vui lòng chờ trong giây lát.</p>
               </div>
             </div>
           </CardContent>

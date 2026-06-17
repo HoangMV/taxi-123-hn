@@ -14,43 +14,43 @@ const actions = [
     tone: 'bg-red-50 text-red-700'
   },
   {
-    title: 'Đơn cấp phù hiệu',
-    description: 'Xem trước, in và xuất đơn đề nghị cấp phù hiệu xe từ hồ sơ AppSheet.',
-    path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT,
-    icon: FileText,
-    tone: 'bg-slate-50 text-slate-700'
-  },
-  {
     title: 'Thông báo ngừng phù hiệu',
-    description: 'Xem trước, in và xuất giấy đề nghị hủy phù hiệu, biển hiệu từ thông báo AppSheet.',
+    description: 'Xem trước, in và xuất giấy đề nghị hủy phù hiệu, biển hiệu từ thông báo Google Sheets.',
     path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT,
     icon: IdCard,
     tone: 'bg-rose-50 text-rose-700'
   },
   {
+    title: 'Đề nghị cấp phù hiệu',
+    description: 'Xem trước, in và xuất đơn đề nghị cấp phù hiệu xe từ hồ sơ Google Sheets.',
+    path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT,
+    icon: FileText,
+    tone: 'bg-slate-50 text-slate-700'
+  },
+  {
     title: 'Đề nghị đào tạo lái xe',
-    description: 'Xem trước, in và xuất Excel danh sách lái xe đề nghị đào tạo từ hồ sơ AppSheet.',
+    description: 'Xem trước, in và xuất Excel danh sách lái xe đề nghị đào tạo từ hồ sơ Google Sheets.',
     path: config.ROUTES.DE_NGHI_DAO_TAO_LAI_XE_REACT,
     icon: GraduationCap,
     tone: 'bg-emerald-50 text-emerald-700'
   },
   {
     title: 'Đề nghị cấp bảo hiểm',
-    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị cấp bảo hiểm từ hồ sơ AppSheet.',
+    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị cấp bảo hiểm từ hồ sơ Google Sheets.',
     path: config.ROUTES.DE_NGHI_CAP_BAO_HIEM_REACT,
     icon: ShieldCheck,
     tone: 'bg-sky-50 text-sky-700'
   },
   {
     title: 'Đề nghị kiểm định taximet',
-    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị kiểm định taximet từ hồ sơ AppSheet.',
+    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị kiểm định taximet từ hồ sơ Google Sheets.',
     path: config.ROUTES.DE_NGHI_KIEM_DINH_TAXIMET_REACT,
     icon: Gauge,
     tone: 'bg-violet-50 text-violet-700'
   },
   {
     title: 'Đề nghị thế chấp',
-    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị thế chấp từ hồ sơ AppSheet.',
+    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị thế chấp từ hồ sơ Google Sheets.',
     path: config.ROUTES.DE_NGHI_THE_CHAP_REACT,
     icon: Landmark,
     tone: 'bg-amber-50 text-amber-700'
@@ -71,14 +71,14 @@ const actions = [
   },
   {
     title: 'Ký quỹ lái xe',
-    description: 'Xem trước, in và xuất hợp đồng ký quỹ của lái xe từ AppSheet.',
+    description: 'Xem trước, in và xuất hợp đồng ký quỹ của lái xe từ Google Sheets.',
     path: config.ROUTES.KY_QUY_LAI_XE_REACT,
     icon: HandCoins,
     tone: 'bg-sky-50 text-sky-700'
   },
   {
     title: 'Thanh lý ký quỹ',
-    description: 'Xem trước, in và xuất biên bản thanh lý hợp đồng đặt cọc lái xe từ AppSheet.',
+    description: 'Xem trước, in và xuất biên bản thanh lý hợp đồng đặt cọc lái xe từ Google Sheets.',
     path: config.ROUTES.THANH_LY_KY_QUY_LAI_XE_REACT,
     icon: FileText,
     tone: 'bg-emerald-50 text-emerald-700'
@@ -92,21 +92,21 @@ const actions = [
   },
   {
     title: 'HĐLĐ nhân viên lái xe',
-    description: 'Xem trước, in và xuất hợp đồng lao động nhân viên lái xe từ AppSheet.',
+    description: 'Xem trước, in và xuất hợp đồng lao động nhân viên lái xe từ Google Sheets.',
     path: config.ROUTES.HDLD_NHAN_VIEN_LAI_XE_REACT,
     icon: ScrollText,
     tone: 'bg-indigo-50 text-indigo-700'
   },
   {
     title: 'Chấm dứt HĐLĐ',
-    description: 'Xem trước, in và xuất quyết định chấm dứt hợp đồng lao động từ AppSheet.',
+    description: 'Xem trước, in và xuất quyết định chấm dứt hợp đồng lao động từ Google Sheets.',
     path: config.ROUTES.CHAM_DUT_HOP_DONG_LAO_DONG_REACT,
     icon: FileText,
     tone: 'bg-rose-50 text-rose-700'
   },
   {
     title: 'Thanh lý HĐLĐ',
-    description: 'Xem trước, in và xuất biên bản thanh lý hợp đồng lao động từ AppSheet.',
+    description: 'Xem trước, in và xuất biên bản thanh lý hợp đồng lao động từ Google Sheets.',
     path: config.ROUTES.THANH_LY_HOP_DONG_LAO_DONG_REACT,
     icon: FileText,
     tone: 'bg-cyan-50 text-cyan-700'

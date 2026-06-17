@@ -390,48 +390,27 @@
       return String(value).trim();
     }
 
-    function escapeSelectorValue(value) {
-      return String(value || '').replace(/"/g, '\\"');
-    }
-
-    function buildEqualsSelector(tableName, keyName, value) {
-      const cleanId = cleanValue(value);
-      if (!cleanId) return '';
-      return `Filter(${tableName}, [${keyName}] = "${escapeSelectorValue(cleanId)}")`;
-    }
-
-    function buildRefSelector(tableName, keyName, ids) {
-      const uniqueIds = [...new Set((Array.isArray(ids) ? ids : []).map(cleanValue).filter(Boolean))];
-      if (!uniqueIds.length) return '';
-      const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-      return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
-    }
-
-    async function appSheetFind(tableName, selector = '') {
-      const runtimeConfig = window.__APPSHEET_RUNTIME_CONFIG__ || {};
-      const response = await fetch(runtimeConfig.API_PROXY_URL || '/api/appsheet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tableName,
-          action: 'Find',
-          payload: selector ? { Properties: { Selector: selector } } : {}
-        })
+    async function fetchBundle(id) {
+      const params = new URLSearchParams({ ID_ThongBaoNgung: id });
+      const response = await fetch(`/api/thong-bao-ngung-phu-hieu?${params.toString()}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' }
       });
-
       const text = await response.text();
-      if (!response.ok) throw new Error(`AppSheet ${response.status}: ${text || 'Yêu cầu thất bại'}`);
-      return text ? JSON.parse(text) : [];
+      let data = {};
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          throw new Error('API bundle chưa trả JSON hợp lệ. Khi chạy local, hãy chạy npm run proxy.');
+        }
+      }
+      if (!response.ok) throw new Error(data.error || `API bundle thất bại (${response.status}).`);
+      return data;
     }
 
     function buildMap(rows, keyName) {
       return new Map((Array.isArray(rows) ? rows : []).map((row) => [cleanValue(row?.[keyName]), row]).filter(([id]) => id));
-    }
-
-    async function fetchMap(tableName, keyName, ids) {
-      const selector = buildRefSelector(tableName, keyName, ids);
-      if (!selector) return new Map();
-      return buildMap(await appSheetFind(tableName, selector), keyName);
     }
 
     function parseDateValue(value) {
@@ -533,21 +512,19 @@
       state.idThongBaoNgung = id;
       state.loading = true;
       elements.statusText.textContent = `Đang tải thông báo ${id}...`;
-      setMessage('Đang tải dữ liệu từ AppSheet...');
+      setMessage('Đang tải dữ liệu từ Google Sheets...');
       elements.summaryBox.hidden = true;
       renderActions();
 
       try {
-        const rows = await appSheetFind('XE_THONGBAO_NGUNG', buildEqualsSelector('XE_THONGBAO_NGUNG', 'ID_ThongBaoNgung', id));
-        const row = Array.isArray(rows) ? rows[0] : null;
+        const bundle = await fetchBundle(id);
+        const row = bundle.row || null;
         if (!row) throw new Error(`Không tìm thấy thông báo ngừng phù hiệu với ID_ThongBaoNgung = ${id}.`);
 
-        const chiTietRows = await appSheetFind('XE_THONGBAO_NGUNG_CHITIET', buildEqualsSelector('XE_THONGBAO_NGUNG_CHITIET', 'Ref_ThongBaoNgung', row.ID_ThongBaoNgung));
-        const [donViById, xeById, phuHieuById] = await Promise.all([
-          fetchMap('DONVI', 'ID_DonVi', [row.Ref_DonVi]),
-          fetchMap('XE', 'ID_Xe', chiTietRows.map((item) => item.Ref_Xe)),
-          fetchMap('XE_PHUHIEU', 'ID_PhuHieu', chiTietRows.map((item) => item.Ref_PhuHieu))
-        ]);
+        const chiTietRows = Array.isArray(bundle.related?.XE_THONGBAO_NGUNG_CHITIET) ? bundle.related.XE_THONGBAO_NGUNG_CHITIET : [];
+        const donViById = buildMap(bundle.related?.DONVI, 'ID_DonVi');
+        const xeById = buildMap(bundle.related?.XE, 'ID_Xe');
+        const phuHieuById = buildMap(bundle.related?.XE_PHUHIEU, 'ID_PhuHieu');
 
         state.payload = buildPayload(row, { chiTietRows, donViById, xeById, phuHieuById });
         elements.statusText.textContent = `Đã tải thông báo ${id}.`;

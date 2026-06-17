@@ -19,16 +19,16 @@ export const menuSections = [
         icon: IdCard
       },
       {
-        id: 'de-nghi-cap-phu-hieu-xe',
-        text: 'Đơn cấp phù hiệu',
-        path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT,
-        icon: FileText
-      },
-      {
         id: 'thong-bao-ngung-phu-hieu',
         text: 'Thông báo ngừng phù hiệu',
         path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT,
         icon: IdCard
+      },
+      {
+        id: 'de-nghi-cap-phu-hieu-xe',
+        text: 'Đề nghị cấp phù hiệu',
+        path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT,
+        icon: FileText
       },
       {
         id: 'de-nghi-dao-tao-lai-xe',

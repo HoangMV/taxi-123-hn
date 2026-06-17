@@ -37,10 +37,8 @@ function parseEnvFile(filePath) {
 const env = { ...parseEnvFile(envPath), ...process.env };
 
 const runtimeConfig = {
-  APP_ID: env.REACT_APP_APP_ID || '',
-  REGION: env.REACT_APP_REGION || 'www',
   DEFAULT_TABLE: env.REACT_APP_DEFAULT_TABLE || '',
-  API_PROXY_URL: env.REACT_APP_API_PROXY_URL || '/api/appsheet'
+  API_BASE_URL: env.REACT_APP_API_BASE_URL || '/api'
 };
 
 const runtimeOutput = `window.__APPSHEET_RUNTIME_CONFIG__ = ${JSON.stringify(runtimeConfig, null, 2)};\n`;

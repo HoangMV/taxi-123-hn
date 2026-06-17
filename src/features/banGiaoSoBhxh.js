@@ -74,39 +74,23 @@ async function fetchBanGiaoSoBundle(idBanGiaoSo, options = {}) {
   return data;
 }
 
-async function fetchRelatedMap(appSheetService, tableName, keyName, ids) {
+async function fetchRelatedMap(legacyService, tableName, keyName, ids) {
   const selector = buildRefSelector(tableName, keyName, ids);
   if (!selector) return new Map();
-  const rows = await appSheetService.find(tableName, selector);
+  const rows = await legacyService.find(tableName, selector);
   return buildMap(rows, keyName);
 }
 
-export async function fetchBanGiaoSoRow(appSheetService, idBanGiaoSo) {
+export async function fetchBanGiaoSoRow(idBanGiaoSo) {
   if (!idBanGiaoSo) {
     throw new Error('Thiếu tham số ID_BanGiaoSo trên URL.');
   }
 
-  try {
-    const bundle = await fetchBanGiaoSoBundle(idBanGiaoSo, { includeRelated: false });
-    const row = bundle.row || null;
-
-    if (!row) {
-      throw new Error(`Không tìm thấy biên bản bàn giao sổ BHXH với ID_BanGiaoSo = ${idBanGiaoSo}.`);
-    }
-
-    return row;
-  } catch (error) {
-    if (!appSheetService) throw error;
-  }
-
-  const selectorValue = escapeSelectorValue(idBanGiaoSo);
-  const rows = await appSheetService.find(TABLE_BAN_GIAO_SO, `Filter(${TABLE_BAN_GIAO_SO}, [ID_BanGiaoSo] = "${selectorValue}")`);
-  const row = Array.isArray(rows) ? rows[0] : null;
-
+  const bundle = await fetchBanGiaoSoBundle(idBanGiaoSo, { includeRelated: false });
+  const row = bundle.row || null;
   if (!row) {
-    throw new Error(`Không tìm thấy biên bản bàn giao sổ BHXH với ID_BanGiaoSo = ${idBanGiaoSo}.`);
+    throw new Error(`Không tìm thấy dữ liệu với ID_BanGiaoSo = ${idBanGiaoSo}.`);
   }
-
   return row;
 }
 
@@ -162,28 +146,22 @@ function getDonViIds(row, bhxh) {
   return [row?.DonViGiao, bhxh?.Ref_DonViDongBHXH, bhxh?.Ref_CoQuanBHXH];
 }
 
-export async function fetchBanGiaoSoRelated(appSheetService, row) {
-  if (!appSheetService) {
-    return {
-      bhxhById: new Map(),
-      nhanSuById: new Map(),
-      donViById: new Map(),
-      chucDanhById: new Map()
-    };
-  }
-
-  const bhxhById = await fetchRelatedMap(appSheetService, TABLE_BHXH, 'ID_BHXH', [row?.Ref_BHXH]);
-  const bhxh = bhxhById.get(cleanValue(row?.Ref_BHXH));
-  const nhanSuIds = [bhxh?.Ref_NhanSu, row?.NguoiGiao, row?.NguoiNhan];
-  const [nhanSuById, donViRows] = await Promise.all([
-    fetchRelatedMap(appSheetService, TABLE_NHAN_SU, 'ID_NhanSu', nhanSuIds),
-    appSheetService.find(TABLE_DON_VI)
-  ]);
-  const laoDong = nhanSuById.get(cleanValue(bhxh?.Ref_NhanSu));
-  const chucDanhById = await fetchRelatedMap(appSheetService, TABLE_CHUC_DANH, 'ID_ChucDanh', [laoDong?.Ref_ChucDanh]);
-  const donViById = buildMap(donViRows, 'ID_DonVi');
-
-  return { bhxhById, nhanSuById, donViById, chucDanhById };
+export async function fetchBanGiaoSoRelated(row) {
+  const id = cleanValue(row?.ID_BanGiaoSo);
+  if (!id) return {
+    bhxhById: new Map(),
+    nhanSuById: new Map(),
+    donViById: new Map(),
+    chucDanhById: new Map()
+  };
+  const bundle = await fetchBanGiaoSoBundle(id, { });
+  const related = bundle.related || {};
+  return {
+    bhxhById: buildMap(related.NHANSU_BHXH, 'ID_BHXH'),
+    nhanSuById: buildMap(related.NHANSU, 'ID_NhanSu'),
+    donViById: buildMap(related.DONVI, 'ID_DonVi'),
+    chucDanhById: buildMap(related.DM_CHUCDANH, 'ID_ChucDanh')
+  };
 }
 
 export function buildBanGiaoSoPayload(row, relatedData = {}) {
@@ -268,62 +246,21 @@ export function buildBanGiaoSoTemplateData(payload) {
   };
 }
 
-export async function fetchBanGiaoSoData(appSheetService, idBanGiaoSo) {
+export async function fetchBanGiaoSoData(idBanGiaoSo) {
   if (!idBanGiaoSo) {
     throw new Error('Thiếu tham số ID_BanGiaoSo trên URL.');
   }
 
-  try {
-    const bundle = await fetchBanGiaoSoBundle(idBanGiaoSo);
-    const row = bundle.row || null;
-
-    if (!row) {
-      throw new Error(`Không tìm thấy biên bản bàn giao sổ BHXH với ID_BanGiaoSo = ${idBanGiaoSo}.`);
-    }
-
-    let bhxhById = buildMap(bundle.related?.NHANSU_BHXH, 'ID_BHXH');
-    let nhanSuById = buildMap(bundle.related?.NHANSU, 'ID_NhanSu');
-    let donViById = buildMap(bundle.related?.DONVI, 'ID_DonVi');
-    let chucDanhById = buildMap(bundle.related?.DM_CHUCDANH, 'ID_ChucDanh');
-
-    if (appSheetService) {
-      const bhxh = bhxhById.get(cleanValue(row.Ref_BHXH));
-      const missingBhxhIds = [row.Ref_BHXH].map(cleanValue).filter((id) => id && !bhxhById.has(id));
-      if (missingBhxhIds.length > 0) {
-        bhxhById = mergeMaps(bhxhById, await fetchRelatedMap(appSheetService, TABLE_BHXH, 'ID_BHXH', missingBhxhIds));
-      }
-
-      const nextBhxh = bhxh || bhxhById.get(cleanValue(row.Ref_BHXH));
-      const missingNhanSuIds = [nextBhxh?.Ref_NhanSu, row.NguoiGiao, row.NguoiNhan]
-        .map(cleanValue)
-        .filter((id) => id && !nhanSuById.has(id));
-      const nextLaoDong = nhanSuById.get(cleanValue(nextBhxh?.Ref_NhanSu));
-      const missingChucDanhIds = [nextLaoDong?.Ref_ChucDanh]
-        .map(cleanValue)
-        .filter((id) => id && !chucDanhById.has(id));
-
-      if (missingNhanSuIds.length > 0 || missingChucDanhIds.length > 0 || donViById.size === 0) {
-        const [extraNhanSuById, extraChucDanhById, extraDonViRows] = await Promise.all([
-          missingNhanSuIds.length > 0
-            ? fetchRelatedMap(appSheetService, TABLE_NHAN_SU, 'ID_NhanSu', missingNhanSuIds)
-            : Promise.resolve(new Map()),
-          missingChucDanhIds.length > 0
-            ? fetchRelatedMap(appSheetService, TABLE_CHUC_DANH, 'ID_ChucDanh', missingChucDanhIds)
-            : Promise.resolve(new Map()),
-          donViById.size === 0 ? appSheetService.find(TABLE_DON_VI) : Promise.resolve([])
-        ]);
-        nhanSuById = mergeMaps(nhanSuById, extraNhanSuById);
-        chucDanhById = mergeMaps(chucDanhById, extraChucDanhById);
-        donViById = mergeMaps(donViById, buildMap(extraDonViRows, 'ID_DonVi'));
-      }
-    }
-
-    return buildBanGiaoSoPayload(row, { bhxhById, nhanSuById, donViById, chucDanhById });
-  } catch (error) {
-    if (!appSheetService) throw error;
+  const bundle = await fetchBanGiaoSoBundle(idBanGiaoSo);
+  const row = bundle.row || null;
+  if (!row) {
+    throw new Error(`Không tìm thấy dữ liệu với ID_BanGiaoSo = ${idBanGiaoSo}.`);
   }
-
-  const row = await fetchBanGiaoSoRow(appSheetService, idBanGiaoSo);
-  const related = await fetchBanGiaoSoRelated(appSheetService, row);
-  return buildBanGiaoSoPayload(row, related);
+  const related = bundle.related || {};
+  return buildBanGiaoSoPayload(row, {
+    bhxhById: buildMap(related.NHANSU_BHXH, 'ID_BHXH'),
+    nhanSuById: buildMap(related.NHANSU, 'ID_NhanSu'),
+    donViById: buildMap(related.DONVI, 'ID_DonVi'),
+    chucDanhById: buildMap(related.DM_CHUCDANH, 'ID_ChucDanh')
+  });
 }

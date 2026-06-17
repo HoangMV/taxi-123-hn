@@ -13,7 +13,6 @@ import {
   fetchChamDutHopDongRow,
   getChamDutHopDongIdFromSearch
 } from '../features/chamDutHopDongLaoDong';
-import appSheetService from '../services/appSheetService';
 
 const TEMPLATE_URL = '/cham_dut_hop_dong_lao_dong_template.docx?v=20260610';
 
@@ -81,10 +80,10 @@ function getFriendlyError(error) {
   if (!message) return 'Không thể tải quyết định chấm dứt HĐLĐ. Vui lòng thử lại.';
   if (message.includes('Thiếu tham số') || message.includes('Không tìm thấy') || message.includes('Thiếu cấu hình')) return message;
   if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-    return 'Không kết nối được AppSheet. Vui lòng kiểm tra mạng hoặc cấu hình API.';
+    return 'Không kết nối được Google Sheets. Vui lòng kiểm tra mạng hoặc cấu hình API.';
   }
   if (message.length > 160) {
-    return 'AppSheet trả về lỗi khi tải quyết định chấm dứt HĐLĐ. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
+    return 'Google Sheets trả về lỗi khi tải quyết định chấm dứt HĐLĐ. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
   }
   return message;
 }
@@ -143,7 +142,7 @@ const ChamDutHopDongLaoDongPage = () => {
     setLoadingRelated(false);
     try {
       setErrorMessage('');
-      const row = await fetchChamDutHopDongRow(appSheetService, idChamDutHD);
+      const row = await fetchChamDutHopDongRow(idChamDutHD);
       if (loadRequestIdRef.current !== requestId) return;
 
       setPayload(buildChamDutHopDongPayload(row));
@@ -151,7 +150,7 @@ const ChamDutHopDongLaoDongPage = () => {
       setLoadingRelated(true);
 
       try {
-        const related = await fetchChamDutHopDongRelated(appSheetService, row);
+        const related = await fetchChamDutHopDongRelated(row);
         if (loadRequestIdRef.current !== requestId) return;
         setPayload(buildChamDutHopDongPayload(row, related));
       } catch (relatedError) {
@@ -243,7 +242,7 @@ const ChamDutHopDongLaoDongPage = () => {
                   Chấm dứt HĐLĐ
                 </CardTitle>
                 <CardDescription className="mt-1 text-slate-500">
-                  {idChamDutHD ? `Đã tải quyết định ${idChamDutHD}.` : 'Nhập ID_ChamDutHD để tải dữ liệu từ AppSheet.'}
+                  {idChamDutHD ? `Đã tải quyết định ${idChamDutHD}.` : 'Nhập ID_ChamDutHD để tải dữ liệu từ Google Sheets.'}
                 </CardDescription>
               </div>
             </div>
@@ -292,7 +291,7 @@ const ChamDutHopDongLaoDongPage = () => {
               <RefreshCw className="h-5 w-5 animate-spin text-rose-700" />
               <div>
                 <p className="font-semibold">Đang tải quyết định chấm dứt HĐLĐ</p>
-                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ AppSheet, vui lòng chờ trong giây lát.</p>
+                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ Google Sheets, vui lòng chờ trong giây lát.</p>
               </div>
             </div>
           </CardContent>

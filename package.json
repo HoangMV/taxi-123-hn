@@ -20,10 +20,9 @@
   "scripts": {
     "prestart": "node scripts/generate-runtime-config.cjs",
     "start": "vite --host 0.0.0.0 --force",
-    "proxy": "node scripts/appsheet-proxy.cjs",
-    "schema:appsheet": "node scripts/list-appsheet-schema.cjs",
+    "proxy": "node scripts/google-sheets-proxy.cjs",
     "check:encoding": "node scripts/check-vietnamese-encoding.cjs",
-    "serve:proxy": "node scripts/generate-runtime-config.cjs && node scripts/appsheet-proxy.cjs",
+    "serve:proxy": "node scripts/generate-runtime-config.cjs && node scripts/google-sheets-proxy.cjs",
     "prebuild": "node scripts/generate-runtime-config.cjs",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0"

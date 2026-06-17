@@ -17,11 +17,8 @@ import { toast } from 'react-toastify';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import appSheetService from '../services/appSheetService';
 import {
   buildPhuHieuStats,
-  CACHE_KEY,
-  CACHE_TTL_MS,
   calculateSummary,
   buildStatsExcelWorkbook,
   filterStats,
@@ -39,29 +36,6 @@ const defaultFilters = {
   totalMin: '',
   totalMax: ''
 };
-
-function loadCache() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed?.ts || !Array.isArray(parsed?.statsData) || !Array.isArray(parsed?.phLoaiTypes)) {
-      return null;
-    }
-
-    if (Date.now() - parsed.ts > CACHE_TTL_MS) {
-      return null;
-    }
-
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function saveCache(payload) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
-}
 
 function useDebouncedValue(value, delayMs) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -85,11 +59,11 @@ function getFriendlyErrorMessage(error) {
   }
 
   if (rawMessage.includes('Failed to fetch') || rawMessage.includes('NetworkError')) {
-    return 'Không kết nối được AppSheet. Vui lòng kiểm tra mạng hoặc cấu hình API.';
+    return 'Không kết nối được API Google Sheets. Vui lòng kiểm tra mạng hoặc chạy npm run proxy khi test local.';
   }
 
   if (rawMessage.length > 160) {
-    return 'AppSheet trả về lỗi khi tải dữ liệu. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
+    return 'Google Sheets API trả về lỗi khi tải dữ liệu. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
   }
 
   return rawMessage;
@@ -177,16 +151,6 @@ const ThongKePhuHieuDonViPage = () => {
   }, [currentPage, totalPages]);
 
   useEffect(() => {
-    const cached = loadCache();
-    if (cached) {
-      setStatsData(cached.statsData);
-      setPhLoaiTypes(cached.phLoaiTypes);
-      setLastUpdated(new Date(cached.ts).toLocaleString('vi-VN'));
-      setLoading(false);
-      refreshData(true);
-      return;
-    }
-
     refreshData(false);
   }, []);
 
@@ -199,10 +163,18 @@ const ThongKePhuHieuDonViPage = () => {
 
     try {
       setErrorMessage('');
-      const [emblemsRaw, companyRaw] = await Promise.all([
-        appSheetService.find('PHUHIEUXE', 'Filter(PHUHIEUXE, [TrangThai] = "Hiệu lực")'),
-        appSheetService.find('THONGTINDONVIVANTAI', 'Filter(THONGTINDONVIVANTAI, true)')
-      ]);
+      const response = await fetch('/api/thong-ke-phu-hieu-don-vi', {
+        method: 'GET',
+        headers: { Accept: 'application/json' }
+      });
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!response.ok) {
+        throw new Error(data.error || `Không tải được dữ liệu thống kê phù hiệu (${response.status}).`);
+      }
+      const related = data.related || {};
+      const emblemsRaw = Array.isArray(related.PHUHIEUXE) ? related.PHUHIEUXE : [];
+      const companyRaw = Array.isArray(related.THONGTINDONVIVANTAI) ? related.THONGTINDONVIVANTAI : [];
 
       const nextData = buildPhuHieuStats(emblemsRaw, companyRaw);
       const payload = {
@@ -211,7 +183,6 @@ const ThongKePhuHieuDonViPage = () => {
         phLoaiTypes: nextData.phLoaiTypes
       };
 
-      saveCache(payload);
       setStatsData(payload.statsData);
       setPhLoaiTypes(payload.phLoaiTypes);
       setLastUpdated(new Date(payload.ts).toLocaleString('vi-VN'));
@@ -378,7 +349,7 @@ const ThongKePhuHieuDonViPage = () => {
       <Search className="mx-auto h-8 w-8 text-slate-300" />
       <h3 className="mt-3 text-base font-semibold text-slate-800">Không có dữ liệu phù hợp</h3>
       <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-        Hãy thử đổi từ khóa, nới bộ lọc hoặc tải lại dữ liệu từ AppSheet.
+        Hãy thử đổi từ khóa, nới bộ lọc hoặc tải lại dữ liệu từ Google Sheets.
       </p>
       {hasActiveFilters && (
         <Button variant="outline" className="mt-4" onClick={clearFilters}>
@@ -399,7 +370,7 @@ const ThongKePhuHieuDonViPage = () => {
                 <span className="min-w-0">Thống kê phù hiệu xe theo đơn vị vận tải</span>
               </CardTitle>
               <CardDescription className="mt-2 text-red-50">
-                Bản React page, đọc AppSheet bằng `appSheetService` và dùng cùng cấu hình `.env` của project.
+                Bản React page, đọc Google Sheets API qua backend và dùng cấu hình `.env` của project.
               </CardDescription>
             </div>
 

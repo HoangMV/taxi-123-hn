@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
-import appSheetService from '../services/appSheetService';
 import config from '../config/config';
 import {
   buildCanCuList,
@@ -129,11 +128,11 @@ function getFriendlyDecisionError(error) {
   }
 
   if (rawMessage.includes('Failed to fetch') || rawMessage.includes('NetworkError')) {
-    return 'Không kết nối được AppSheet. Vui lòng kiểm tra mạng hoặc cấu hình API.';
+    return 'Không kết nối được Google Sheets. Vui lòng kiểm tra mạng hoặc cấu hình API.';
   }
 
   if (rawMessage.length > 160) {
-    return 'AppSheet trả về lỗi khi tải quyết định. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
+    return 'Google Sheets trả về lỗi khi tải quyết định. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
   }
 
   return rawMessage;
@@ -198,7 +197,7 @@ const QuyetDinhThuHoiGPKDPage = () => {
     setLoading(true);
     try {
       setErrorMessage('');
-      const nextPayload = await fetchQuyetDinhThuHoiData(appSheetService, decisionId);
+      const nextPayload = await fetchQuyetDinhThuHoiData(decisionId);
       setPayload(nextPayload);
     } catch (error) {
       const message = getFriendlyDecisionError(error);
@@ -348,7 +347,7 @@ const QuyetDinhThuHoiGPKDPage = () => {
               <RefreshCw className="h-5 w-5 animate-spin text-sky-700" />
               <div>
                 <p className="font-semibold">Đang tải quyết định</p>
-                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ AppSheet, vui lòng chờ trong giây lát.</p>
+                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ Google Sheets, vui lòng chờ trong giây lát.</p>
               </div>
             </div>
           </CardContent>

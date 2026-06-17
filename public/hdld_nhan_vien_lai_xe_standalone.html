@@ -403,7 +403,7 @@
       async function init() {
         try {
           if (!idHopDongLaoDong) throw new Error('Thiếu tham số ID_HopDongLaoDong trên URL.');
-          statusText.textContent = 'Đang tải HĐLĐ nhân viên lái xe từ AppSheet...';
+          statusText.textContent = 'Đang tải HĐLĐ nhân viên lái xe từ Google Sheets...';
           const bundle = await fetchBundle();
           const row = bundle.row || null;
           if (!row) throw new Error(`Không tìm thấy HĐLĐ nhân viên lái xe với ID_HopDongLaoDong = ${idHopDongLaoDong}.`);

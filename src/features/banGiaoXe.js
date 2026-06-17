@@ -10,33 +10,9 @@ function cleanValue(value) {
   return String(value).trim();
 }
 
-function escapeSelectorValue(value) {
-  return String(value || '').replace(/"/g, '\\"');
-}
-
 function getNhanSuDisplayName(nhanSu) {
   if (!nhanSu) return '';
   return cleanValue(nhanSu.HoTen) || cleanValue(nhanSu.Display) || cleanValue(nhanSu.ID_NhanSu);
-}
-
-function buildNhanSuSelector(ids) {
-  const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
-  if (uniqueIds.length === 0) return '';
-
-  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-  return `Filter(NHANSU, IN([ID_NhanSu], LIST(${listValues})))`;
-}
-
-async function fetchNhanSuByIds(appSheetService, ids) {
-  const selector = buildNhanSuSelector(ids);
-  if (!selector) return new Map();
-
-  const rows = await appSheetService.find('NHANSU', selector);
-  return new Map(
-    (Array.isArray(rows) ? rows : [])
-      .map((row) => [cleanValue(row?.ID_NhanSu), row])
-      .filter(([id]) => id)
-  );
 }
 
 function buildNhanSuMap(rows) {
@@ -55,12 +31,27 @@ async function fetchBanGiaoXeBundle(idBienBanXe, options = {}) {
     params.set('includeRelated', '0');
   }
 
-  const response = await fetch(`/api/ban-giao-xe?${params.toString()}`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json'
-    }
-  });
+  const init = options.row
+    ? {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ID_BienBanXe: idBienBanXe,
+          includeRelated: options.includeRelated === false ? '0' : '1',
+          row: options.row
+        })
+      }
+    : {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json'
+        }
+      };
+
+  const response = await fetch(`/api/ban-giao-xe?${params.toString()}`, init);
 
   const text = await response.text();
   const data = text ? JSON.parse(text) : {};
@@ -71,27 +62,13 @@ async function fetchBanGiaoXeBundle(idBienBanXe, options = {}) {
   return data;
 }
 
-export async function fetchBanGiaoXeRow(appSheetService, idBienBanXe) {
+export async function fetchBanGiaoXeRow(idBienBanXe) {
   if (!idBienBanXe) {
     throw new Error('Thiếu tham số ID_BienBanXe trên URL.');
   }
 
-  try {
-    const bundle = await fetchBanGiaoXeBundle(idBienBanXe, { includeRelated: false });
-    const row = bundle.row || null;
-
-    if (!row) {
-      throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
-    }
-
-    return row;
-  } catch (error) {
-    if (!appSheetService) throw error;
-  }
-
-  const selectorValue = escapeSelectorValue(idBienBanXe);
-  const rows = await appSheetService.find('XE_BANGIAO', `Filter(XE_BANGIAO, [ID_BienBanXe] = "${selectorValue}")`);
-  const row = Array.isArray(rows) ? rows[0] : null;
+  const bundle = await fetchBanGiaoXeBundle(idBienBanXe, { includeRelated: false });
+  const row = bundle.row || null;
 
   if (!row) {
     throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
@@ -108,9 +85,11 @@ export function buildBanGiaoXeNhanSuMap(rows) {
   return buildNhanSuMap(rows);
 }
 
-export async function fetchBanGiaoXeNhanSu(appSheetService, row) {
-  if (!appSheetService) return new Map();
-  return fetchNhanSuByIds(appSheetService, getBanGiaoXeNhanSuIds(row));
+export async function fetchBanGiaoXeNhanSu(row) {
+  const idBienBanXe = cleanValue(row?.ID_BienBanXe);
+  if (!idBienBanXe) return new Map();
+  const bundle = await fetchBanGiaoXeBundle(idBienBanXe, { row });
+  return buildNhanSuMap(bundle.related?.NHANSU);
 }
 
 export function buildBanGiaoXePayload(row, relatedData = {}) {
@@ -175,28 +154,19 @@ export function buildBanGiaoXeTemplateData(payload) {
   };
 }
 
-export async function fetchBanGiaoXeData(appSheetService, idBienBanXe) {
+export async function fetchBanGiaoXeData(idBienBanXe) {
   if (!idBienBanXe) {
     throw new Error('Thiếu tham số ID_BienBanXe trên URL.');
   }
 
-  try {
-    const bundle = await fetchBanGiaoXeBundle(idBienBanXe);
-    const row = bundle.row || null;
+  const bundle = await fetchBanGiaoXeBundle(idBienBanXe);
+  const row = bundle.row || null;
 
-    if (!row) {
-      throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
-    }
-
-    return buildBanGiaoXePayload(row, {
-      nhanSuById: buildNhanSuMap(bundle.related?.NHANSU)
-    });
-  } catch (error) {
-    if (!appSheetService) throw error;
+  if (!row) {
+    throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
   }
 
-  const row = await fetchBanGiaoXeRow(appSheetService, idBienBanXe);
-  const nhanSuById = await fetchBanGiaoXeNhanSu(appSheetService, row);
-
-  return buildBanGiaoXePayload(row, { nhanSuById });
+  return buildBanGiaoXePayload(row, {
+    nhanSuById: buildNhanSuMap(bundle.related?.NHANSU)
+  });
 }

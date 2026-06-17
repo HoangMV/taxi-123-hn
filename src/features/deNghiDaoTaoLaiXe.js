@@ -65,10 +65,10 @@ function getNhanSuAddress(nhanSu) {
   );
 }
 
-async function fetchMap(appSheetService, tableName, keyName, ids) {
+async function fetchMap(legacyService, tableName, keyName, ids) {
   const selector = buildRefSelector(tableName, keyName, ids);
   if (!selector) return new Map();
-  const rows = await appSheetService.find(tableName, selector);
+  const rows = await legacyService.find(tableName, selector);
   return buildMap(rows, keyName);
 }
 
@@ -106,20 +106,8 @@ async function readJsonResponse(response, fallbackMessage) {
   return data;
 }
 
-export async function fetchDeNghiDaoTaoRow(appSheetService, idHoSoDaoTao) {
-  if (!idHoSoDaoTao) {
-    throw new Error('Thiếu tham số ID_HoSoDaoTao trên URL.');
-  }
-
-  const selector = buildEqualsSelector(TABLE_HO_SO, 'ID_HoSoDaoTao', idHoSoDaoTao);
-  const rows = await appSheetService.find(TABLE_HO_SO, selector);
-  const row = Array.isArray(rows) ? rows[0] : null;
-
-  if (!row) {
-    throw new Error(`Không tìm thấy hồ sơ đề nghị đào tạo với ID_HoSoDaoTao = ${idHoSoDaoTao}.`);
-  }
-
-  return row;
+export async function fetchDeNghiDaoTaoRow(idHoSoDaoTao) {
+  return fetchDeNghiDaoTaoBundleRow(idHoSoDaoTao);
 }
 
 export async function fetchDeNghiDaoTaoBundleRow(idHoSoDaoTao) {
@@ -175,35 +163,8 @@ export async function fetchDeNghiDaoTaoBundleRelated(row) {
   };
 }
 
-export async function fetchDeNghiDaoTaoRelated(appSheetService, row) {
-  if (!appSheetService) {
-    return {
-      chiTietRows: [],
-      donViById: new Map(),
-      nhanSuById: new Map()
-    };
-  }
-
-  const chiTietRows = await appSheetService.find(
-    TABLE_CHI_TIET,
-    buildEqualsSelector(TABLE_CHI_TIET, 'Ref_HoSoDaoTao', row?.ID_HoSoDaoTao)
-  );
-
-  const [donViById, nhanSuById] = await Promise.all([
-    fetchMap(appSheetService, TABLE_DON_VI, 'ID_DonVi', [row?.Ref_DonViDeNghi]),
-    fetchMap(
-      appSheetService,
-      TABLE_NHAN_SU,
-      'ID_NhanSu',
-      (Array.isArray(chiTietRows) ? chiTietRows : []).map((chiTiet) => chiTiet?.Ref_NhanSu)
-    )
-  ]);
-
-  return {
-    chiTietRows: Array.isArray(chiTietRows) ? chiTietRows : [],
-    donViById,
-    nhanSuById
-  };
+export async function fetchDeNghiDaoTaoRelated(row) {
+  return fetchDeNghiDaoTaoBundleRelated(row);
 }
 
 function buildLaiXeItems(chiTietRows, nhanSuById) {

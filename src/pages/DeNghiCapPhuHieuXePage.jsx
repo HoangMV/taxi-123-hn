@@ -13,7 +13,6 @@ import {
   fetchDeNghiCapPhuHieuRow,
   getDeNghiCapPhuHieuIdFromSearch
 } from '../features/deNghiCapPhuHieuXe';
-import appSheetService from '../services/appSheetService';
 
 const TEMPLATE_URL = '/de_nghi_cap_phu_hieu_xe_template.docx?v=20260603';
 
@@ -62,10 +61,10 @@ function getFriendlyError(error) {
   if (!message) return 'Không thể tải đơn đề nghị cấp phù hiệu. Vui lòng thử lại.';
   if (message.includes('Thiếu tham số') || message.includes('Không tìm thấy') || message.includes('Thiếu cấu hình')) return message;
   if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-    return 'Không kết nối được AppSheet. Vui lòng kiểm tra mạng hoặc cấu hình API.';
+    return 'Không kết nối được Google Sheets. Vui lòng kiểm tra mạng hoặc cấu hình API.';
   }
   if (message.length > 160) {
-    return 'AppSheet trả về lỗi khi tải hồ sơ đề nghị cấp phù hiệu. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
+    return 'Google Sheets trả về lỗi khi tải hồ sơ đề nghị cấp phù hiệu. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
   }
   return message;
 }
@@ -173,7 +172,7 @@ const DeNghiCapPhuHieuXePage = () => {
 
     try {
       setErrorMessage('');
-      const row = await fetchDeNghiCapPhuHieuRow(appSheetService, idHoSoPhuHieu);
+      const row = await fetchDeNghiCapPhuHieuRow(idHoSoPhuHieu);
       if (loadRequestIdRef.current !== requestId) return;
 
       setPayload(buildDeNghiCapPhuHieuPayload(row));
@@ -181,7 +180,7 @@ const DeNghiCapPhuHieuXePage = () => {
       setLoadingRelated(true);
 
       try {
-        const related = await fetchDeNghiCapPhuHieuRelated(appSheetService, row);
+        const related = await fetchDeNghiCapPhuHieuRelated(row);
         if (loadRequestIdRef.current !== requestId) return;
         setPayload(buildDeNghiCapPhuHieuPayload(row, related));
       } catch (relatedError) {
@@ -277,7 +276,7 @@ const DeNghiCapPhuHieuXePage = () => {
                   Đơn đề nghị cấp phù hiệu xe
                 </CardTitle>
                 <CardDescription className="mt-1 text-slate-500">
-                  {idHoSoPhuHieu ? `Đã tải hồ sơ ${idHoSoPhuHieu}.` : 'Nhập ID_HoSoPhuHieu để tải dữ liệu từ AppSheet.'}
+                  {idHoSoPhuHieu ? `Đã tải hồ sơ ${idHoSoPhuHieu}.` : 'Nhập ID_HoSoPhuHieu để tải dữ liệu từ Google Sheets.'}
                 </CardDescription>
               </div>
             </div>

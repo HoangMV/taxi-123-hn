@@ -177,94 +177,6 @@
         return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
       }
 
-      async function appSheetFind(tableName, selector = '') {
-        const payload = selector
-          ? {
-              Properties: {
-                Selector: selector
-              }
-            }
-          : {};
-        const response = await fetch('/api/appsheet', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            tableName,
-            action: 'Find',
-            payload
-          })
-        });
-        const text = await response.text();
-        const contentType = response.headers.get('content-type') || '';
-        if (!response.ok) {
-          throw new Error(text || `Không tải được bảng ${tableName}.`);
-        }
-        if (!contentType.includes('application/json')) {
-          throw new Error(`/api/appsheet chưa trả JSON hợp lệ khi tải bảng ${tableName}.`);
-        }
-        const rows = text ? JSON.parse(text) : [];
-        return Array.isArray(rows) ? rows : [];
-      }
-
-      async function findRowsByIds(tableName, keyName, ids) {
-        const selector = buildRefSelector(tableName, keyName, ids);
-        if (!selector) return [];
-        return appSheetFind(tableName, selector);
-      }
-
-      async function fetchFallbackBundle(includeRelated = true, sourceRow = null) {
-        const hasSourceRow = sourceRow && cleanValue(sourceRow.ID_ChamDutHD) === cleanValue(idChamDutHD);
-        const rows = hasSourceRow
-          ? []
-          : await appSheetFind('NHANSU_CHAMDUT_HOPDONG', buildEqualsSelector('NHANSU_CHAMDUT_HOPDONG', 'ID_ChamDutHD', idChamDutHD));
-        const row = hasSourceRow ? sourceRow : rows[0] || null;
-        if (!row) throw new Error(`Không tìm thấy quyết định chấm dứt HĐLĐ với ID_ChamDutHD = ${idChamDutHD}.`);
-        if (!includeRelated) return { row, related: {} };
-
-        const [hopDongRows, nhanSuRows] = await Promise.all([
-          findRowsByIds('NHANSU_HOPDONG_LAODONG', 'ID_HopDongLaoDong', [row.Ref_HopDongLD]),
-          findRowsByIds('NHANSU', 'ID_NhanSu', [row.Ref_NhanSu, row.Ref_NguoiKy])
-        ]);
-        const hopDong = hopDongRows[0] || null;
-        const nhanSu = nhanSuRows.find((item) => cleanValue(item.ID_NhanSu) === cleanValue(row.Ref_NhanSu));
-        const nguoiKy = nhanSuRows.find((item) => cleanValue(item.ID_NhanSu) === cleanValue(row.Ref_NguoiKy));
-        const donViId = getDonViId(hopDong, nhanSu);
-        const [donViRows, chucDanhRows] = await Promise.all([
-          findRowsByIds('DONVI', 'ID_DonVi', [donViId]),
-          findRowsByIds('DM_CHUCDANH', 'ID_ChucDanh', [
-            nhanSu?.Ref_ChucDanh,
-            nguoiKy?.Ref_ChucDanh,
-            hopDong?.Ref_BoPhan,
-            nhanSu?.Ref_BoPhan
-          ])
-        ]);
-        const chucDanh =
-          chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nhanSu?.Ref_ChucDanh)) ||
-          chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(hopDong?.Ref_BoPhan));
-        const nguoiKyChucDanh = chucDanhRows.find((item) => cleanValue(item.ID_ChucDanh) === cleanValue(nguoiKy?.Ref_ChucDanh));
-        const boPhanRows = chucDanh
-          ? []
-          : await findRowsByIds('DM_BOPHAN', 'ID_BoPhan', [
-              nhanSu?.Ref_BoPhan,
-              hopDong?.Ref_BoPhan,
-              chucDanh?.Ref_BoPhan,
-              nguoiKyChucDanh?.Ref_BoPhan
-            ]);
-
-        return {
-          row,
-          related: {
-            NHANSU_HOPDONG_LAODONG: hopDongRows,
-            NHANSU: nhanSuRows,
-            DONVI: donViRows,
-            DM_CHUCDANH: chucDanhRows,
-            DM_BOPHAN: boPhanRows
-          }
-        };
-      }
-
       async function fetchBundle(includeRelated = true, sourceRow = null) {
         const params = new URLSearchParams({ ID_ChamDutHD: idChamDutHD });
         if (!includeRelated) params.set('includeRelated', '0');
@@ -279,12 +191,11 @@
         const contentType = response.headers.get('content-type') || '';
         const text = await response.text();
         if (!contentType.includes('application/json')) {
-          return fetchFallbackBundle(includeRelated, sourceRow);
+          throw new Error('Route API chưa trả JSON hợp lệ. Hãy chạy npm run proxy khi test local.');
         }
         const data = text ? JSON.parse(text) : {};
         if (!response.ok) {
           if (response.status === 404 || response.status === 405) {
-            return fetchFallbackBundle(includeRelated, sourceRow);
           }
           throw new Error(data.error || `Không tải được dữ liệu chấm dứt HĐLĐ (${response.status}).`);
         }

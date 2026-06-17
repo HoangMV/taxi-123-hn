@@ -371,7 +371,7 @@
 
       function requireConfig() {
         if (!config.API_PROXY_URL) {
-          throw new Error('Thiếu cấu hình proxy AppSheet. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
+          throw new Error('Thiếu cấu hình proxy Google Sheets. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
         }
       }
 
@@ -404,30 +404,6 @@
           month: date.getMonth() + 1 <= 2 ? String(date.getMonth() + 1).padStart(2, '0') : String(date.getMonth() + 1),
           year: String(date.getFullYear())
         };
-      }
-
-      async function appSheetFind(tableName, selector) {
-        requireConfig();
-        const response = await fetch(config.API_PROXY_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            tableName,
-            action: 'Find',
-            payload: {
-              Properties: { Selector: selector || `Filter(${tableName}, true)` }
-            }
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`AppSheet ${response.status}: không tải được dữ liệu.`);
-        }
-
-        const text = await response.text();
-        return text ? JSON.parse(text) : [];
       }
 
       function buildCanCu(refIds, canCuData) {
@@ -560,32 +536,33 @@
         printButton.disabled = true;
         exportWordButton.disabled = true;
         messageBox.hidden = true;
-        statusText.textContent = 'Đang tải quyết định từ AppSheet...';
+        statusText.textContent = 'Đang tải quyết định từ Google Sheets...';
 
         try {
           if (!decisionId) {
             throw new Error('Thiếu tham số IDQuyetDinh trên URL.');
           }
 
-          const [quyetDinhData, details, provinceData, canCuData] = await Promise.all([
-            appSheetFind('QUYETDINH_THUHOI_GPKD', `Filter(QUYETDINH_THUHOI_GPKD, [ID_QD] = "${decisionId}")`),
-            appSheetFind('GPKD_THUHOI_CHITIET', `Filter(GPKD_THUHOI_CHITIET, [Ref_QDThuHoi] = "${decisionId}")`),
-            appSheetFind('ThongTin', 'Filter(ThongTin, true)'),
-            appSheetFind('CANCU_PHAPLY', 'Filter(CANCU_PHAPLY, true)')
-          ]);
-
-          const quyetDinh = Array.isArray(quyetDinhData) ? quyetDinhData[0] : null;
+          const response = await fetch(`/api/quyet-dinh-thu-hoi-gpkd?IDQuyetDinh=${encodeURIComponent(decisionId)}`, {
+            method: 'GET',
+            headers: { Accept: 'application/json' }
+          });
+          const text = await response.text();
+          const data = text ? JSON.parse(text) : {};
+          if (!response.ok) throw new Error(data.error || 'Không tải được quyết định thu hồi GPKD.');
+          const related = data.related || {};
+          const quyetDinh = data.row || null;
+          const details = Array.isArray(related.GPKD_THUHOI_CHITIET) ? related.GPKD_THUHOI_CHITIET : [];
+          const provinceData = Array.isArray(related.ThongTin) ? related.ThongTin : [];
+          const canCuData = Array.isArray(related.CANCU_PHAPLY) ? related.CANCU_PHAPLY : [];
+          const signers = Array.isArray(related.NguoiPhuTrach) ? related.NguoiPhuTrach : [];
           if (!quyetDinh) {
             throw new Error(`Không tìm thấy quyết định với IDQuyetDinh = ${decisionId}.`);
           }
 
           let nguoiKy = '';
-          let signer = null;
-          if (quyetDinh.NguoiKy) {
-            const signers = await appSheetFind('NguoiPhuTrach', `Filter(NguoiPhuTrach, [IDNguoi] = "${quyetDinh.NguoiKy}")`);
-            signer = Array.isArray(signers) ? signers[0] : null;
-            nguoiKy = signer?.TenNguoi || signer?.HoTen || signer?.NguoiPhuTrach || '';
-          }
+          const signer = signers.find((item) => String(item.IDNguoi || '').trim() === String(quyetDinh.NguoiKy || '').trim()) || null;
+          nguoiKy = signer?.TenNguoi || signer?.HoTen || signer?.NguoiPhuTrach || '';
 
           renderDocument({
             quyetDinh,

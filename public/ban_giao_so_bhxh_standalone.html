@@ -121,29 +121,6 @@
         return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
       }
 
-      async function appSheetFind(tableName, selector) {
-        const response = await fetch('/api/appsheet', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tableName,
-            action: 'Find',
-            payload: selector ? { Properties: { Selector: selector } } : {}
-          })
-        });
-        const text = await response.text();
-        if (!response.ok) throw new Error(`AppSheet ${response.status}: ${text || 'Yêu cầu thất bại'}`);
-        const rows = text ? JSON.parse(text) : [];
-        return Array.isArray(rows) ? rows : [];
-      }
-
-      async function fetchRelatedMap(tableName, keyName, ids) {
-        const selector = buildRefSelector(tableName, keyName, ids);
-        if (!selector) return new Map();
-        const rows = await appSheetFind(tableName, selector);
-        return new Map(rows.map((row) => [cleanValue(row[keyName]), row]).filter(([id]) => id));
-      }
-
       async function fetchBundle(includeRelated = true) {
         const params = new URLSearchParams({ ID_BanGiaoSo: idBanGiaoSo });
         if (!includeRelated) params.set('includeRelated', '0');
@@ -166,17 +143,15 @@
         return bundle.row || null;
       }
 
-      async function fetchRelated(row) {
-        const bhxhById = await fetchRelatedMap('NHANSU_BHXH', 'ID_BHXH', [row.Ref_BHXH]);
-        const bhxh = bhxhById.get(cleanValue(row.Ref_BHXH));
-        const [nhanSuById, donViRows] = await Promise.all([
-          fetchRelatedMap('NHANSU', 'ID_NhanSu', [bhxh?.Ref_NhanSu, row.NguoiGiao, row.NguoiNhan]),
-          appSheetFind('DONVI')
-        ]);
-        const laoDong = nhanSuById.get(cleanValue(bhxh?.Ref_NhanSu));
-        const chucDanhById = await fetchRelatedMap('DM_CHUCDANH', 'ID_ChucDanh', [laoDong?.Ref_ChucDanh]);
-        const donViById = new Map(donViRows.map((donVi) => [cleanValue(donVi.ID_DonVi), donVi]).filter(([id]) => id));
-        return { bhxhById, nhanSuById, donViById, chucDanhById };
+      async function fetchRelated() {
+        const bundle = await fetchBundle(true);
+        const related = bundle.related || {};
+        return {
+          bhxhById: new Map((related.NHANSU_BHXH || []).map((row) => [cleanValue(row.ID_BHXH), row]).filter(([id]) => id)),
+          nhanSuById: new Map((related.NHANSU || []).map((row) => [cleanValue(row.ID_NhanSu), row]).filter(([id]) => id)),
+          donViById: new Map((related.DONVI || []).map((row) => [cleanValue(row.ID_DonVi), row]).filter(([id]) => id)),
+          chucDanhById: new Map((related.DM_CHUCDANH || []).map((row) => [cleanValue(row.ID_ChucDanh), row]).filter(([id]) => id))
+        };
       }
 
       function getNhanSuDisplayName(nhanSu) {
@@ -374,7 +349,7 @@
       async function init() {
         try {
           if (!idBanGiaoSo) throw new Error('Thiếu tham số ID_BanGiaoSo trên URL.');
-          statusText.textContent = 'Đang tải biên bản bàn giao sổ BHXH từ AppSheet...';
+          statusText.textContent = 'Đang tải biên bản bàn giao sổ BHXH từ Google Sheets...';
           const row = await fetchRow();
           if (!row) throw new Error(`Không tìm thấy biên bản bàn giao sổ BHXH với ID_BanGiaoSo = ${idBanGiaoSo}.`);
           render(buildPayload(row));

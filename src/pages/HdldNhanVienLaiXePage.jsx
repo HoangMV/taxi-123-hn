@@ -13,7 +13,6 @@ import {
   fetchHdldNhanVienLaiXeRow,
   getHdldNhanVienLaiXeIdFromSearch
 } from '../features/hdldNhanVienLaiXe';
-import appSheetService from '../services/appSheetService';
 
 const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=utf8-20260529';
 
@@ -59,10 +58,10 @@ function getFriendlyError(error) {
   if (!message) return 'Không thể tải HĐLĐ nhân viên lái xe. Vui lòng thử lại.';
   if (message.includes('Thiếu tham số') || message.includes('Không tìm thấy') || message.includes('Thiếu cấu hình')) return message;
   if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-    return 'Không kết nối được AppSheet. Vui lòng kiểm tra mạng hoặc cấu hình API.';
+    return 'Không kết nối được Google Sheets. Vui lòng kiểm tra mạng hoặc cấu hình API.';
   }
   if (message.length > 160) {
-    return 'AppSheet trả về lỗi khi tải HĐLĐ nhân viên lái xe. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
+    return 'Google Sheets trả về lỗi khi tải HĐLĐ nhân viên lái xe. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
   }
   return message;
 }
@@ -121,7 +120,7 @@ const HdldNhanVienLaiXePage = () => {
     setLoadingRelated(false);
     try {
       setErrorMessage('');
-      const row = await fetchHdldNhanVienLaiXeRow(appSheetService, idHopDongLaoDong);
+      const row = await fetchHdldNhanVienLaiXeRow(idHopDongLaoDong);
       if (loadRequestIdRef.current !== requestId) return;
 
       setPayload(buildHdldNhanVienLaiXePayload(row));
@@ -129,7 +128,7 @@ const HdldNhanVienLaiXePage = () => {
       setLoadingRelated(true);
 
       try {
-        const related = await fetchHdldNhanVienLaiXeRelated(appSheetService, row);
+        const related = await fetchHdldNhanVienLaiXeRelated(row);
         if (loadRequestIdRef.current !== requestId) return;
         setPayload(buildHdldNhanVienLaiXePayload(row, related));
       } catch (relatedError) {
@@ -222,7 +221,7 @@ const HdldNhanVienLaiXePage = () => {
                   HĐLĐ nhân viên lái xe
                 </CardTitle>
                 <CardDescription className="mt-1 text-slate-500">
-                  {idHopDongLaoDong ? `Đã tải hợp đồng ${idHopDongLaoDong}.` : 'Nhập ID_HopDongLaoDong để tải dữ liệu từ AppSheet.'}
+                  {idHopDongLaoDong ? `Đã tải hợp đồng ${idHopDongLaoDong}.` : 'Nhập ID_HopDongLaoDong để tải dữ liệu từ Google Sheets.'}
                 </CardDescription>
               </div>
             </div>
@@ -271,7 +270,7 @@ const HdldNhanVienLaiXePage = () => {
               <RefreshCw className="h-5 w-5 animate-spin text-indigo-700" />
               <div>
                 <p className="font-semibold">Đang tải HĐLĐ nhân viên lái xe</p>
-                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ AppSheet, vui lòng chờ trong giây lát.</p>
+                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ Google Sheets, vui lòng chờ trong giây lát.</p>
               </div>
             </div>
           </CardContent>

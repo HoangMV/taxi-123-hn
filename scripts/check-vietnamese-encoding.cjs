@@ -21,24 +21,23 @@ const textExtensions = new Set([
   '.json',
   '.md',
   '.mjs',
+  '.ps1',
   '.txt'
 ]);
 
 const mojibakePatterns = [
   { name: 'Ký tự thay thế Unicode', pattern: /\uFFFD/ },
-  { name: 'Chuỗi lỗi dạng replacement bị encode sai', pattern: /\u00EF\u00BF\u00BD/ },
-  { name: 'Tiếng Việt UTF-8 bị đọc sai dạng a sắc/hỏi/ngã/nặng', pattern: /\u00E1[\u00BB\u00BA]/ },
-  { name: 'Tiếng Việt UTF-8 bị đọc sai dạng D gạch ngang', pattern: /\u00C4[\u0080-\u00BF‘’“”a-zA-Z]/ },
-  { name: 'Tiếng Việt UTF-8 bị đọc sai dạng u/o móc', pattern: /\u00C6[\u0080-\u00BF‘’“”a-zA-Z]/ },
-  { name: 'Tiếng Việt UTF-8 bị đọc sai dạng A ngã + byte Latin-1', pattern: /\u00C3[\u0080-\u00BF\u00A1-\u00BF]/ },
-  { name: 'Tiếng Việt bị thay bằng dấu hỏi', pattern: /\b(L\?\?c|d\? li\?u|S\? d\?ng|T\?i li\?u|Quan h\?|b\?ng|c\?t|kh\?a|hi\?n th\?|nghi\?p v\?|C\?n ki\?m tra)\b/i }
+  { name: 'Chuỗi replacement bị encode sai', pattern: /\u00EF\u00BF\u00BD/ },
+  { name: 'Tiếng Việt UTF-8 bị đọc sai dạng dấu tiếng Việt', pattern: new RegExp('(?:\\u00E1\\u00BA|\\u00E1\\u00BB|\\u00C3[\\u00A0-\\u00BF]|\\u00C4[\\u0080-\\u00BF\\u2018-\\u201D]|\\u00C6[\\u0080-\\u00BF\\u2018-\\u201D]|\\u00E2[\\u0080-\\u00BF\\u20AC\\u2018-\\u201D])') },
+  { name: 'Tiếng Việt bị thay bằng dấu hỏi', pattern: /\b(?:Kh\?ng|Thi\?u|d\? li\?u|t\?i|b\?ng|c\?t|kh\?a|hi\?n th\?|nghi\?p v\?|C\?n ki\?m tra|H\?p)\b/i }
 ];
 
 function shouldCheckFile(filePath) {
   const basename = path.basename(filePath);
   const extension = path.extname(filePath);
 
-  if (basename === '.env' || basename === '.env.example') return true;
+  if (basename === '.env') return false;
+  if (basename === '.env.example') return true;
   return textExtensions.has(extension);
 }
 

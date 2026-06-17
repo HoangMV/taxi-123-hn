@@ -223,9 +223,9 @@
         return cleanValue(row?.Ref_DonViQuanLyHienTai) || cleanValue(row?.Ref_DonVi);
       }
 
-      async function appSheetFind(tableName, selector) {
+      async function legacyFind(tableName, selector) {
         if (!config.API_PROXY_URL) {
-          throw new Error('Thiếu cấu hình proxy AppSheet. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
+          throw new Error('Thiếu cấu hình proxy Google Sheets. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
         }
         const response = await fetch(config.API_PROXY_URL, {
           method: 'POST',
@@ -238,7 +238,7 @@
         });
         if (!response.ok) {
           const text = await response.text();
-          throw new Error(`AppSheet ${response.status}: ${text || 'Yêu cầu thất bại'}`);
+          throw new Error(`Google Sheets ${response.status}: ${text || 'Yêu cầu thất bại'}`);
         }
         const text = await response.text();
         return text ? JSON.parse(text) : [];
@@ -280,11 +280,9 @@
         );
       }
 
-      async function fetchRelatedMap(tableName, keyName, ids) {
-        const selector = buildRefSelector(tableName, keyName, ids);
-        if (!selector) return new Map();
-        const rows = await appSheetFind(tableName, selector);
-        return buildMap(rows, keyName);
+      async function fetchRelatedMap(tableName, keyName) {
+        const bundle = await fetchKyQuyBundle(true);
+        return buildMap(bundle.related?.[tableName] || [], keyName);
       }
 
       function buildRefSelector(tableName, keyName, ids) {
@@ -514,7 +512,7 @@
         exportWordButton.disabled = true;
         messageBox.hidden = true;
         preview.hidden = true;
-        statusText.textContent = 'Đang tải hợp đồng ký quỹ từ AppSheet...';
+        statusText.textContent = 'Đang tải hợp đồng ký quỹ từ Google Sheets...';
 
         try {
           if (!idKyQuy) throw new Error('Thiếu tham số ID_KyQuy trên URL.');

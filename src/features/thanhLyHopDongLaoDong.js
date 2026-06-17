@@ -82,10 +82,10 @@ async function fetchThanhLyHopDongBundle(idThanhLyHD, options = {}) {
   return data;
 }
 
-async function fetchRelatedMap(appSheetService, tableName, keyName, ids) {
+async function fetchRelatedMap(legacyService, tableName, keyName, ids) {
   const selector = buildRefSelector(tableName, keyName, ids);
   if (!selector) return new Map();
-  const rows = await appSheetService.find(tableName, selector);
+  const rows = await legacyService.find(tableName, selector);
   return buildMap(rows, keyName);
 }
 
@@ -123,71 +123,35 @@ function buildHopDongNumber(hopDongLaoDong, nhanSuId) {
   return { soHopDong, matchedNhanSu };
 }
 
-export async function fetchThanhLyHopDongRow(appSheetService, idThanhLyHD) {
+export async function fetchThanhLyHopDongRow(idThanhLyHD) {
   if (!idThanhLyHD) {
     throw new Error('Thiếu tham số ID_ThanhLyHD trên URL.');
   }
 
-  try {
-    const bundle = await fetchThanhLyHopDongBundle(idThanhLyHD, { includeRelated: false });
-    const row = bundle.row || null;
-
-    if (!row) {
-      throw new Error(`Không tìm thấy biên bản thanh lý HĐLĐ với ID_ThanhLyHD = ${idThanhLyHD}.`);
-    }
-
-    return row;
-  } catch (error) {
-    if (!appSheetService) throw error;
-  }
-
-  const selector = buildEqualsSelector(TABLE_THANH_LY_HOP_DONG, 'ID_ThanhLyHD', idThanhLyHD);
-  const rows = await appSheetService.find(TABLE_THANH_LY_HOP_DONG, selector);
-  const row = Array.isArray(rows) ? rows[0] : null;
-
+  const bundle = await fetchThanhLyHopDongBundle(idThanhLyHD, { includeRelated: false });
+  const row = bundle.row || null;
   if (!row) {
-    throw new Error(`Không tìm thấy biên bản thanh lý HĐLĐ với ID_ThanhLyHD = ${idThanhLyHD}.`);
+    throw new Error(`Không tìm thấy dữ liệu với ID_ThanhLyHD = ${idThanhLyHD}.`);
   }
-
   return row;
 }
 
-export async function fetchThanhLyHopDongRelated(appSheetService, row) {
-  const idThanhLyHD = cleanValue(row?.ID_ThanhLyHD);
-
-  if (idThanhLyHD) {
-    try {
-      const bundle = await fetchThanhLyHopDongBundle(idThanhLyHD, { sourceRow: row });
-      return {
-        nhanSuById: buildMap(bundle.related?.NHANSU, 'ID_NhanSu'),
-        hopDongLaoDongById: buildMap(bundle.related?.NHANSU_HOPDONG_LAODONG, 'ID_HopDongLaoDong'),
-        chamDutHopDongById: buildMap(bundle.related?.NHANSU_CHAMDUT_HOPDONG, 'ID_ChamDutHD'),
-        donViById: buildMap(bundle.related?.DONVI, 'ID_DonVi')
-      };
-    } catch {
-      // Giữ fallback qua appSheetService để trang vẫn chạy khi bundle API chưa có sẵn.
-    }
-  }
-
-  if (!appSheetService) {
-    return {
-      nhanSuById: new Map(),
-      hopDongLaoDongById: new Map(),
-      chamDutHopDongById: new Map(),
-      donViById: new Map()
-    };
-  }
-
-  const [nhanSuById, hopDongLaoDongById, chamDutHopDongById] = await Promise.all([
-    fetchRelatedMap(appSheetService, TABLE_NHAN_SU, 'ID_NhanSu', [row?.Ref_NhanSu]),
-    fetchRelatedMap(appSheetService, TABLE_HOP_DONG_LAO_DONG, 'ID_HopDongLaoDong', [row?.Ref_HopDongLD]),
-    fetchRelatedMap(appSheetService, TABLE_CHAM_DUT_HOP_DONG, 'ID_ChamDutHD', [row?.Ref_ChamDutHD])
-  ]);
-  const nhanSu = nhanSuById.get(cleanValue(row?.Ref_NhanSu));
-  const hopDongLaoDong = hopDongLaoDongById.get(cleanValue(row?.Ref_HopDongLD));
-  const donViById = await fetchRelatedMap(appSheetService, TABLE_DON_VI, 'ID_DonVi', [getDonViId(hopDongLaoDong, nhanSu)]);
-
-  return { nhanSuById, hopDongLaoDongById, chamDutHopDongById, donViById };
+export async function fetchThanhLyHopDongRelated(row) {
+  const id = cleanValue(row?.ID_ThanhLyHD);
+  if (!id) return {
+    nhanSuById: new Map(),
+    hopDongLaoDongById: new Map(),
+    chamDutHopDongById: new Map(),
+    donViById: new Map()
+  };
+  const bundle = await fetchThanhLyHopDongBundle(id, { sourceRow: row });
+  const related = bundle.related || {};
+  return {
+    nhanSuById: buildMap(related.NHANSU, 'ID_NhanSu'),
+    hopDongLaoDongById: buildMap(related.NHANSU_HOPDONG_LAODONG, 'ID_HopDongLaoDong'),
+    chamDutHopDongById: buildMap(related.NHANSU_CHAMDUT_HOPDONG, 'ID_ChamDutHD'),
+    donViById: buildMap(related.DONVI, 'ID_DonVi')
+  };
 }
 
 export function buildThanhLyHopDongPayload(row, relatedData = {}) {
@@ -309,60 +273,21 @@ export function buildThanhLyHopDongTemplateData(payload) {
   };
 }
 
-export async function fetchThanhLyHopDongData(appSheetService, idThanhLyHD) {
+export async function fetchThanhLyHopDongData(idThanhLyHD) {
   if (!idThanhLyHD) {
     throw new Error('Thiếu tham số ID_ThanhLyHD trên URL.');
   }
 
-  try {
-    const bundle = await fetchThanhLyHopDongBundle(idThanhLyHD);
-    const row = bundle.row || null;
-
-    if (!row) {
-      throw new Error(`Không tìm thấy biên bản thanh lý HĐLĐ với ID_ThanhLyHD = ${idThanhLyHD}.`);
-    }
-
-    let nhanSuById = buildMap(bundle.related?.NHANSU, 'ID_NhanSu');
-    let hopDongLaoDongById = buildMap(bundle.related?.NHANSU_HOPDONG_LAODONG, 'ID_HopDongLaoDong');
-    let chamDutHopDongById = buildMap(bundle.related?.NHANSU_CHAMDUT_HOPDONG, 'ID_ChamDutHD');
-    let donViById = buildMap(bundle.related?.DONVI, 'ID_DonVi');
-
-    if (appSheetService) {
-      const missingNhanSuIds = [row.Ref_NhanSu].map(cleanValue).filter((id) => id && !nhanSuById.has(id));
-      const missingHopDongIds = [row.Ref_HopDongLD].map(cleanValue).filter((id) => id && !hopDongLaoDongById.has(id));
-      const missingChamDutIds = [row.Ref_ChamDutHD].map(cleanValue).filter((id) => id && !chamDutHopDongById.has(id));
-
-      if (missingNhanSuIds.length > 0 || missingHopDongIds.length > 0 || missingChamDutIds.length > 0) {
-        const [extraNhanSuById, extraHopDongById, extraChamDutById] = await Promise.all([
-          missingNhanSuIds.length > 0
-            ? fetchRelatedMap(appSheetService, TABLE_NHAN_SU, 'ID_NhanSu', missingNhanSuIds)
-            : Promise.resolve(new Map()),
-          missingHopDongIds.length > 0
-            ? fetchRelatedMap(appSheetService, TABLE_HOP_DONG_LAO_DONG, 'ID_HopDongLaoDong', missingHopDongIds)
-            : Promise.resolve(new Map()),
-          missingChamDutIds.length > 0
-            ? fetchRelatedMap(appSheetService, TABLE_CHAM_DUT_HOP_DONG, 'ID_ChamDutHD', missingChamDutIds)
-            : Promise.resolve(new Map())
-        ]);
-        nhanSuById = mergeMaps(nhanSuById, extraNhanSuById);
-        hopDongLaoDongById = mergeMaps(hopDongLaoDongById, extraHopDongById);
-        chamDutHopDongById = mergeMaps(chamDutHopDongById, extraChamDutById);
-      }
-
-      const nhanSu = nhanSuById.get(cleanValue(row.Ref_NhanSu));
-      const hopDongLaoDong = hopDongLaoDongById.get(cleanValue(row.Ref_HopDongLD));
-      const donViId = getDonViId(hopDongLaoDong, nhanSu);
-      if (donViId && !donViById.has(donViId)) {
-        donViById = mergeMaps(donViById, await fetchRelatedMap(appSheetService, TABLE_DON_VI, 'ID_DonVi', [donViId]));
-      }
-    }
-
-    return buildThanhLyHopDongPayload(row, { nhanSuById, hopDongLaoDongById, chamDutHopDongById, donViById });
-  } catch (error) {
-    if (!appSheetService) throw error;
+  const bundle = await fetchThanhLyHopDongBundle(idThanhLyHD);
+  const row = bundle.row || null;
+  if (!row) {
+    throw new Error(`Không tìm thấy dữ liệu với ID_ThanhLyHD = ${idThanhLyHD}.`);
   }
-
-  const row = await fetchThanhLyHopDongRow(appSheetService, idThanhLyHD);
-  const related = await fetchThanhLyHopDongRelated(appSheetService, row);
-  return buildThanhLyHopDongPayload(row, related);
+  const related = bundle.related || {};
+  return buildThanhLyHopDongPayload(row, {
+    nhanSuById: buildMap(related.NHANSU, 'ID_NhanSu'),
+    hopDongLaoDongById: buildMap(related.NHANSU_HOPDONG_LAODONG, 'ID_HopDongLaoDong'),
+    chamDutHopDongById: buildMap(related.NHANSU_CHAMDUT_HOPDONG, 'ID_ChamDutHD'),
+    donViById: buildMap(related.DONVI, 'ID_DonVi')
+  });
 }

@@ -13,7 +13,6 @@ import {
   getBanGiaoXeIdFromSearch
 } from '../features/banGiaoXe';
 import config from '../config/config';
-import appSheetService from '../services/appSheetService';
 
 const TEMPLATE_URL = '/ban_giao_xe_template.docx';
 
@@ -50,10 +49,10 @@ function getFriendlyError(error) {
   if (!message) return 'Không thể tải biên bản bàn giao xe. Vui lòng thử lại.';
   if (message.includes('Thiếu tham số') || message.includes('Không tìm thấy') || message.includes('Thiếu cấu hình')) return message;
   if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-    return 'Không kết nối được AppSheet. Vui lòng kiểm tra mạng hoặc cấu hình API.';
+    return 'Không kết nối được Google Sheets. Vui lòng kiểm tra mạng hoặc cấu hình API.';
   }
   if (message.length > 160) {
-    return 'AppSheet trả về lỗi khi tải biên bản bàn giao xe. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
+    return 'Google Sheets trả về lỗi khi tải biên bản bàn giao xe. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
   }
   return message;
 }
@@ -132,7 +131,7 @@ const BanGiaoXePage = () => {
     setLoadingNhanSu(false);
     try {
       setErrorMessage('');
-      const row = await fetchBanGiaoXeRow(appSheetService, idBienBanXe);
+      const row = await fetchBanGiaoXeRow(idBienBanXe);
       if (loadRequestIdRef.current !== requestId) return;
 
       setPayload(buildBanGiaoXePayload(row));
@@ -140,7 +139,7 @@ const BanGiaoXePage = () => {
       setLoadingNhanSu(true);
 
       try {
-        const nhanSuById = await fetchBanGiaoXeNhanSu(appSheetService, row);
+        const nhanSuById = await fetchBanGiaoXeNhanSu(row);
         if (loadRequestIdRef.current !== requestId) return;
         setPayload(buildBanGiaoXePayload(row, { nhanSuById }));
       } catch (relatedError) {
@@ -230,7 +229,7 @@ const BanGiaoXePage = () => {
                   Bàn giao xe
                 </CardTitle>
                 <CardDescription className="mt-1 text-slate-500">
-                  {idBienBanXe ? `Đã tải biên bản ${idBienBanXe}.` : 'Nhập ID_BienBanXe để tải dữ liệu từ AppSheet.'}
+                  {idBienBanXe ? `Đã tải biên bản ${idBienBanXe}.` : 'Nhập ID_BienBanXe để tải dữ liệu từ Google Sheets.'}
                 </CardDescription>
               </div>
             </div>
@@ -279,7 +278,7 @@ const BanGiaoXePage = () => {
               <RefreshCw className="h-5 w-5 animate-spin text-red-700" />
               <div>
                 <p className="font-semibold">Đang tải biên bản bàn giao xe</p>
-                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ AppSheet, vui lòng chờ trong giây lát.</p>
+                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ Google Sheets, vui lòng chờ trong giây lát.</p>
               </div>
             </div>
           </CardContent>

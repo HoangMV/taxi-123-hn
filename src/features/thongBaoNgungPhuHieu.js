@@ -1,10 +1,6 @@
 import { formatAdministrativeDate, formatAdministrativeDateString } from '../lib/dateFormat';
 
-const TABLE_THONG_BAO = 'XE_THONGBAO_NGUNG';
-const TABLE_CHI_TIET = 'XE_THONGBAO_NGUNG_CHITIET';
-const TABLE_DON_VI = 'DONVI';
-const TABLE_XE = 'XE';
-const TABLE_PHU_HIEU = 'XE_PHUHIEU';
+const BUNDLE_ENDPOINT = '/api/thong-bao-ngung-phu-hieu';
 
 export const THONG_BAO_NGUNG_TEMPLATE_CONFIG = {
   HA_NOI: {
@@ -33,23 +29,6 @@ function cleanValue(value) {
   return String(value).trim();
 }
 
-function escapeSelectorValue(value) {
-  return String(value || '').replace(/"/g, '\\"');
-}
-
-function buildEqualsSelector(tableName, keyName, value) {
-  const cleanId = cleanValue(value);
-  if (!cleanId) return '';
-  return `Filter(${tableName}, [${keyName}] = "${escapeSelectorValue(cleanId)}")`;
-}
-
-function buildRefSelector(tableName, keyName, ids) {
-  const uniqueIds = [...new Set((Array.isArray(ids) ? ids : []).map(cleanValue).filter(Boolean))];
-  if (uniqueIds.length === 0) return '';
-  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-  return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
-}
-
 function buildMap(rows, keyName) {
   return new Map(
     (Array.isArray(rows) ? rows : [])
@@ -58,11 +37,55 @@ function buildMap(rows, keyName) {
   );
 }
 
-async function fetchMap(appSheetService, tableName, keyName, ids) {
-  const selector = buildRefSelector(tableName, keyName, ids);
-  if (!selector) return new Map();
-  const rows = await appSheetService.find(tableName, selector);
-  return buildMap(rows, keyName);
+async function readJsonResponse(response, fallbackMessage) {
+  const text = await response.text();
+  let data = {};
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      const preview = text.trim().slice(0, 40).toLowerCase();
+      if (preview.startsWith('<!doctype') || preview.startsWith('<html') || preview.startsWith('<')) {
+        throw new Error('API trả về HTML thay vì JSON. Khi chạy local, hãy chạy thêm npm run proxy cùng với npm start, rồi tải lại trang.');
+      }
+      throw new Error(fallbackMessage || 'Không đọc được phản hồi JSON từ API.');
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || fallbackMessage || `Yêu cầu thất bại (${response.status}).`);
+  }
+
+  return data;
+}
+
+async function fetchThongBaoNgungBundle(idThongBaoNgung, options = {}) {
+  const params = new URLSearchParams({ ID_ThongBaoNgung: idThongBaoNgung });
+  if (options.includeRelated === false) {
+    params.set('includeRelated', '0');
+  }
+
+  const init = options.row
+    ? {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ID_ThongBaoNgung: idThongBaoNgung,
+          includeRelated: options.includeRelated === false ? '0' : '1',
+          row: options.row
+        })
+      }
+    : {
+        method: 'GET',
+        headers: { Accept: 'application/json' }
+      };
+
+  const response = await fetch(`${BUNDLE_ENDPOINT}?${params.toString()}`, init);
+  return readJsonResponse(response, 'Không tải được dữ liệu thông báo ngừng phù hiệu từ API bundle.');
 }
 
 function getDonViDisplayName(donVi) {
@@ -111,14 +134,13 @@ function buildVehicleItems(chiTietRows, xeById, phuHieuById, donVi) {
   });
 }
 
-export async function fetchThongBaoNgungRow(appSheetService, idThongBaoNgung) {
+export async function fetchThongBaoNgungRow(idThongBaoNgung) {
   if (!idThongBaoNgung) {
     throw new Error('Thiếu tham số ID_ThongBaoNgung trên URL.');
   }
 
-  const selector = buildEqualsSelector(TABLE_THONG_BAO, 'ID_ThongBaoNgung', idThongBaoNgung);
-  const rows = await appSheetService.find(TABLE_THONG_BAO, selector);
-  const row = Array.isArray(rows) ? rows[0] : null;
+  const bundle = await fetchThongBaoNgungBundle(idThongBaoNgung, { includeRelated: false });
+  const row = bundle.row || null;
 
   if (!row) {
     throw new Error(`Không tìm thấy thông báo ngừng phù hiệu với ID_ThongBaoNgung = ${idThongBaoNgung}.`);
@@ -127,42 +149,23 @@ export async function fetchThongBaoNgungRow(appSheetService, idThongBaoNgung) {
   return row;
 }
 
-export async function fetchThongBaoNgungRelated(appSheetService, row) {
-  if (!appSheetService) {
+export async function fetchThongBaoNgungRelated(row) {
+  const idThongBaoNgung = cleanValue(row?.ID_ThongBaoNgung);
+  if (idThongBaoNgung) {
+    const bundle = await fetchThongBaoNgungBundle(idThongBaoNgung, { row });
     return {
-      chiTietRows: [],
-      donViById: new Map(),
-      xeById: new Map(),
-      phuHieuById: new Map()
+      chiTietRows: Array.isArray(bundle.related?.XE_THONGBAO_NGUNG_CHITIET) ? bundle.related.XE_THONGBAO_NGUNG_CHITIET : [],
+      donViById: buildMap(bundle.related?.DONVI, 'ID_DonVi'),
+      xeById: buildMap(bundle.related?.XE, 'ID_Xe'),
+      phuHieuById: buildMap(bundle.related?.XE_PHUHIEU, 'ID_PhuHieu')
     };
   }
 
-  const chiTietRows = await appSheetService.find(
-    TABLE_CHI_TIET,
-    buildEqualsSelector(TABLE_CHI_TIET, 'Ref_ThongBaoNgung', row?.ID_ThongBaoNgung)
-  );
-
-  const [donViById, xeById, phuHieuById] = await Promise.all([
-    fetchMap(appSheetService, TABLE_DON_VI, 'ID_DonVi', [row?.Ref_DonVi]),
-    fetchMap(
-      appSheetService,
-      TABLE_XE,
-      'ID_Xe',
-      (Array.isArray(chiTietRows) ? chiTietRows : []).map((chiTiet) => chiTiet?.Ref_Xe)
-    ),
-    fetchMap(
-      appSheetService,
-      TABLE_PHU_HIEU,
-      'ID_PhuHieu',
-      (Array.isArray(chiTietRows) ? chiTietRows : []).map((chiTiet) => chiTiet?.Ref_PhuHieu)
-    )
-  ]);
-
   return {
-    chiTietRows: Array.isArray(chiTietRows) ? chiTietRows : [],
-    donViById,
-    xeById,
-    phuHieuById
+    chiTietRows: [],
+    donViById: new Map(),
+    xeById: new Map(),
+    phuHieuById: new Map()
   };
 }
 

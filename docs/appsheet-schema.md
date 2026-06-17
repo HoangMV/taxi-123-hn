@@ -1,4 +1,4 @@
-# Lược đồ dữ liệu AppSheet
+# Lược đồ dữ liệu Google Sheets
 
 Số dòng mẫu dùng để suy luận kiểu dữ liệu: 100.
 
@@ -937,4 +937,4 @@ Số dòng tải được: 11.
 | Related XE_THECHAP_HOSOs | Văn bản | 1 |
 | Related XE_THECHAP_HOSO_CHITIETs | Văn bản | 1 |
 
-Ghi chú: Kiểu dữ liệu ở đây được suy luận từ dữ liệu API trả về, không phải cấu hình schema gốc trong AppSheet Editor.
+Ghi chú: Kiểu dữ liệu ở đây được suy luận từ dữ liệu bảng và tên bảng/cột được giữ theo schema lịch sử.

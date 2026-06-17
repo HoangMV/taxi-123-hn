@@ -40,10 +40,10 @@ function getFriendlyError(error) {
   if (!message) return 'Không thể tải hồ sơ đề nghị thế chấp. Vui lòng thử lại.';
   if (message.includes('Thiếu tham số') || message.includes('Không tìm thấy') || message.includes('Thiếu cấu hình')) return message;
   if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-    return 'Không kết nối được AppSheet. Vui lòng kiểm tra mạng hoặc cấu hình API.';
+    return 'Không kết nối được Google Sheets. Vui lòng kiểm tra mạng hoặc cấu hình API.';
   }
   if (message.length > 160) {
-    return 'AppSheet trả về lỗi khi tải hồ sơ đề nghị thế chấp. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
+    return 'Google Sheets trả về lỗi khi tải hồ sơ đề nghị thế chấp. Vui lòng kiểm tra lại cấu hình và quyền truy cập.';
   }
   return message;
 }
@@ -253,7 +253,7 @@ const DeNghiTheChapPage = () => {
                   Danh sách xe đề nghị thế chấp
                 </CardTitle>
                 <CardDescription className="mt-1 text-slate-500">
-                  {idHoSoTheChap ? `Đã tải hồ sơ ${idHoSoTheChap}.` : 'Nhập ID_HoSoTheChap để tải dữ liệu từ AppSheet.'}
+                  {idHoSoTheChap ? `Đã tải hồ sơ ${idHoSoTheChap}.` : 'Nhập ID_HoSoTheChap để tải dữ liệu từ Google Sheets.'}
                 </CardDescription>
               </div>
             </div>
@@ -302,7 +302,7 @@ const DeNghiTheChapPage = () => {
               <RefreshCw className="h-5 w-5 animate-spin text-red-700" />
               <div>
                 <p className="font-semibold">Đang tải hồ sơ đề nghị thế chấp</p>
-                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ AppSheet, vui lòng chờ trong giây lát.</p>
+                <p className="text-sm text-slate-500">Hệ thống đang lấy dữ liệu từ Google Sheets, vui lòng chờ trong giây lát.</p>
               </div>
             </div>
           </CardContent>

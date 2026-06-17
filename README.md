@@ -1,23 +1,21 @@
 # TAXI 123_HN
 
-Ứng dụng React cho nghiệp vụ TAXI 123_HN, tập trung vào các chức năng chính:
+Ứng dụng React cho các nghiệp vụ TAXI 123_HN, gồm trang React và các file HTML standalone để xem trước, in và xuất Word/Excel.
 
-- Thống kê phù hiệu xe theo đơn vị vận tải.
-- Lập và xuất quyết định thu hồi GPKD.
-- Kết nối dữ liệu qua AppSheet API bằng `src/services/appSheetService.js`.
+Nguồn đọc dữ liệu hiện tại là Google Sheets API ở backend. App không gọi Google Sheets API trực tiếp nữa.
 
-## Chạy dự án ở máy local
+## Chạy Local
 
-Lần đầu tải dự án về máy:
+Lần đầu tải dự án:
 
 ```bash
 npm install
 copy .env.example .env
 ```
 
-Sau đó mở file `.env` và điền đúng thông tin AppSheet.
+Sau đó mở `.env` và điền thông tin Google Sheets service account.
 
-Khi chạy dự án ở máy local, cần mở **2 terminal** trong thư mục dự án.
+Khi chạy local, mở 2 terminal trong thư mục dự án.
 
 Terminal 1 chạy giao diện React:
 
@@ -25,80 +23,66 @@ Terminal 1 chạy giao diện React:
 npm start
 ```
 
-Terminal 2 chạy proxy AppSheet:
+Terminal 2 chạy API/static proxy local:
 
 ```bash
 npm run proxy
 ```
 
-Sau khi cả 2 terminal đều đang chạy, mở trình duyệt tại:
+Mặc định proxy chạy tại:
 
 ```text
-http://127.0.0.1:3000
+http://localhost:8787
 ```
 
-Không tắt terminal chạy `npm run proxy` khi đang dùng app. Nếu proxy không chạy, các màn đọc dữ liệu sẽ báo lỗi dạng `AppSheet 500` hoặc không tải được dữ liệu.
+Nếu trang React hoặc HTML standalone báo API trả HTML thay vì JSON, hãy kiểm tra terminal `npm run proxy` đang chạy.
 
-Nếu `localhost:3000` mở nhầm sang app khác trên máy, hãy dùng `http://127.0.0.1:3000`.
-
-## Biến môi trường
+## Biến Môi Trường
 
 ```env
-REACT_APP_APP_ID=
-REACT_APP_ACCESS_KEY=
-REACT_APP_API_PROXY_URL=/api/appsheet
-REACT_APP_REGION=www
+GOOGLE_SHEETS_SPREADSHEET_ID=
+GOOGLE_SERVICE_ACCOUNT_EMAIL=
+GOOGLE_PRIVATE_KEY=
+GOOGLE_SHEETS_DEFAULT_RANGE=A:ZZ
+GOOGLE_SHEETS_TABLE_MAP={}
+GOOGLE_SHEETS_RANGE_MAP={}
 REACT_APP_DEFAULT_TABLE=
+REACT_APP_API_BASE_URL=/api
 ```
 
 Ý nghĩa:
 
-- `REACT_APP_APP_ID`: ID ứng dụng AppSheet.
-- `REACT_APP_ACCESS_KEY`: khóa gọi AppSheet API. Chỉ backend proxy hoặc Vercel Function đọc biến này từ môi trường server; frontend không được ghi key ra file public.
-- `REACT_APP_API_PROXY_URL`: đường dẫn proxy để frontend gọi AppSheet, mặc định là `/api/appsheet`.
-- `REACT_APP_REGION`: vùng máy chủ AppSheet, đa số là `www`.
-- `REACT_APP_DEFAULT_TABLE`: bảng mặc định dự phòng cho các màn cần đọc bảng cấu hình, có thể để trống.
+- `GOOGLE_SHEETS_SPREADSHEET_ID`: ID Google Spreadsheet chứa dữ liệu nghiệp vụ.
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL`: email service account đã được share quyền xem Google Sheet.
+- `GOOGLE_PRIVATE_KEY`: private key service account, chỉ để ở backend/server env.
+- `GOOGLE_SHEETS_DEFAULT_RANGE`: range mặc định khi đọc tab, mặc định `A:ZZ` để tránh thiếu cột.
+- `GOOGLE_SHEETS_TABLE_MAP`: JSON map tên bảng trong code sang tên tab nếu tab Google Sheet khác tên bảng.
+- `GOOGLE_SHEETS_RANGE_MAP`: JSON map range riêng cho từng bảng để tối ưu tốc độ.
+- `REACT_APP_DEFAULT_TABLE`: bảng public dự phòng, có thể để trống.
+- `REACT_APP_API_BASE_URL`: đường dẫn API backend public, mặc định `/api`.
 
-Khi chạy `npm start` hoặc `npm run build`, script `scripts/generate-runtime-config.cjs` sẽ tạo `public/runtime-config.js`. File này là cấu hình public dùng chung cho app React và các file HTML standalone, gồm `APP_ID`, `REGION`, `DEFAULT_TABLE`, `API_PROXY_URL`.
+## Kiến Trúc Dữ Liệu
+
+- `scripts/google-sheets-service.cjs`: service đọc Google Sheets bằng service account, có cache OAuth token nhưng không cache dữ liệu bảng.
+- `scripts/google-feature-bundles.cjs`: gom dữ liệu nghiệp vụ từ nhiều tab bằng Google Sheets API.
+- `scripts/google-api-handler.cjs`: factory tạo API route Google Sheets-only.
+- `scripts/google-sheets-proxy.cjs`: proxy local cho Google Sheets API và static server.
+- `api/*.js`: endpoint nghiệp vụ cho Vercel/backend.
+
+`docs/appsheet-schema.md` và `docs/appsheet-relationships.md` vẫn được giữ tạm làm tài liệu tên bảng/cột vì Google Sheet đang dùng lại schema lịch sử. Không coi các cột `Related ...` là dữ liệu chính.
 
 ## Deploy Vercel
 
-Đẩy source lên GitHub, sau đó import repository vào Vercel.
-
-Cấu hình trên Vercel:
+Thiết lập:
 
 - Build Command: `npm run build`
 - Output Directory: `build`
 - Install Command: `npm install`
 
-Thêm các Environment Variables trong Vercel:
+Thêm các biến môi trường Google Sheets ở trên vào Vercel. Không commit `.env` hoặc private key lên GitHub.
 
-- `REACT_APP_APP_ID`
-- `REACT_APP_ACCESS_KEY`
-- `REACT_APP_REGION`
-- `REACT_APP_DEFAULT_TABLE`
-- `REACT_APP_API_PROXY_URL` với giá trị `/api/appsheet`
+## Ghi Chú
 
-Vercel sẽ chạy API route `api/appsheet.js` để giữ `REACT_APP_ACCESS_KEY` ở server-side. Không commit file `.env` lên GitHub.
-
-## Cấu trúc chính
-
-```text
-api/                 # Vercel Function cho proxy AppSheet
-public/              # Static assets và HTML standalone
-scripts/             # Script tạo runtime config và proxy local
-src/
-  components/        # UI cơ bản
-  config/            # Cấu hình route, menu, runtime config
-  features/          # Logic nghiệp vụ
-  layouts/           # MainLayout
-  pages/             # Dashboard, thống kê, quyết định
-  routes/            # Khai báo route
-  services/          # AppSheet service
-```
-
-## Ghi chú
-
-- Dự án này không dùng chức năng đăng nhập.
-- Các màn nghiệp vụ tái sử dụng `appSheetService` để kết nối AppSheet.
-- Chính sách rà soát dependency nằm ở `docs/DEPENDENCY_AUDIT.md`.
+- Dự án không dùng chức năng đăng nhập.
+- Template Word/Excel trong `public` vẫn được giữ vì các trang xuất file đang dùng.
+- Sau khi sửa nội dung tiếng Việt, chạy `npm run check:encoding` trước khi kết thúc.

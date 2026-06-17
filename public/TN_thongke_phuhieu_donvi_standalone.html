@@ -470,7 +470,7 @@
           <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
           <div>
             <h1>Thống kê phù hiệu xe theo đơn vị vận tải</h1>
-            <div class="subtitle" id="statusText">Sẵn sàng tải dữ liệu từ AppSheet.</div>
+            <div class="subtitle" id="statusText">Sẵn sàng tải dữ liệu từ Google Sheets.</div>
           </div>
         </div>
         <div class="hero-actions">
@@ -536,7 +536,7 @@
 
       <div class="message" id="emptyMessage" hidden>
         <strong>Không có dữ liệu phù hợp</strong>
-        Hãy thử đổi từ khóa, nới bộ lọc hoặc tải lại dữ liệu từ AppSheet.
+        Hãy thử đổi từ khóa, nới bộ lọc hoặc tải lại dữ liệu từ Google Sheets.
       </div>
     </main>
 
@@ -590,36 +590,6 @@
           '"': '&quot;',
           "'": '&#039;'
         }[char]));
-      }
-
-      function requireConfig() {
-        if (!config.API_PROXY_URL) {
-          throw new Error('Thiếu cấu hình proxy AppSheet. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
-        }
-      }
-
-      async function appSheetFind(tableName, selector) {
-        requireConfig();
-        const response = await fetch(config.API_PROXY_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            tableName,
-            action: 'Find',
-            payload: {
-              Properties: { Selector: selector || `Filter(${tableName}, true)` }
-            }
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`AppSheet ${response.status}: không tải được dữ liệu.`);
-        }
-
-        const text = await response.text();
-        return text ? JSON.parse(text) : [];
       }
 
       function isValidEmblem(item) {
@@ -824,14 +794,20 @@
       async function loadData() {
         state.loading = true;
         els.reload.disabled = true;
-        els.status.textContent = 'Đang tải dữ liệu từ AppSheet...';
+        els.status.textContent = 'Đang tải dữ liệu từ Google Sheets...';
         render();
 
         try {
-          const [emblems, companies] = await Promise.all([
-            appSheetFind('PHUHIEUXE', 'Filter(PHUHIEUXE, [TrangThai] = "Hiệu lực")'),
-            appSheetFind('THONGTINDONVIVANTAI', 'Filter(THONGTINDONVIVANTAI, true)')
-          ]);
+          const response = await fetch('/api/thong-ke-phu-hieu-don-vi', {
+            method: 'GET',
+            headers: { Accept: 'application/json' }
+          });
+          const text = await response.text();
+          const data = text ? JSON.parse(text) : {};
+          if (!response.ok) throw new Error(data.error || 'Không tải được dữ liệu thống kê phù hiệu.');
+          const related = data.related || {};
+          const emblems = Array.isArray(related.PHUHIEUXE) ? related.PHUHIEUXE : [];
+          const companies = Array.isArray(related.THONGTINDONVIVANTAI) ? related.THONGTINDONVIVANTAI : [];
           const result = buildStats(emblems, companies);
           state.stats = result.stats;
           state.types = result.types;

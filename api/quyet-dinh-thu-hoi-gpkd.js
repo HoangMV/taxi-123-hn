@@ -1,3 +1,3 @@
 const { createGoogleSheetsHandler } = require('../scripts/google-api-handler.cjs');
 
-module.exports = createGoogleSheetsHandler('de-nghi-the-chap');
+module.exports = createGoogleSheetsHandler('quyet-dinh-thu-hoi-gpkd');

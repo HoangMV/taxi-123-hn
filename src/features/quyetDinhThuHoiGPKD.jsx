@@ -136,47 +136,66 @@ export function normalizeQuyetDinhWordLayout(zip) {
   return zip;
 }
 
-export async function fetchQuyetDinhThuHoiData(appSheetService, decisionId) {
+async function readJsonResponse(response, fallbackMessage) {
+  const text = await response.text();
+  let data = {};
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      const preview = text.trim().slice(0, 40).toLowerCase();
+      if (preview.startsWith('<!doctype') || preview.startsWith('<html') || preview.startsWith('<')) {
+        throw new Error('API trả về HTML thay vì JSON. Khi chạy local, hãy chạy thêm npm run proxy cùng với npm start, rồi tải lại trang.');
+      }
+      throw new Error(fallbackMessage || 'Không đọc được phản hồi JSON từ API.');
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || fallbackMessage || `Y?u c?u th?t b?i (${response.status}).`);
+  }
+
+  return data;
+}
+
+export async function fetchQuyetDinhThuHoiData(decisionId) {
   if (!decisionId) {
     throw new Error('Thiếu tham số IDQuyetDinh trên URL.');
   }
 
-  const [quyetDinhData, chitietData, tinhData, canCuData] = await Promise.all([
-    appSheetService.find('QUYETDINH_THUHOI_GPKD', `Filter(QUYETDINH_THUHOI_GPKD, [ID_QD] = "${decisionId}")`),
-    appSheetService.find('GPKD_THUHOI_CHITIET', `Filter(GPKD_THUHOI_CHITIET, [Ref_QDThuHoi] = "${decisionId}")`),
-    appSheetService.find('ThongTin', 'Filter(ThongTin, true)'),
-    appSheetService.find('CANCU_PHAPLY', 'Filter(CANCU_PHAPLY, true)')
-  ]);
-
-  const quyetDinh = Array.isArray(quyetDinhData) ? quyetDinhData[0] : null;
+  const response = await fetch(`/api/quyet-dinh-thu-hoi-gpkd?IDQuyetDinh=${encodeURIComponent(decisionId)}`, {
+    method: 'GET',
+    headers: { Accept: 'application/json' }
+  });
+  const data = await readJsonResponse(response, 'Không tải được dữ liệu quyết định thu hồi GPKD từ Google Sheets.');
+  const related = data.related || {};
+  const quyetDinh = data.row || null;
   if (!quyetDinh) {
     throw new Error(`Không tìm thấy quyết định với IDQuyetDinh = ${decisionId}.`);
   }
 
-  let nguoiPhuTrachInfo = null;
-  const nguoiKyId = String(quyetDinh.NguoiKy || '').trim();
-  if (nguoiKyId) {
-    const nguoiPhuTrachData = await appSheetService.find('NguoiPhuTrach', `Filter(NguoiPhuTrach, [IDNguoi] = "${nguoiKyId}")`);
-    nguoiPhuTrachInfo = getNguoiPhuTrachInfo(quyetDinh, nguoiPhuTrachData);
-  }
+  const chitietData = Array.isArray(related.GPKD_THUHOI_CHITIET) ? related.GPKD_THUHOI_CHITIET : [];
+  const tinhData = Array.isArray(related.ThongTin) ? related.ThongTin : [];
+  const canCuData = Array.isArray(related.CANCU_PHAPLY) ? related.CANCU_PHAPLY : [];
+  const nguoiPhuTrachData = Array.isArray(related.NguoiPhuTrach) ? related.NguoiPhuTrach : [];
+  const nguoiPhuTrachInfo = getNguoiPhuTrachInfo(quyetDinh, nguoiPhuTrachData);
 
   const mocTinhHieuLuc = parseDateValue(quyetDinh.NgayKy) || new Date();
-  const sortedTinhData = Array.isArray(tinhData)
-    ? [...tinhData]
-        .filter((item) => {
-          const ngayHieuLuc = parseDateValue(item.Ngay_hieu_luc);
-          return !ngayHieuLuc || ngayHieuLuc <= mocTinhHieuLuc;
-        })
-        .sort((a, b) => new Date(b.Ngay_hieu_luc) - new Date(a.Ngay_hieu_luc))
-    : [];
+  const sortedTinhData = tinhData
+    .filter((item) => {
+      const ngayHieuLuc = parseDateValue(item.Ngay_hieu_luc);
+      return !ngayHieuLuc || ngayHieuLuc <= mocTinhHieuLuc;
+    })
+    .sort((a, b) => new Date(b.Ngay_hieu_luc) - new Date(a.Ngay_hieu_luc));
   const tenTinh = sortedTinhData[0]?.Tinh || '';
 
   return {
     decisionId,
     quyetDinh,
-    chiTietData: Array.isArray(chitietData) ? chitietData : [],
-    tinhData: Array.isArray(tinhData) ? tinhData : [],
-    canCuData: Array.isArray(canCuData) ? canCuData : [],
+    chiTietData: chitietData,
+    tinhData,
+    canCuData,
     nguoiPhuTrachInfo,
     tenTinh
   };

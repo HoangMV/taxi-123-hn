@@ -89,39 +89,23 @@ async function fetchKyQuyBundle(idKyQuy, options = {}) {
   return data;
 }
 
-async function fetchRelatedMap(appSheetService, tableName, keyName, ids) {
+async function fetchRelatedMap(legacyService, tableName, keyName, ids) {
   const selector = buildRefSelector(tableName, keyName, ids);
   if (!selector) return new Map();
-  const rows = await appSheetService.find(tableName, selector);
+  const rows = await legacyService.find(tableName, selector);
   return buildMap(rows, keyName);
 }
 
-export async function fetchKyQuyRow(appSheetService, idKyQuy) {
+export async function fetchKyQuyRow(idKyQuy) {
   if (!idKyQuy) {
     throw new Error('Thiếu tham số ID_KyQuy trên URL.');
   }
 
-  try {
-    const bundle = await fetchKyQuyBundle(idKyQuy, { includeRelated: false });
-    const row = bundle.row || null;
-
-    if (!row) {
-      throw new Error(`Không tìm thấy hợp đồng ký quỹ với ID_KyQuy = ${idKyQuy}.`);
-    }
-
-    return row;
-  } catch (error) {
-    if (!appSheetService) throw error;
-  }
-
-  const selectorValue = escapeSelectorValue(idKyQuy);
-  const rows = await appSheetService.find('NHANSU_KYQUY', `Filter(NHANSU_KYQUY, [ID_KyQuy] = "${selectorValue}")`);
-  const row = Array.isArray(rows) ? rows[0] : null;
-
+  const bundle = await fetchKyQuyBundle(idKyQuy, { includeRelated: false });
+  const row = bundle.row || null;
   if (!row) {
-    throw new Error(`Không tìm thấy hợp đồng ký quỹ với ID_KyQuy = ${idKyQuy}.`);
+    throw new Error(`Không tìm thấy dữ liệu với ID_KyQuy = ${idKyQuy}.`);
   }
-
   return row;
 }
 
@@ -132,21 +116,18 @@ export function getKyQuyRelatedIds(row) {
   };
 }
 
-export async function fetchKyQuyRelated(appSheetService, row) {
-  if (!appSheetService) {
-    return {
-      nhanSuById: new Map(),
-      donViById: new Map()
-    };
-  }
-
-  const { nhanSuIds, donViIds } = getKyQuyRelatedIds(row);
-  const [nhanSuById, donViById] = await Promise.all([
-    fetchRelatedMap(appSheetService, 'NHANSU', 'ID_NhanSu', nhanSuIds),
-    fetchRelatedMap(appSheetService, 'DONVI', 'ID_DonVi', donViIds)
-  ]);
-
-  return { nhanSuById, donViById };
+export async function fetchKyQuyRelated(row) {
+  const id = cleanValue(row?.ID_KyQuy);
+  if (!id) return {
+    nhanSuById: new Map(),
+    donViById: new Map()
+  };
+  const bundle = await fetchKyQuyBundle(id, { });
+  const related = bundle.related || {};
+  return {
+    nhanSuById: buildMap(related.NHANSU, 'ID_NhanSu'),
+    donViById: buildMap(related.DONVI, 'ID_DonVi')
+  };
 }
 
 export function buildKyQuyPayload(row, relatedData = {}) {
@@ -226,51 +207,19 @@ export function buildKyQuyTemplateData(payload) {
   };
 }
 
-export async function fetchKyQuyData(appSheetService, idKyQuy) {
+export async function fetchKyQuyData(idKyQuy) {
   if (!idKyQuy) {
     throw new Error('Thiếu tham số ID_KyQuy trên URL.');
   }
 
-  try {
-    const bundle = await fetchKyQuyBundle(idKyQuy);
-    const row = bundle.row || null;
-
-    if (!row) {
-      throw new Error(`Không tìm thấy hợp đồng ký quỹ với ID_KyQuy = ${idKyQuy}.`);
-    }
-    let nhanSuById = buildMap(bundle.related?.NHANSU, 'ID_NhanSu');
-    let donViById = buildMap(bundle.related?.DONVI, 'ID_DonVi');
-    const { nhanSuIds, donViIds } = getKyQuyRelatedIds(row);
-
-    if (appSheetService) {
-      const missingNhanSuIds = nhanSuIds
-        .map(cleanValue)
-        .filter((id) => id && !nhanSuById.has(id));
-      const missingDonViIds = donViIds
-        .map(cleanValue)
-        .filter((id) => id && !donViById.has(id));
-
-      if (missingNhanSuIds.length > 0 || missingDonViIds.length > 0) {
-        const [extraNhanSuById, extraDonViById] = await Promise.all([
-          missingNhanSuIds.length > 0
-            ? fetchRelatedMap(appSheetService, 'NHANSU', 'ID_NhanSu', missingNhanSuIds)
-            : Promise.resolve(new Map()),
-          missingDonViIds.length > 0
-            ? fetchRelatedMap(appSheetService, 'DONVI', 'ID_DonVi', missingDonViIds)
-            : Promise.resolve(new Map())
-        ]);
-
-        nhanSuById = mergeMaps(nhanSuById, extraNhanSuById);
-        donViById = mergeMaps(donViById, extraDonViById);
-      }
-    }
-
-    return buildKyQuyPayload(row, { nhanSuById, donViById });
-  } catch (error) {
-    if (!appSheetService) throw error;
+  const bundle = await fetchKyQuyBundle(idKyQuy);
+  const row = bundle.row || null;
+  if (!row) {
+    throw new Error(`Không tìm thấy dữ liệu với ID_KyQuy = ${idKyQuy}.`);
   }
-
-  const row = await fetchKyQuyRow(appSheetService, idKyQuy);
-  const related = await fetchKyQuyRelated(appSheetService, row);
-  return buildKyQuyPayload(row, related);
+  const related = bundle.related || {};
+  return buildKyQuyPayload(row, {
+    nhanSuById: buildMap(related.NHANSU, 'ID_NhanSu'),
+    donViById: buildMap(related.DONVI, 'ID_DonVi')
+  });
 }

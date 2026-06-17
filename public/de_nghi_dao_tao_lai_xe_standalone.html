@@ -409,28 +409,6 @@
         ].map(cleanValue).filter(Boolean).join(', ');
       }
 
-      async function appSheetFind(tableName, selector) {
-        const apiProxyUrl = runtimeConfig.API_PROXY_URL || '/api/appsheet';
-        const response = await fetch(apiProxyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tableName,
-            action: 'Find',
-            payload: selector ? { Properties: { Selector: selector } } : {}
-          })
-        });
-        const rows = await readJsonResponse(response, `AppSheet ${response.status}: Yêu cầu thất bại.`);
-        return Array.isArray(rows) ? rows : [];
-      }
-
-      async function fetchMap(tableName, keyName, ids) {
-        const selector = buildRefSelector(tableName, keyName, ids);
-        if (!selector) return new Map();
-        const rows = await appSheetFind(tableName, selector);
-        return buildMap(rows, keyName);
-      }
-
       async function fetchHoSo(idHoSoDaoTao) {
         const params = new URLSearchParams({
           ID_HoSoDaoTao: idHoSoDaoTao,
@@ -652,7 +630,7 @@
         currentPayload = null;
         elements.printButton.disabled = true;
         elements.exportExcelButton.disabled = true;
-        elements.statusText.textContent = 'Đang tải hồ sơ đề nghị đào tạo từ AppSheet...';
+        elements.statusText.textContent = 'Đang tải hồ sơ đề nghị đào tạo từ Google Sheets...';
         showMessage('Đang tải dữ liệu...', false);
 
         try {

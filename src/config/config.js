@@ -6,13 +6,8 @@ const runtimeConfig =
 const config = {
   APP_NAME: 'TAXI 123_HN',
   LOGO_URL: '/logo-taxi-123.png',
-  APP_ID: runtimeConfig.APP_ID || '',
-  REGION: runtimeConfig.REGION || 'www',
   DEFAULT_TABLE: runtimeConfig.DEFAULT_TABLE || '',
-  API_PROXY_URL: runtimeConfig.API_PROXY_URL || '/api/appsheet',
-  get API_URL() {
-    return `https://${this.REGION}.appsheet.com/api/v2/apps/${this.APP_ID}/tables`;
-  },
+  API_BASE_URL: runtimeConfig.API_BASE_URL || '/api',
   ROUTES: {
     HOME: '/',
     DASHBOARD: '/dashboard',

@@ -1,10 +1,6 @@
 import { formatAdministrativeDate, formatAdministrativeDateString } from '../lib/dateFormat';
 
-const TABLE_HO_SO = 'HS_DE_NGHI_PHUHIEU';
-const TABLE_CHI_TIET = 'CT_HS_DE_NGHI_PHUHIEU';
-const TABLE_DON_VI = 'DONVI';
-const TABLE_CO_QUAN_CAP = 'DM_COQUAN_CAP';
-const TABLE_XE = 'XE';
+const BUNDLE_ENDPOINT = '/api/de-nghi-cap-phu-hieu-xe';
 
 export function getDeNghiCapPhuHieuIdFromSearch(search) {
   const params = new URLSearchParams(search || '');
@@ -16,29 +12,63 @@ function cleanValue(value) {
   return String(value).trim();
 }
 
-function escapeSelectorValue(value) {
-  return String(value || '').replace(/"/g, '\\"');
-}
-
-function buildEqualsSelector(tableName, keyName, value) {
-  const cleanId = cleanValue(value);
-  if (!cleanId) return '';
-  return `Filter(${tableName}, [${keyName}] = "${escapeSelectorValue(cleanId)}")`;
-}
-
-function buildRefSelector(tableName, keyName, ids) {
-  const uniqueIds = [...new Set((Array.isArray(ids) ? ids : []).map(cleanValue).filter(Boolean))];
-  if (uniqueIds.length === 0) return '';
-  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-  return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
-}
-
 function buildMap(rows, keyName) {
   return new Map(
     (Array.isArray(rows) ? rows : [])
       .map((row) => [cleanValue(row?.[keyName]), row])
       .filter(([id]) => id)
   );
+}
+
+async function readJsonResponse(response, fallbackMessage) {
+  const text = await response.text();
+  let data = {};
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      const preview = text.trim().slice(0, 40).toLowerCase();
+      if (preview.startsWith('<!doctype') || preview.startsWith('<html') || preview.startsWith('<')) {
+        throw new Error('API trả về HTML thay vì JSON. Khi chạy local, hãy chạy thêm npm run proxy cùng với npm start, rồi tải lại trang.');
+      }
+      throw new Error(fallbackMessage || 'Không đọc được phản hồi JSON từ API.');
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || fallbackMessage || `Yêu cầu thất bại (${response.status}).`);
+  }
+
+  return data;
+}
+
+async function fetchDeNghiCapPhuHieuBundle(idHoSoPhuHieu, options = {}) {
+  const params = new URLSearchParams({ ID_HoSoPhuHieu: idHoSoPhuHieu });
+  if (options.includeRelated === false) {
+    params.set('includeRelated', '0');
+  }
+
+  const init = options.row
+    ? {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ID_HoSoPhuHieu: idHoSoPhuHieu,
+          includeRelated: options.includeRelated === false ? '0' : '1',
+          row: options.row
+        })
+      }
+    : {
+        method: 'GET',
+        headers: { Accept: 'application/json' }
+      };
+
+  const response = await fetch(`${BUNDLE_ENDPOINT}?${params.toString()}`, init);
+  return readJsonResponse(response, 'Không tải được dữ liệu đề nghị cấp phù hiệu từ API bundle.');
 }
 
 function getDonViDisplayName(donVi) {
@@ -83,14 +113,13 @@ function buildXeItems(chiTietRows, xeById, hoSoRow) {
   });
 }
 
-export async function fetchDeNghiCapPhuHieuRow(appSheetService, idHoSoPhuHieu) {
+export async function fetchDeNghiCapPhuHieuRow(idHoSoPhuHieu) {
   if (!idHoSoPhuHieu) {
     throw new Error('Thiếu tham số ID_HoSoPhuHieu trên URL.');
   }
 
-  const selector = buildEqualsSelector(TABLE_HO_SO, 'ID_HoSoPhuHieu', idHoSoPhuHieu);
-  const rows = await appSheetService.find(TABLE_HO_SO, selector);
-  const row = Array.isArray(rows) ? rows[0] : null;
+  const bundle = await fetchDeNghiCapPhuHieuBundle(idHoSoPhuHieu, { includeRelated: false });
+  const row = bundle.row || null;
 
   if (!row) {
     throw new Error(`Không tìm thấy hồ sơ đề nghị cấp phù hiệu với ID_HoSoPhuHieu = ${idHoSoPhuHieu}.`);
@@ -99,44 +128,23 @@ export async function fetchDeNghiCapPhuHieuRow(appSheetService, idHoSoPhuHieu) {
   return row;
 }
 
-async function fetchMap(appSheetService, tableName, keyName, ids) {
-  const selector = buildRefSelector(tableName, keyName, ids);
-  if (!selector) return new Map();
-  const rows = await appSheetService.find(tableName, selector);
-  return buildMap(rows, keyName);
-}
-
-export async function fetchDeNghiCapPhuHieuRelated(appSheetService, row) {
-  if (!appSheetService) {
+export async function fetchDeNghiCapPhuHieuRelated(row) {
+  const idHoSoPhuHieu = cleanValue(row?.ID_HoSoPhuHieu);
+  if (idHoSoPhuHieu) {
+    const bundle = await fetchDeNghiCapPhuHieuBundle(idHoSoPhuHieu, { row });
     return {
-      chiTietRows: [],
-      donViById: new Map(),
-      coQuanCapById: new Map(),
-      xeById: new Map()
+      chiTietRows: Array.isArray(bundle.related?.CT_HS_DE_NGHI_PHUHIEU) ? bundle.related.CT_HS_DE_NGHI_PHUHIEU : [],
+      donViById: buildMap(bundle.related?.DONVI, 'ID_DonVi'),
+      coQuanCapById: buildMap(bundle.related?.DM_COQUAN_CAP, 'ID_CoQuanCap'),
+      xeById: buildMap(bundle.related?.XE, 'ID_Xe')
     };
   }
 
-  const chiTietRows = await appSheetService.find(
-    TABLE_CHI_TIET,
-    buildEqualsSelector(TABLE_CHI_TIET, 'Ref_HoSoPhuHieu', row?.ID_HoSoPhuHieu)
-  );
-
-  const [donViById, coQuanCapById, xeById] = await Promise.all([
-    fetchMap(appSheetService, TABLE_DON_VI, 'ID_DonVi', [row?.Ref_DonViDeNghi]),
-    fetchMap(appSheetService, TABLE_CO_QUAN_CAP, 'ID_CoQuanCap', [row?.Ref_CoQuanCap]),
-    fetchMap(
-      appSheetService,
-      TABLE_XE,
-      'ID_Xe',
-      (Array.isArray(chiTietRows) ? chiTietRows : []).map((chiTiet) => chiTiet?.Ref_Xe)
-    )
-  ]);
-
   return {
-    chiTietRows: Array.isArray(chiTietRows) ? chiTietRows : [],
-    donViById,
-    coQuanCapById,
-    xeById
+    chiTietRows: [],
+    donViById: new Map(),
+    coQuanCapById: new Map(),
+    xeById: new Map()
   };
 }
 
