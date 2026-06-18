@@ -592,12 +592,53 @@
         }[char]));
       }
 
+      function parseDateValue(value) {
+        if (!value) return null;
+        if (value instanceof Date) {
+          const dateValue = new Date(value.getTime());
+          return Number.isNaN(dateValue.getTime()) ? null : dateValue;
+        }
+
+        const text = String(value).trim();
+        if (!text) return null;
+
+        const isoDateMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+        if (isoDateMatch) {
+          const [, year, month, day] = isoDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (
+            dateValue.getFullYear() === Number(year) &&
+            dateValue.getMonth() === Number(month) - 1 &&
+            dateValue.getDate() === Number(day)
+          ) {
+            return dateValue;
+          }
+        }
+
+        const vietnameseDateMatch = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:\s+.*)?$/);
+        if (vietnameseDateMatch) {
+          const [, day, month, year] = vietnameseDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (
+            dateValue.getFullYear() === Number(year) &&
+            dateValue.getMonth() === Number(month) - 1 &&
+            dateValue.getDate() === Number(day)
+          ) {
+            return dateValue;
+          }
+        }
+
+        const parsed = new Date(text);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+
       function isValidEmblem(item) {
         if (String(item.TrangThai || '').trim() !== 'Hiệu lực') return false;
         if (!item.NgayHetHan) return true;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        return new Date(item.NgayHetHan) >= today;
+        const expiredAt = parseDateValue(item.NgayHetHan);
+        return Boolean(expiredAt) && expiredAt >= today;
       }
 
       function isActive(item) {

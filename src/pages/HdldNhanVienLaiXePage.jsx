@@ -14,7 +14,7 @@ import {
   getHdldNhanVienLaiXeIdFromSearch
 } from '../features/hdldNhanVienLaiXe';
 
-const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=utf8-20260529';
+const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=so-hop-dong-20260618';
 
 function normalizeDocxZipEntryNames(zip, PizZip) {
   const normalizedZip = new PizZip();
@@ -308,7 +308,7 @@ const HdldNhanVienLaiXePage = () => {
                 <div className="hdld-center hdld-bold">Độc lập - Tự do - Hạnh phúc</div>
 
                 <div className="hdld-title">HỢP ĐỒNG LAO ĐỘNG</div>
-                <div className="hdld-center">Số: {payload.soHopDong || '...'} /{payload.namHopDong || '...'}/HĐLĐ</div>
+                <div className="hdld-center">Số: {payload.soHopDong || '...'}</div>
 
                 <div className="hdld-row">
                   Hôm nay, ngày {payload.ngayKy.day || '...'} tháng {payload.ngayKy.month || '...'} năm {payload.ngayKy.year || '...'} tại {payload.tenDonVi || '................................'}, chúng tôi gồm:

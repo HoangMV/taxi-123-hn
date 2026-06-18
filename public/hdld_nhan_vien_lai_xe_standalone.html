@@ -82,7 +82,41 @@
 
       function parseDateValue(value) {
         if (!value) return null;
-        const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+        if (value instanceof Date) {
+          const dateValue = new Date(value.getTime());
+          return Number.isNaN(dateValue.getTime()) ? null : dateValue;
+        }
+
+        const text = String(value).trim();
+        if (!text) return null;
+
+        const isoDateMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+        if (isoDateMatch) {
+          const [, year, month, day] = isoDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (
+            dateValue.getFullYear() === Number(year) &&
+            dateValue.getMonth() === Number(month) - 1 &&
+            dateValue.getDate() === Number(day)
+          ) {
+            return dateValue;
+          }
+        }
+
+        const vietnameseDateMatch = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:\s+.*)?$/);
+        if (vietnameseDateMatch) {
+          const [, day, month, year] = vietnameseDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (
+            dateValue.getFullYear() === Number(year) &&
+            dateValue.getMonth() === Number(month) - 1 &&
+            dateValue.getDate() === Number(day)
+          ) {
+            return dateValue;
+          }
+        }
+
+        const parsed = new Date(text);
         return Number.isNaN(parsed.getTime()) ? null : parsed;
       }
 
@@ -244,7 +278,6 @@
         return {
           idHopDongLaoDong: cleanValue(row.ID_HopDongLaoDong),
           soHopDong: cleanValue(row.SoHopDong) || cleanValue(nhanSu?.CCCD) || cleanValue(row.ID_HopDongLaoDong),
-          namHopDong: ngayKy.year,
           ngayKy,
           ngayKyText: formatAdministrativeDateString(row.NgayKy),
           ngayBatDauText: formatAdministrativeDateString(row.NgayBatDau),
@@ -278,7 +311,6 @@
       function buildTemplateData(payload) {
         return {
           so_hop_dong: payload.soHopDong,
-          nam_hop_dong: payload.namHopDong,
           ngay_ky_text: payload.ngayKyText,
           ngay_ky: payload.ngayKy.day,
           thang_ky: payload.ngayKy.month,
@@ -329,7 +361,7 @@
             <div class="center bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
             <div class="center bold">Độc lập - Tự do - Hạnh phúc</div>
             <div class="title">HỢP ĐỒNG LAO ĐỘNG</div>
-            <div class="center">Số: ${payload.soHopDong || '...'} /${payload.namHopDong || '...'}/HĐLĐ</div>
+            <div class="center">Số: ${payload.soHopDong || '...'}</div>
             <div class="row">Hôm nay, ngày ${payload.ngayKy.day || '...'} tháng ${payload.ngayKy.month || '...'} năm ${payload.ngayKy.year || '...'} tại ${payload.tenDonVi || '................................'}, chúng tôi gồm:</div>
             <div class="section">
               <div class="line"><strong>BÊN A:</strong> ${payload.tenDonViUpper || ''}</div>
@@ -376,7 +408,7 @@
         if (!currentPayload) return;
         exportButton.disabled = true;
         try {
-          const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=utf8-20260529');
+          const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=so-hop-dong-20260618');
           if (!response.ok) throw new Error('Không thể tải template Word.');
           const content = await response.arrayBuffer();
           const sourceZip = new PizZip(content);

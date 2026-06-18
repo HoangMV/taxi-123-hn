@@ -215,7 +215,6 @@ export function buildHdldNhanVienLaiXePayload(row, relatedData = {}) {
     refBoPhan: cleanValue(row?.Ref_BoPhan),
     refMucLuong: mucLuongId,
     soHopDong,
-    namHopDong: ngayKy.year,
     loaiHopDong: cleanValue(row?.LoaiHopDong),
     ngayKy,
     ngayKyText: formatAdministrativeDateString(row?.NgayKy),
@@ -254,7 +253,6 @@ export function buildHdldNhanVienLaiXePayload(row, relatedData = {}) {
 export function buildHdldNhanVienLaiXeTemplateData(payload) {
   return {
     so_hop_dong: payload.soHopDong,
-    nam_hop_dong: payload.namHopDong,
     ngay_ky_text: payload.ngayKyText,
     ngay_ky: payload.ngayKy.day,
     thang_ky: payload.ngayKy.month,

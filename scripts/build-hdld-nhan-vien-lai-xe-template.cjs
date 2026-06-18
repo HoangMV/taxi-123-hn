@@ -38,7 +38,7 @@ function escapeXmlText(value) {
 
 const replacements = new Map([
   [6, '{so_hop_dong}'],
-  [7, '/{nam_hop_dong}/HĐLĐ'],
+  [7, ''],
   [15, ' {ngay_ky} tháng {thang_ky} năm {nam_ky}'],
   [16, ''],
   [18, 'tại {ten_don_vi}, chúng tôi gồm:'],

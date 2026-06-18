@@ -1,0 +1,15 @@
+
+> taxi-123-hn@0.1.0 prestart
+> node scripts/generate-runtime-config.cjs
+
+Generated public\runtime-config.js
+
+> taxi-123-hn@0.1.0 start
+> vite --host 0.0.0.0 --force --port 5173
+
+[2m09:31:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Forced re-optimization of dependencies
+
+  [32m[1mVITE[22m v7.3.3[39m  [2mready in [0m[1m394[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.88.126:[1m5173[22m/[39m

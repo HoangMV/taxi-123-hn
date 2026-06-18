@@ -1,3 +1,5 @@
+import { parseDateValue } from '../lib/dateFormat';
+
 export const CACHE_KEY = 'taxi123hn.thongke-phuhieu-donvi.v1';
 export const CACHE_TTL_MS = 60 * 60 * 1000;
 
@@ -18,8 +20,8 @@ export function isValidEmblem(item) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const expiryDate = new Date(item.NgayHetHan);
-    if (expiryDate < today) {
+    const expiryDate = parseDateValue(item.NgayHetHan);
+    if (!expiryDate || expiryDate < today) {
       return false;
     }
   }

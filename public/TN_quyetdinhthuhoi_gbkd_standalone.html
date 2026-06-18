@@ -385,10 +385,50 @@
         }[char]));
       }
 
+      function parseDateValue(value) {
+        if (!value) return null;
+        if (value instanceof Date) {
+          const dateValue = new Date(value.getTime());
+          return Number.isNaN(dateValue.getTime()) ? null : dateValue;
+        }
+
+        const text = String(value).trim();
+        if (!text) return null;
+
+        const isoDateMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+        if (isoDateMatch) {
+          const [, year, month, day] = isoDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (
+            dateValue.getFullYear() === Number(year) &&
+            dateValue.getMonth() === Number(month) - 1 &&
+            dateValue.getDate() === Number(day)
+          ) {
+            return dateValue;
+          }
+        }
+
+        const vietnameseDateMatch = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:\s+.*)?$/);
+        if (vietnameseDateMatch) {
+          const [, day, month, year] = vietnameseDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (
+            dateValue.getFullYear() === Number(year) &&
+            dateValue.getMonth() === Number(month) - 1 &&
+            dateValue.getDate() === Number(day)
+          ) {
+            return dateValue;
+          }
+        }
+
+        const parsed = new Date(text);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+
       function formatAdministrativeDate(value) {
         if (!value) return '';
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return '';
+        const date = parseDateValue(value);
+        if (!date) return '';
         const day = String(date.getDate()).padStart(2, '0');
         const monthValue = date.getMonth() + 1;
         const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
@@ -397,8 +437,8 @@
       }
 
       function adminDate(value) {
-        const date = value ? new Date(value) : new Date();
-        if (Number.isNaN(date.getTime())) return { day: '', month: '', year: '' };
+        const date = value ? parseDateValue(value) : new Date();
+        if (!date) return { day: '', month: '', year: '' };
         return {
           day: String(date.getDate()).padStart(2, '0'),
           month: date.getMonth() + 1 <= 2 ? String(date.getMonth() + 1).padStart(2, '0') : String(date.getMonth() + 1),

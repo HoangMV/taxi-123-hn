@@ -114,7 +114,41 @@
 
       function parseDateValue(value) {
         if (!value) return null;
-        const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+        if (value instanceof Date) {
+          const dateValue = new Date(value.getTime());
+          return Number.isNaN(dateValue.getTime()) ? null : dateValue;
+        }
+
+        const text = String(value).trim();
+        if (!text) return null;
+
+        const isoDateMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+        if (isoDateMatch) {
+          const [, year, month, day] = isoDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (
+            dateValue.getFullYear() === Number(year) &&
+            dateValue.getMonth() === Number(month) - 1 &&
+            dateValue.getDate() === Number(day)
+          ) {
+            return dateValue;
+          }
+        }
+
+        const vietnameseDateMatch = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:\s+.*)?$/);
+        if (vietnameseDateMatch) {
+          const [, day, month, year] = vietnameseDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (
+            dateValue.getFullYear() === Number(year) &&
+            dateValue.getMonth() === Number(month) - 1 &&
+            dateValue.getDate() === Number(day)
+          ) {
+            return dateValue;
+          }
+        }
+
+        const parsed = new Date(text);
         return Number.isNaN(parsed.getTime()) ? null : parsed;
       }
 
