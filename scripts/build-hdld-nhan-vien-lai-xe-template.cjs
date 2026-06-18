@@ -63,7 +63,7 @@ const replacements = new Map([
   [78, '{chuc_danh}'],
   [130, '- Loại hợp đồng lao động: {loai_hop_dong}'],
   [131, '.'],
-  [132, '- Thời hạn hợp đồng lao động: từ ngày {ngay_bat_dau} đến ngày {ngay_ket_thuc}'],
+  [132, '- Thời hạn hợp đồng lao động: {thoi_han_hop_dong}'],
   [144, '{muc_luong}'],
   [145, 'VNĐ/tháng.']
 ]);

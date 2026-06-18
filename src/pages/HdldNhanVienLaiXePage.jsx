@@ -14,7 +14,7 @@ import {
   getHdldNhanVienLaiXeIdFromSearch
 } from '../features/hdldNhanVienLaiXe';
 
-const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=so-hop-dong-20260618';
+const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=thoi-han-20260618';
 
 function normalizeDocxZipEntryNames(zip, PizZip) {
   const normalizedZip = new PizZip();
@@ -338,7 +338,7 @@ const HdldNhanVienLaiXePage = () => {
                 <div className="hdld-section">
                   <div className="hdld-line"><strong>Điều 2. Thời hạn hợp đồng</strong></div>
                   <div className="hdld-line hdld-indent">Loại hợp đồng lao động: {payload.loaiHopDong}.</div>
-                  <div className="hdld-line hdld-indent">Thời hạn hợp đồng lao động: từ ngày {payload.ngayBatDauText} đến ngày {payload.ngayKetThucText}.</div>
+                  <div className="hdld-line hdld-indent">Thời hạn hợp đồng lao động: {payload.thoiHanHopDongText}.</div>
                 </div>
 
                 <div className="hdld-section">

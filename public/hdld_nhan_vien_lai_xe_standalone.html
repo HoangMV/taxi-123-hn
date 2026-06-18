@@ -220,6 +220,27 @@
         return cleanValue(boPhan.TenBoPhan) || cleanValue(boPhan.Display) || cleanValue(boPhan.ID_BoPhan);
       }
 
+      function normalizeVietnameseText(value) {
+        return cleanValue(value)
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd')
+          .replace(/Đ/g, 'D')
+          .toLowerCase();
+      }
+
+      function isIndefiniteContractType(value) {
+        return normalizeVietnameseText(value) === 'khong xac dinh thoi han';
+      }
+
+      function buildThoiHanHopDongText(loaiHopDong, ngayBatDauText, ngayKetThucText) {
+        const batDau = cleanValue(ngayBatDauText);
+        const ketThuc = cleanValue(ngayKetThucText);
+        const batDauText = batDau ? `từ ngày ${batDau}` : 'từ ngày';
+        if (isIndefiniteContractType(loaiHopDong)) return batDauText;
+        return ketThuc ? `${batDauText} đến ngày ${ketThuc}` : `${batDauText} đến ngày`;
+      }
+
       function normalizeLookupText(value) {
         return cleanValue(value).toLowerCase();
       }
@@ -275,13 +296,17 @@
         const ngayKy = formatAdministrativeDate(row.NgayKy);
         const tenDonVi = getDonViDisplayName(donVi) || cleanValue(row.Ref_DonViLamViec);
         const missingSalary = Boolean(cleanValue(row.MucLuongCoBan) && !mucLuong);
+        const loaiHopDong = cleanValue(row.LoaiHopDong);
+        const ngayBatDauText = formatAdministrativeDateString(row.NgayBatDau);
+        const ngayKetThucText = formatAdministrativeDateString(row.NgayKetThuc);
         return {
           idHopDongLaoDong: cleanValue(row.ID_HopDongLaoDong),
           soHopDong: cleanValue(row.SoHopDong) || cleanValue(nhanSu?.CCCD) || cleanValue(row.ID_HopDongLaoDong),
           ngayKy,
           ngayKyText: formatAdministrativeDateString(row.NgayKy),
-          ngayBatDauText: formatAdministrativeDateString(row.NgayBatDau),
-          ngayKetThucText: formatAdministrativeDateString(row.NgayKetThuc),
+          ngayBatDauText,
+          ngayKetThucText,
+          thoiHanHopDongText: buildThoiHanHopDongText(loaiHopDong, ngayBatDauText, ngayKetThucText),
           tenDonVi,
           tenDonViUpper: tenDonVi.toUpperCase(),
           maSoThueDonVi: cleanValue(donVi?.MaSoThue) || cleanValue(donVi?.MaDonVi),
@@ -298,7 +323,7 @@
           hangGplx: cleanValue(nhanSu?.HangGPLX) || 'B2',
           chucDanh: getChucDanhDisplayName(chucDanh) || cleanValue(row.Ref_BoPhan),
           boPhan: getBoPhanDisplayName(boPhan),
-          loaiHopDong: cleanValue(row.LoaiHopDong),
+          loaiHopDong,
           mucLuongText: formatMoney(mucLuong?.MucLuong),
           mucLuongBangChu: salaryDigits ? `${numberToWords(salaryDigits)} đồng` : '',
           missingSalary,
@@ -334,6 +359,7 @@
           loai_hop_dong: payload.loaiHopDong,
           ngay_bat_dau: payload.ngayBatDauText,
           ngay_ket_thuc: payload.ngayKetThucText,
+          thoi_han_hop_dong: payload.thoiHanHopDongText,
           muc_luong: payload.mucLuongText,
           muc_luong_bang_chu: payload.mucLuongBangChu,
           trang_thai: payload.trangThaiXuLy,
@@ -384,7 +410,7 @@
             <div class="section">
               <div class="line"><strong>Điều 2. Thời hạn hợp đồng</strong></div>
               <div class="line indent">Loại hợp đồng lao động: ${payload.loaiHopDong || ''}.</div>
-              <div class="line indent">Thời hạn hợp đồng lao động: từ ngày ${payload.ngayBatDauText || ''} đến ngày ${payload.ngayKetThucText || ''}.</div>
+              <div class="line indent">Thời hạn hợp đồng lao động: ${payload.thoiHanHopDongText || ''}.</div>
             </div>
             <div class="section">
               <div class="line"><strong>Điều 3. Tiền lương và chế độ</strong></div>
@@ -408,7 +434,7 @@
         if (!currentPayload) return;
         exportButton.disabled = true;
         try {
-          const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=so-hop-dong-20260618');
+          const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=thoi-han-20260618');
           if (!response.ok) throw new Error('Không thể tải template Word.');
           const content = await response.arrayBuffer();
           const sourceZip = new PizZip(content);

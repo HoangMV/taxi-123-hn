@@ -158,6 +158,27 @@ function getSalaryDigits(value) {
   return cleanValue(value).replace(/[^\d]/g, '');
 }
 
+function normalizeVietnameseText(value) {
+  return cleanValue(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+}
+
+function isIndefiniteContractType(value) {
+  return normalizeVietnameseText(value) === 'khong xac dinh thoi han';
+}
+
+function buildThoiHanHopDongText(loaiHopDong, ngayBatDauText, ngayKetThucText) {
+  const batDau = cleanValue(ngayBatDauText);
+  const ketThuc = cleanValue(ngayKetThucText);
+  const batDauText = batDau ? `từ ngày ${batDau}` : 'từ ngày';
+  if (isIndefiniteContractType(loaiHopDong)) return batDauText;
+  return ketThuc ? `${batDauText} đến ngày ${ketThuc}` : `${batDauText} đến ngày`;
+}
+
 export async function fetchHdldNhanVienLaiXeRelated(row) {
   const id = cleanValue(row?.ID_HopDongLaoDong);
   if (!id) return {
@@ -203,6 +224,9 @@ export function buildHdldNhanVienLaiXePayload(row, relatedData = {}) {
   const chucVuNguoiKy = getChucDanhDisplayName(nguoiKyChucDanh) || cleanValue(donVi?.ChucVuNguoiDaiDien);
   const missingSalary = Boolean(mucLuongId && !mucLuong);
   const soHopDong = cleanValue(row?.SoHopDong) || cleanValue(nhanSu?.CCCD) || cleanValue(row?.ID_HopDongLaoDong);
+  const loaiHopDong = cleanValue(row?.LoaiHopDong);
+  const ngayBatDauText = formatAdministrativeDateString(row?.NgayBatDau);
+  const ngayKetThucText = formatAdministrativeDateString(row?.NgayKetThuc);
 
   return {
     raw: row,
@@ -215,11 +239,12 @@ export function buildHdldNhanVienLaiXePayload(row, relatedData = {}) {
     refBoPhan: cleanValue(row?.Ref_BoPhan),
     refMucLuong: mucLuongId,
     soHopDong,
-    loaiHopDong: cleanValue(row?.LoaiHopDong),
+    loaiHopDong,
     ngayKy,
     ngayKyText: formatAdministrativeDateString(row?.NgayKy),
-    ngayBatDauText: formatAdministrativeDateString(row?.NgayBatDau),
-    ngayKetThucText: formatAdministrativeDateString(row?.NgayKetThuc),
+    ngayBatDauText,
+    ngayKetThucText,
+    thoiHanHopDongText: buildThoiHanHopDongText(loaiHopDong, ngayBatDauText, ngayKetThucText),
     tenDonVi,
     tenDonViUpper: tenDonVi.toUpperCase(),
     maSoThueDonVi: cleanValue(donVi?.MaSoThue) || cleanValue(donVi?.MaDonVi),
@@ -276,6 +301,7 @@ export function buildHdldNhanVienLaiXeTemplateData(payload) {
     loai_hop_dong: payload.loaiHopDong,
     ngay_bat_dau: payload.ngayBatDauText,
     ngay_ket_thuc: payload.ngayKetThucText,
+    thoi_han_hop_dong: payload.thoiHanHopDongText,
     muc_luong: payload.mucLuongText,
     muc_luong_bang_chu: payload.mucLuongBangChu,
     trang_thai: payload.trangThaiXuLy,
