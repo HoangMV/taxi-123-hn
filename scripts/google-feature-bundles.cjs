@@ -290,7 +290,7 @@ const featureConfigs = {
       env,
       mainTable: 'NHANSU_HOPDONG_LAODONG',
       mainKey: 'ID_HopDongLaoDong',
-      tableNames: ['NHANSU_HOPDONG_LAODONG', 'NHANSU', 'DONVI', 'DM_CHUCDANH', 'DM_BOPHAN', 'DM_MUCLUONG_DONGBHXH'],
+      tableNames: ['NHANSU_HOPDONG_LAODONG', 'NHANSU', 'DONVI', 'DM_CHUCDANH', 'DM_BOPHAN', 'DM_MUCLUONG_DONGBHXH', 'LAIXE_GPLX'],
       buildRelated: (row, tables) => {
         const nhanSuRows = findRowsByIds(tables.NHANSU, 'ID_NhanSu', [row.Ref_NhanSu, row.Ref_NguoiKy]);
         const chucDanhRows = findRowsByIds(tables.DM_CHUCDANH, 'ID_ChucDanh', [
@@ -305,7 +305,8 @@ const featureConfigs = {
             row.Ref_BoPhan,
             ...chucDanhRows.map((chucDanh) => chucDanh.Ref_BoPhan)
           ]),
-          DM_MUCLUONG_DONGBHXH: findRowsByIds(tables.DM_MUCLUONG_DONGBHXH, 'ID_MucLuong', [row.MucLuongCoBan])
+          DM_MUCLUONG_DONGBHXH: findRowsByIds(tables.DM_MUCLUONG_DONGBHXH, 'ID_MucLuong', [row.MucLuongCoBan]),
+          LAIXE_GPLX: findRowsByValue(tables.LAIXE_GPLX, 'Ref_NhanSu', row.Ref_NhanSu)
         };
       }
     })

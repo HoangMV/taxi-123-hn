@@ -99,6 +99,32 @@ Số dòng tải được: 1352.
 | Related CT_HS_DAOTAOs | Trống | 0 |
 | Related DM_DOIXE_MOIs | Trống | 0 |
 
+## LAIXE_GPLX
+
+Số dòng tải được: 1297.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| ID_GPLX | Văn bản | 100 |
+| Ref_NhanSu | Văn bản | 100 |
+| SoGPLX | Số nguyên | 100 |
+| HangGPLX | Văn bản | 100 |
+| Ref_GPLXCu | Trống | 0 |
+| NgayCap | Ngày | 100 |
+| NgayHetHan | Ngày | 100 |
+| NoiCap | Trống | 0 |
+| TrangThai | Văn bản | 100 |
+| FileScan | Trống | 0 |
+| NgayTao | Trống | 0 |
+| NguoiTao | Trống | 0 |
+| NgayCapNhat | Trống | 0 |
+| NguoiCapNhat | Trống | 0 |
+| GhiChu | Trống | 0 |
+| ScanGPLX | Trống | 0 |
+| Scan_Hoten | Trống | 0 |
+| Image1 | Trống | 0 |
+| Image2 | Trống | 0 |
+
 ## DONVI
 
 Số dòng tải được: 2.

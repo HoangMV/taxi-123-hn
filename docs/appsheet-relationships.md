@@ -106,6 +106,19 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU_THANHLY_HOPDONG` | Bảng thanh lý hợp đồng lao động, dùng `Ref_NhanSu` để tìm hồ sơ thanh lý HĐLĐ liên quan và lấy `Ref_HopDongLD` |
 | `KIEMTRA_XE_TAXI_CHITIET` | Bảng chi tiết kiểm tra xe taxi |
 
+## Nghiệp vụ HĐLĐ nhân viên lái xe
+
+| Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |
+| --- | --- | --- | --- | --- |
+| `NHANSU_HOPDONG_LAODONG` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, dự phòng `Display`; lấy thêm `NgaySinh`, `CCCD`, `NgayCapCCCD`, `NoiCapCCCD`, `Dia_Chi_Day_Du` |
+| `NHANSU_HOPDONG_LAODONG` | `Ref_DonViLamViec` | `DONVI` | `ID_DonVi` | `TenDonVi`, `DiaChi`, `MaSoThue`, `NguoiDaiDien`, `ChucVuNguoiDaiDien` |
+| `NHANSU_HOPDONG_LAODONG` | `Ref_NguoiKy` | `NHANSU` | `ID_NhanSu` | `HoTen`, dự phòng `Display`; nếu trống thì dùng `DONVI.NguoiDaiDien` và `DONVI.ChucVuNguoiDaiDien` |
+| `NHANSU_HOPDONG_LAODONG` | `Ref_BoPhan` | `DM_CHUCDANH`, `DM_BOPHAN` | `ID_ChucDanh`, `ID_BoPhan` | `TenChucDanh`, `TenBoPhan` |
+| `NHANSU_HOPDONG_LAODONG` | `MucLuongCoBan` | `DM_MUCLUONG_DONGBHXH` | `ID_MucLuong` | `MucLuong`; nếu không tìm thấy thì để trống, không tự đoán |
+| `NHANSU.ID_NhanSu` | `ID_NhanSu` | `LAIXE_GPLX` | `Ref_NhanSu` | `SoGPLX`, `HangGPLX`, `NgayHetHan`; ưu tiên dòng `TrangThai = Đang hiệu lực` |
+
+Khi render HĐLĐ nhân viên lái xe hoặc xuất Word, không lấy `SoGPLX`, `HangGPLX`, `HanGPLX` từ `NHANSU` vì đây có thể là cột ảo từ hệ thống cũ. Phải lấy giấy phép lái xe từ bảng `LAIXE_GPLX` theo `Ref_NhanSu`; nếu không resolve được thì để trống, không tự điền hạng bằng mặc định như `B2`.
+
 ## Nghiệp vụ chấm dứt hợp đồng lao động
 
 | Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |

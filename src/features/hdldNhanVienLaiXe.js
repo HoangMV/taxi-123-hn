@@ -1,4 +1,4 @@
-import { formatAdministrativeDate, formatAdministrativeDateString } from '../lib/dateFormat';
+import { formatAdministrativeDate, formatAdministrativeDateString, parseDateValue } from '../lib/dateFormat';
 import { numberToVietnameseWords } from '../lib/numberToVietnamese';
 
 const TABLE_HOP_DONG = 'NHANSU_HOPDONG_LAODONG';
@@ -7,6 +7,7 @@ const TABLE_DON_VI = 'DONVI';
 const TABLE_CHUC_DANH = 'DM_CHUCDANH';
 const TABLE_BO_PHAN = 'DM_BOPHAN';
 const TABLE_MUC_LUONG = 'DM_MUCLUONG_DONGBHXH';
+const TABLE_GPLX = 'LAIXE_GPLX';
 
 export function getHdldNhanVienLaiXeIdFromSearch(search) {
   const params = new URLSearchParams(search || '');
@@ -179,6 +180,24 @@ function buildThoiHanHopDongText(loaiHopDong, ngayBatDauText, ngayKetThucText) {
   return ketThuc ? `${batDauText} đến ngày ${ketThuc}` : `${batDauText} đến ngày`;
 }
 
+function pickGplxForNhanSu(gplxRows, nhanSuId) {
+  const targetId = cleanValue(nhanSuId);
+  if (!targetId) return null;
+
+  const rows = (Array.isArray(gplxRows) ? gplxRows : [])
+    .filter((row) => cleanValue(row?.Ref_NhanSu) === targetId);
+  if (rows.length === 0) return null;
+
+  const activeRow = rows.find((row) => normalizeVietnameseText(row?.TrangThai).includes('dang hieu luc'));
+  if (activeRow) return activeRow;
+
+  return [...rows].sort((a, b) => {
+    const dateA = parseDateValue(a?.NgayHetHan);
+    const dateB = parseDateValue(b?.NgayHetHan);
+    return (dateB ? dateB.getTime() : 0) - (dateA ? dateA.getTime() : 0);
+  })[0] || rows[0];
+}
+
 export async function fetchHdldNhanVienLaiXeRelated(row) {
   const id = cleanValue(row?.ID_HopDongLaoDong);
   if (!id) return {
@@ -186,7 +205,8 @@ export async function fetchHdldNhanVienLaiXeRelated(row) {
     donViById: new Map(),
     chucDanhById: new Map(),
     boPhanById: new Map(),
-    mucLuongById: new Map()
+    mucLuongById: new Map(),
+    gplxRows: []
   };
   const bundle = await fetchHdldBundle(id, { });
   const related = bundle.related || {};
@@ -195,7 +215,8 @@ export async function fetchHdldNhanVienLaiXeRelated(row) {
     donViById: buildMap(related.DONVI, 'ID_DonVi'),
     chucDanhById: buildMap(related.DM_CHUCDANH, 'ID_ChucDanh'),
     boPhanById: buildMap(related.DM_BOPHAN, 'ID_BoPhan'),
-    mucLuongById: buildMap(related.DM_MUCLUONG_DONGBHXH, 'ID_MucLuong')
+    mucLuongById: buildMap(related.DM_MUCLUONG_DONGBHXH, 'ID_MucLuong'),
+    gplxRows: related.LAIXE_GPLX || []
   };
 }
 
@@ -205,6 +226,7 @@ export function buildHdldNhanVienLaiXePayload(row, relatedData = {}) {
   const chucDanhById = relatedData.chucDanhById || new Map();
   const boPhanById = relatedData.boPhanById || new Map();
   const mucLuongById = relatedData.mucLuongById || new Map();
+  const gplxRows = relatedData.gplxRows || [];
   const nhanSuId = cleanValue(row?.Ref_NhanSu);
   const nguoiKyId = cleanValue(row?.Ref_NguoiKy);
   const donViId = cleanValue(row?.Ref_DonViLamViec);
@@ -216,6 +238,7 @@ export function buildHdldNhanVienLaiXePayload(row, relatedData = {}) {
   const nguoiKyChucDanh = chucDanhById.get(cleanValue(nguoiKy?.Ref_ChucDanh));
   const boPhan = boPhanById.get(cleanValue(row?.Ref_BoPhan)) || boPhanById.get(cleanValue(chucDanh?.Ref_BoPhan));
   const mucLuong = mucLuongById.get(mucLuongId);
+  const gplx = pickGplxForNhanSu(gplxRows, nhanSuId);
   const salaryDigits = getSalaryDigits(mucLuong?.MucLuong);
   const salaryWords = salaryDigits ? `${numberToVietnameseWords(salaryDigits)} đồng` : '';
   const ngayKy = formatAdministrativeDate(row?.NgayKy);
@@ -257,9 +280,9 @@ export function buildHdldNhanVienLaiXePayload(row, relatedData = {}) {
     soCccd: cleanValue(nhanSu?.CCCD),
     ngayCapCccd: formatAdministrativeDateString(nhanSu?.NgayCapCCCD),
     noiCapCccd: cleanValue(nhanSu?.NoiCapCCCD),
-    soGplx: cleanValue(nhanSu?.SoGPLX),
-    hanGplx: formatAdministrativeDateString(nhanSu?.HanGPLX),
-    hangGplx: cleanValue(nhanSu?.HangGPLX) || 'B2',
+    soGplx: cleanValue(gplx?.SoGPLX),
+    hanGplx: formatAdministrativeDateString(gplx?.NgayHetHan),
+    hangGplx: cleanValue(gplx?.HangGPLX),
     chucDanh: getChucDanhDisplayName(chucDanh) || cleanValue(row?.Ref_BoPhan),
     boPhan: getBoPhanDisplayName(boPhan),
     mucLuongRaw: cleanValue(mucLuong?.MucLuong),
@@ -325,6 +348,7 @@ export async function fetchHdldNhanVienLaiXeData(idHopDongLaoDong) {
     donViById: buildMap(related.DONVI, 'ID_DonVi'),
     chucDanhById: buildMap(related.DM_CHUCDANH, 'ID_ChucDanh'),
     boPhanById: buildMap(related.DM_BOPHAN, 'ID_BoPhan'),
-    mucLuongById: buildMap(related.DM_MUCLUONG_DONGBHXH, 'ID_MucLuong')
+    mucLuongById: buildMap(related.DM_MUCLUONG_DONGBHXH, 'ID_MucLuong'),
+    gplxRows: related.LAIXE_GPLX || []
   });
 }

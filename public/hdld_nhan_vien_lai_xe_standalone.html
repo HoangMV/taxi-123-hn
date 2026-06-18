@@ -241,6 +241,24 @@
         return ketThuc ? `${batDauText} đến ngày ${ketThuc}` : `${batDauText} đến ngày`;
       }
 
+      function pickGplxForNhanSu(gplxRows, nhanSuId) {
+        const targetId = cleanValue(nhanSuId);
+        if (!targetId) return null;
+
+        const rows = (Array.isArray(gplxRows) ? gplxRows : [])
+          .filter((row) => cleanValue(row?.Ref_NhanSu) === targetId);
+        if (rows.length === 0) return null;
+
+        const activeRow = rows.find((row) => normalizeVietnameseText(row?.TrangThai).includes('dang hieu luc'));
+        if (activeRow) return activeRow;
+
+        return [...rows].sort((a, b) => {
+          const dateA = parseDateValue(a?.NgayHetHan);
+          const dateB = parseDateValue(b?.NgayHetHan);
+          return (dateB ? dateB.getTime() : 0) - (dateA ? dateA.getTime() : 0);
+        })[0] || rows[0];
+      }
+
       function normalizeLookupText(value) {
         return cleanValue(value).toLowerCase();
       }
@@ -285,13 +303,15 @@
         const chucDanhById = buildMap(related.DM_CHUCDANH, 'ID_ChucDanh');
         const boPhanById = buildMap(related.DM_BOPHAN, 'ID_BoPhan');
         const mucLuongById = buildMap(related.DM_MUCLUONG_DONGBHXH, 'ID_MucLuong');
-        const nhanSu = nhanSuById.get(cleanValue(row.Ref_NhanSu));
+        const nhanSuId = cleanValue(row.Ref_NhanSu);
+        const nhanSu = nhanSuById.get(nhanSuId);
         const nguoiKy = nhanSuById.get(cleanValue(row.Ref_NguoiKy));
         const donVi = findDonVi(donViById, row.Ref_DonViLamViec);
         const chucDanh = chucDanhById.get(cleanValue(nhanSu?.Ref_ChucDanh)) || chucDanhById.get(cleanValue(row.Ref_BoPhan));
         const nguoiKyChucDanh = chucDanhById.get(cleanValue(nguoiKy?.Ref_ChucDanh));
         const boPhan = boPhanById.get(cleanValue(row.Ref_BoPhan)) || boPhanById.get(cleanValue(chucDanh?.Ref_BoPhan));
         const mucLuong = mucLuongById.get(cleanValue(row.MucLuongCoBan));
+        const gplx = pickGplxForNhanSu(related.LAIXE_GPLX, nhanSuId);
         const salaryDigits = cleanValue(mucLuong?.MucLuong).replace(/[^\d]/g, '');
         const ngayKy = formatAdministrativeDate(row.NgayKy);
         const tenDonVi = getDonViDisplayName(donVi) || cleanValue(row.Ref_DonViLamViec);
@@ -319,8 +339,8 @@
           soCccd: cleanValue(nhanSu?.CCCD),
           ngayCapCccd: formatAdministrativeDateString(nhanSu?.NgayCapCCCD),
           noiCapCccd: cleanValue(nhanSu?.NoiCapCCCD),
-          soGplx: cleanValue(nhanSu?.SoGPLX),
-          hangGplx: cleanValue(nhanSu?.HangGPLX) || 'B2',
+          soGplx: cleanValue(gplx?.SoGPLX),
+          hangGplx: cleanValue(gplx?.HangGPLX),
           chucDanh: getChucDanhDisplayName(chucDanh) || cleanValue(row.Ref_BoPhan),
           boPhan: getBoPhanDisplayName(boPhan),
           loaiHopDong,
