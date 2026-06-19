@@ -1,4 +1,4 @@
 window.__APPSHEET_RUNTIME_CONFIG__ = {
-  "DEFAULT_TABLE": "",
+  "DEFAULT_TABLE": "8800000",
   "API_BASE_URL": "/api"
 };

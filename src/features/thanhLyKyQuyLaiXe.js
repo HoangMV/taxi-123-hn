@@ -1,13 +1,6 @@
 import { formatAdministrativeDate, formatAdministrativeDateString, parseDateValue } from '../lib/dateFormat';
 import { numberToVietnameseWords } from '../lib/numberToVietnamese';
 
-const TABLE_THANH_LY_KY_QUY = 'NHANSU_KYQUY_THANHLY';
-const TABLE_KY_QUY = 'NHANSU_KYQUY';
-const TABLE_NHAN_SU = 'NHANSU';
-const TABLE_DON_VI = 'DONVI';
-const TABLE_THANH_LY_HOP_DONG = 'NHANSU_THANHLY_HOPDONG';
-const TABLE_HOP_DONG_LAO_DONG = 'NHANSU_HOPDONG_LAODONG';
-
 export function getThanhLyKyQuyIdFromSearch(search) {
   const params = new URLSearchParams(search || '');
   return params.get('ID_ThanhLy') || '';
@@ -18,39 +11,12 @@ function cleanValue(value) {
   return String(value).trim();
 }
 
-function escapeSelectorValue(value) {
-  return String(value || '').replace(/"/g, '\\"');
-}
-
-function buildRefSelector(tableName, keyName, ids) {
-  const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
-  if (uniqueIds.length === 0) return '';
-  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-  return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
-}
-
-function buildEqualsSelector(tableName, keyName, value) {
-  const cleanId = cleanValue(value);
-  if (!cleanId) return '';
-  return `Filter(${tableName}, [${keyName}] = "${escapeSelectorValue(cleanId)}")`;
-}
-
 function buildMap(rows, keyName) {
   return new Map(
     (Array.isArray(rows) ? rows : [])
       .map((row) => [cleanValue(row?.[keyName]), row])
       .filter(([id]) => id)
   );
-}
-
-function mergeMaps(primaryMap, secondaryMap) {
-  const merged = new Map(primaryMap || []);
-  for (const [key, value] of secondaryMap || []) {
-    if (!merged.has(key)) {
-      merged.set(key, value);
-    }
-  }
-  return merged;
 }
 
 function formatMoney(value) {
@@ -139,13 +105,6 @@ async function fetchThanhLyKyQuyBundle(idThanhLy, options = {}) {
   }
 
   return data;
-}
-
-async function fetchRelatedMap(legacyService, tableName, keyName, ids) {
-  const selector = buildRefSelector(tableName, keyName, ids);
-  if (!selector) return new Map();
-  const rows = await legacyService.find(tableName, selector);
-  return buildMap(rows, keyName);
 }
 
 export async function fetchThanhLyKyQuyRow(idThanhLy) {

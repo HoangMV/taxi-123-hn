@@ -358,7 +358,6 @@
     </main>
 
     <script>
-      const config = window.__APPSHEET_RUNTIME_CONFIG__ || {};
       const statusText = document.getElementById('statusText');
       const messageBox = document.getElementById('messageBox');
       const preview = document.getElementById('preview');
@@ -368,12 +367,6 @@
       const exportWordButton = document.getElementById('exportWordButton');
       const decisionId = new URLSearchParams(window.location.search).get('IDQuyetDinh') || '';
       let currentPayload = null;
-
-      function requireConfig() {
-        if (!config.API_PROXY_URL) {
-          throw new Error('Thiếu cấu hình proxy Google Sheets. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
-        }
-      }
 
       function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, (char) => ({

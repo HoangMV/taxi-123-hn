@@ -1,11 +1,5 @@
 import { formatAdministrativeDate, formatAdministrativeDateString } from '../lib/dateFormat';
 
-const TABLE_THANH_LY_HOP_DONG = 'NHANSU_THANHLY_HOPDONG';
-const TABLE_HOP_DONG_LAO_DONG = 'NHANSU_HOPDONG_LAODONG';
-const TABLE_CHAM_DUT_HOP_DONG = 'NHANSU_CHAMDUT_HOPDONG';
-const TABLE_NHAN_SU = 'NHANSU';
-const TABLE_DON_VI = 'DONVI';
-
 export function getThanhLyHopDongIdFromSearch(search) {
   const params = new URLSearchParams(search || '');
   return params.get('ID_ThanhLyHD') || '';
@@ -16,40 +10,12 @@ function cleanValue(value) {
   return String(value).trim();
 }
 
-function escapeSelectorValue(value) {
-  return String(value || '').replace(/"/g, '\\"');
-}
-
-function buildRefSelector(tableName, keyName, ids) {
-  const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
-  if (uniqueIds.length === 0) return '';
-  if (uniqueIds.length === 1) return buildEqualsSelector(tableName, keyName, uniqueIds[0]);
-  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-  return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
-}
-
-function buildEqualsSelector(tableName, keyName, value) {
-  const cleanId = cleanValue(value);
-  if (!cleanId) return '';
-  return `Filter(${tableName}, [${keyName}] = "${escapeSelectorValue(cleanId)}")`;
-}
-
 function buildMap(rows, keyName) {
   return new Map(
     (Array.isArray(rows) ? rows : [])
       .map((row) => [cleanValue(row?.[keyName]), row])
       .filter(([id]) => id)
   );
-}
-
-function mergeMaps(primaryMap, secondaryMap) {
-  const merged = new Map(primaryMap || []);
-  for (const [key, value] of secondaryMap || []) {
-    if (!merged.has(key)) {
-      merged.set(key, value);
-    }
-  }
-  return merged;
 }
 
 async function fetchThanhLyHopDongBundle(idThanhLyHD, options = {}) {
@@ -80,13 +46,6 @@ async function fetchThanhLyHopDongBundle(idThanhLyHD, options = {}) {
   }
 
   return data;
-}
-
-async function fetchRelatedMap(legacyService, tableName, keyName, ids) {
-  const selector = buildRefSelector(tableName, keyName, ids);
-  if (!selector) return new Map();
-  const rows = await legacyService.find(tableName, selector);
-  return buildMap(rows, keyName);
 }
 
 function getNhanSuDisplayName(nhanSu) {

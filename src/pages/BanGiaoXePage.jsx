@@ -57,15 +57,6 @@ function getFriendlyError(error) {
   return message;
 }
 
-function InfoItem({ label, value }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-      <div className="text-xs font-semibold uppercase text-slate-500">{label}</div>
-      <div className="mt-1 min-h-5 break-words text-sm text-slate-950">{value || 'Chưa có'}</div>
-    </div>
-  );
-}
-
 function CheckList({ items }) {
   return (
     <div className="bgx-check-list">
@@ -299,23 +290,6 @@ const BanGiaoXePage = () => {
 
       {payload && !loading && (
         <>
-          <Card className="bgx-actions border-slate-200 bg-white">
-            <CardHeader>
-              <CardTitle>Thông tin đã tải</CardTitle>
-              <CardDescription>Kiểm tra nhanh dữ liệu trước khi xuất Word.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <InfoItem label="Số biên bản" value={payload.soBienBan} />
-              <InfoItem label="Ngày bàn giao" value={payload.ngayBanGiaoText} />
-              <InfoItem label="Nhân sự" value={loadingNhanSu ? 'Đang tải tên nhân sự...' : 'Đã tải'} />
-              <InfoItem label="Bên giao" value={payload.tenBenGiao} />
-              <InfoItem label="Bên nhận" value={payload.hoTenLaiXe} />
-              <InfoItem label="Biển số xe" value={payload.bienSoXe} />
-              <InfoItem label="Mã đàm" value={payload.maDam} />
-              <InfoItem label="Trạng thái xe" value={payload.trangThaiQuanLyXe} />
-            </CardContent>
-          </Card>
-
           <div className="overflow-x-auto pb-4">
             <div className="bgx-document min-w-[21cm]">
               <div className="bgx-page shadow-sm">

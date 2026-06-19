@@ -1,12 +1,6 @@
 import { formatAdministrativeDate, formatAdministrativeDateString } from '../lib/dateFormat';
 import { numberToVietnameseWords } from '../lib/numberToVietnamese';
 
-const TABLE_BAN_GIAO_SO = 'NHANSU_BHXH_BANGIAO_SO';
-const TABLE_BHXH = 'NHANSU_BHXH';
-const TABLE_NHAN_SU = 'NHANSU';
-const TABLE_DON_VI = 'DONVI';
-const TABLE_CHUC_DANH = 'DM_CHUCDANH';
-
 export function getBanGiaoSoIdFromSearch(search) {
   const params = new URLSearchParams(search || '');
   return params.get('ID_BanGiaoSo') || '';
@@ -17,33 +11,12 @@ function cleanValue(value) {
   return String(value).trim();
 }
 
-function escapeSelectorValue(value) {
-  return String(value || '').replace(/"/g, '\\"');
-}
-
-function buildRefSelector(tableName, keyName, ids) {
-  const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
-  if (uniqueIds.length === 0) return '';
-  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-  return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
-}
-
 function buildMap(rows, keyName) {
   return new Map(
     (Array.isArray(rows) ? rows : [])
       .map((row) => [cleanValue(row?.[keyName]), row])
       .filter(([id]) => id)
   );
-}
-
-function mergeMaps(primaryMap, secondaryMap) {
-  const merged = new Map(primaryMap || []);
-  for (const [key, value] of secondaryMap || []) {
-    if (!merged.has(key)) {
-      merged.set(key, value);
-    }
-  }
-  return merged;
 }
 
 async function fetchBanGiaoSoBundle(idBanGiaoSo, options = {}) {
@@ -72,13 +45,6 @@ async function fetchBanGiaoSoBundle(idBanGiaoSo, options = {}) {
   }
 
   return data;
-}
-
-async function fetchRelatedMap(legacyService, tableName, keyName, ids) {
-  const selector = buildRefSelector(tableName, keyName, ids);
-  if (!selector) return new Map();
-  const rows = await legacyService.find(tableName, selector);
-  return buildMap(rows, keyName);
 }
 
 export async function fetchBanGiaoSoRow(idBanGiaoSo) {

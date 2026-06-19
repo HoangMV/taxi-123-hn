@@ -1,10 +1,5 @@
 import { formatAdministrativeDate, formatAdministrativeDateString } from '../lib/dateFormat';
 
-const TABLE_HO_SO = 'HS_DAOTAO';
-const TABLE_CHI_TIET = 'CT_HS_DAOTAO';
-const TABLE_DON_VI = 'DONVI';
-const TABLE_NHAN_SU = 'NHANSU';
-
 export const DE_NGHI_DAO_TAO_EXCEL_TEMPLATE_URL = '/de_nghi_dao_tao_lai_xe_template.xlsx?v=20260612';
 
 export function getDeNghiDaoTaoIdFromSearch(search) {
@@ -15,23 +10,6 @@ export function getDeNghiDaoTaoIdFromSearch(search) {
 export function cleanValue(value) {
   if (value === null || value === undefined) return '';
   return String(value).trim();
-}
-
-function escapeSelectorValue(value) {
-  return String(value || '').replace(/"/g, '\\"');
-}
-
-function buildEqualsSelector(tableName, keyName, value) {
-  const cleanId = cleanValue(value);
-  if (!cleanId) return '';
-  return `Filter(${tableName}, [${keyName}] = "${escapeSelectorValue(cleanId)}")`;
-}
-
-function buildRefSelector(tableName, keyName, ids) {
-  const uniqueIds = [...new Set((Array.isArray(ids) ? ids : []).map(cleanValue).filter(Boolean))];
-  if (uniqueIds.length === 0) return '';
-  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-  return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
 }
 
 function buildMap(rows, keyName) {
@@ -63,13 +41,6 @@ function getNhanSuAddress(nhanSu) {
       .filter(Boolean)
       .join(', ')
   );
-}
-
-async function fetchMap(legacyService, tableName, keyName, ids) {
-  const selector = buildRefSelector(tableName, keyName, ids);
-  if (!selector) return new Map();
-  const rows = await legacyService.find(tableName, selector);
-  return buildMap(rows, keyName);
 }
 
 function cloneStyle(style) {

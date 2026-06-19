@@ -15,10 +15,6 @@ function cleanValue(value) {
   return String(value).trim();
 }
 
-function escapeSelectorValue(value) {
-  return String(value || '').replace(/"/g, '\\"');
-}
-
 function formatMoney(value) {
   const digits = String(value ?? '').replace(/[^\d-]/g, '');
   if (!digits) return '';
@@ -36,29 +32,12 @@ function getDonViRefId(row) {
   return cleanValue(row?.Ref_DonViQuanLyHienTai) || cleanValue(row?.Ref_DonVi);
 }
 
-function buildRefSelector(tableName, keyName, ids) {
-  const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
-  if (uniqueIds.length === 0) return '';
-  const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-  return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
-}
-
 function buildMap(rows, keyName) {
   return new Map(
     (Array.isArray(rows) ? rows : [])
       .map((row) => [cleanValue(row?.[keyName]), row])
       .filter(([id]) => id)
   );
-}
-
-function mergeMaps(primaryMap, secondaryMap) {
-  const merged = new Map(primaryMap || []);
-  for (const [key, value] of secondaryMap || []) {
-    if (!merged.has(key)) {
-      merged.set(key, value);
-    }
-  }
-  return merged;
 }
 
 async function fetchKyQuyBundle(idKyQuy, options = {}) {
@@ -87,13 +66,6 @@ async function fetchKyQuyBundle(idKyQuy, options = {}) {
   }
 
   return data;
-}
-
-async function fetchRelatedMap(legacyService, tableName, keyName, ids) {
-  const selector = buildRefSelector(tableName, keyName, ids);
-  if (!selector) return new Map();
-  const rows = await legacyService.find(tableName, selector);
-  return buildMap(rows, keyName);
 }
 
 export async function fetchKyQuyRow(idKyQuy) {

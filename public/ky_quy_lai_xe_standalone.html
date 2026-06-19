@@ -92,7 +92,6 @@
     </main>
 
     <script>
-      const config = window.__APPSHEET_RUNTIME_CONFIG__ || {};
       const statusText = document.getElementById('statusText');
       const messageBox = document.getElementById('messageBox');
       const preview = document.getElementById('preview');
@@ -249,33 +248,8 @@
         return sentence.charAt(0).toUpperCase() + sentence.slice(1);
       }
 
-      function escapeSelectorValue(value) {
-        return String(value || '').replace(/"/g, '\\"');
-      }
-
       function getDonViRefId(row) {
         return cleanValue(row?.Ref_DonViQuanLyHienTai) || cleanValue(row?.Ref_DonVi);
-      }
-
-      async function legacyFind(tableName, selector) {
-        if (!config.API_PROXY_URL) {
-          throw new Error('Thiếu cấu hình proxy Google Sheets. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
-        }
-        const response = await fetch(config.API_PROXY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tableName,
-            action: 'Find',
-            payload: { Properties: { Selector: selector || `Filter(${tableName}, true)` } }
-          })
-        });
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`Google Sheets ${response.status}: ${text || 'Yêu cầu thất bại'}`);
-        }
-        const text = await response.text();
-        return text ? JSON.parse(text) : [];
       }
 
       async function fetchKyQuyBundle(includeRelated = true) {
@@ -317,13 +291,6 @@
       async function fetchRelatedMap(tableName, keyName) {
         const bundle = await fetchKyQuyBundle(true);
         return buildMap(bundle.related?.[tableName] || [], keyName);
-      }
-
-      function buildRefSelector(tableName, keyName, ids) {
-        const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
-        if (!uniqueIds.length) return '';
-        const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-        return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
       }
 
       function buildPayload(row, nhanSuById = new Map(), donViById = new Map()) {

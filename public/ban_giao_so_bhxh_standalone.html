@@ -79,10 +79,6 @@
         return String(value).trim();
       }
 
-      function escapeSelectorValue(value) {
-        return String(value || '').replace(/"/g, '\\"');
-      }
-
       function parseDateValue(value) {
         if (!value) return null;
         if (value instanceof Date) {
@@ -146,13 +142,6 @@
         if (!Number.isFinite(number)) return '';
         if (number < 10) return ones[number];
         return digits;
-      }
-
-      function buildRefSelector(tableName, keyName, ids) {
-        const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
-        if (uniqueIds.length === 0) return '';
-        const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-        return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
       }
 
       async function fetchBundle(includeRelated = true) {

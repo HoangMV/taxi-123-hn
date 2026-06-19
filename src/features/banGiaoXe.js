@@ -23,6 +23,14 @@ function buildNhanSuMap(rows) {
   );
 }
 
+function parseApiJson(text) {
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error('API /api/ban-giao-xe không trả JSON. Khi test local, hãy chạy npm run proxy hoặc npm start để proxy /api hoạt động.');
+  }
+}
+
 async function fetchBanGiaoXeBundle(idBienBanXe, options = {}) {
   const params = new URLSearchParams({
     ID_BienBanXe: idBienBanXe
@@ -54,7 +62,7 @@ async function fetchBanGiaoXeBundle(idBienBanXe, options = {}) {
   const response = await fetch(`/api/ban-giao-xe?${params.toString()}`, init);
 
   const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
+  const data = parseApiJson(text);
   if (!response.ok) {
     throw new Error(data.error || `Không tải được dữ liệu bàn giao xe (${response.status}).`);
   }

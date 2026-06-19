@@ -118,33 +118,6 @@
         text-align: center;
       }
 
-      .summary {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 10px;
-        margin-top: 16px;
-      }
-
-      .summary-item {
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: #fff;
-        padding: 10px;
-      }
-
-      .summary-label {
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-
-      .summary-value {
-        margin-top: 4px;
-        font-weight: 700;
-        overflow-wrap: anywhere;
-      }
-
       .preview {
         margin-top: 16px;
         overflow-x: auto;
@@ -233,13 +206,8 @@
         }
 
         .actions,
-        .actions button,
-        .summary {
+        .actions button {
           width: 100%;
-        }
-
-        .summary {
-          grid-template-columns: 1fr;
         }
 
         .page {
@@ -261,10 +229,6 @@
 
         .toolbar,
         .message,
-        .summary {
-          display: none !important;
-        }
-
         .shell,
         .preview {
           margin: 0;
@@ -304,17 +268,14 @@
       </section>
 
       <div class="message" id="messageBox" hidden></div>
-      <section class="summary" id="summary" hidden></section>
       <section class="preview" id="preview" hidden>
         <article class="page" id="documentPage"></article>
       </section>
     </main>
 
     <script>
-      const config = window.__APPSHEET_RUNTIME_CONFIG__ || {};
       const statusText = document.getElementById('statusText');
       const messageBox = document.getElementById('messageBox');
-      const summary = document.getElementById('summary');
       const preview = document.getElementById('preview');
       const page = document.getElementById('documentPage');
       const reloadButton = document.getElementById('reloadButton');
@@ -326,12 +287,6 @@
       const identityItems = ['4 Mã đàm', 'SĐT xanh, trắng', 'Tem app', 'Tem mào, tròn, tem sườn', 'Bảng giá', 'Tem 10 điểm vàng'];
       const equipmentItems = ['Lốp sơ cua', 'Kích lốp', 'Cầu trì ắc quy', 'Tay quay', 'Chụp ốc', 'Ốc giữ lốp'];
       const paperItems = ['Đăng ký', 'Bảo hiểm', 'Chứng chỉ', 'Đăng kiểm', 'Phù hiệu taxi', 'Thẻ nhân viên, thẻ từ'];
-
-      function requireConfig() {
-        if (!config.API_PROXY_URL) {
-          throw new Error('Thiếu cấu hình proxy Google Sheets. Hãy kiểm tra file .env rồi chạy lại npm start hoặc npm run build.');
-        }
-      }
 
       function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, (char) => ({
@@ -403,58 +358,9 @@
         return `${date.day}/${date.month}/${date.year}`;
       }
 
-      function escapeSelectorValue(value) {
-        return String(value || '').replace(/"/g, '\\"');
-      }
-
-      async function legacyFind(tableName, selector) {
-        requireConfig();
-        const response = await fetch(config.API_PROXY_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            tableName,
-            action: 'Find',
-            payload: {
-              Properties: { Selector: selector || `Filter(${tableName}, true)` }
-            }
-          })
-        });
-
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`Google Sheets ${response.status}: ${text || 'Yêu cầu thất bại'}`);
-        }
-
-        const text = await response.text();
-        return text ? JSON.parse(text) : [];
-      }
-
       function getNhanSuDisplayName(nhanSu) {
         if (!nhanSu) return '';
         return cleanValue(nhanSu.HoTen) || cleanValue(nhanSu.Display) || cleanValue(nhanSu.ID_NhanSu);
-      }
-
-      function buildNhanSuSelector(ids) {
-        const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
-        if (uniqueIds.length === 0) return '';
-
-        const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-        return `Filter(NHANSU, IN([ID_NhanSu], LIST(${listValues})))`;
-      }
-
-      async function fetchNhanSuByIds(ids) {
-        const selector = buildNhanSuSelector(ids);
-        if (!selector) return new Map();
-
-        const rows = await legacyFind('NHANSU', selector);
-        return new Map(
-          (Array.isArray(rows) ? rows : [])
-            .map((item) => [cleanValue(item.ID_NhanSu), item])
-            .filter(([id]) => id)
-        );
       }
 
       function buildNhanSuMap(rows) {
@@ -465,6 +371,14 @@
         );
       }
 
+      function parseApiJson(text) {
+        try {
+          return text ? JSON.parse(text) : {};
+        } catch {
+          throw new Error('API /api/ban-giao-xe không trả JSON. Khi test local, hãy chạy npm run proxy hoặc npm start để proxy /api hoạt động.');
+        }
+      }
+
       async function fetchBanGiaoXeBundle(id, options = {}) {
         const params = new URLSearchParams({
           ID_BienBanXe: id
@@ -473,20 +387,42 @@
           params.set('includeRelated', '0');
         }
 
-        const response = await fetch(`/api/ban-giao-xe?${params.toString()}`, {
-          method: 'GET',
-          headers: {
-            Accept: 'application/json'
-          }
-        });
+        const init = options.row
+          ? {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                ID_BienBanXe: id,
+                includeRelated: options.includeRelated === false ? '0' : '1',
+                row: options.row
+              })
+            }
+          : {
+              method: 'GET',
+              headers: {
+                Accept: 'application/json'
+              }
+            };
+
+        const response = await fetch(`/api/ban-giao-xe?${params.toString()}`, init);
 
         const text = await response.text();
-        const data = text ? JSON.parse(text) : {};
+        const data = parseApiJson(text);
         if (!response.ok) {
           throw new Error(data.error || `Không tải được dữ liệu bàn giao xe (${response.status}).`);
         }
 
         return data;
+      }
+
+      async function fetchBanGiaoXeNhanSu(row) {
+        const id = cleanValue(row?.ID_BienBanXe);
+        if (!id) return new Map();
+        const bundle = await fetchBanGiaoXeBundle(id, { row });
+        return buildNhanSuMap(bundle.related?.NHANSU);
       }
 
       function buildPayload(row, relatedData = {}) {
@@ -529,25 +465,6 @@
 
       function checkList(items) {
         return `<div class="check-list">${items.map((item) => `<div>☐ ${escapeHtml(item)}</div>`).join('')}</div>`;
-      }
-
-      function renderSummary(payload, nhanSuStatus = 'Đã tải') {
-        const items = [
-          ['Số biên bản', payload.soBienBan],
-          ['Ngày bàn giao', payload.ngayBanGiaoText],
-          ['Nhân sự', nhanSuStatus],
-          ['Bên giao', payload.tenBenGiao],
-          ['Bên nhận', payload.hoTenLaiXe],
-          ['Biển số xe', payload.bienSoXe],
-          ['Mã đàm', payload.maDam],
-          ['Trạng thái xe', payload.trangThaiQuanLyXe]
-        ];
-        summary.innerHTML = items.map(([label, value]) => `
-          <div class="summary-item">
-            <div class="summary-label">${escapeHtml(label)}</div>
-            <div class="summary-value">${escapeHtml(value || 'Chưa có')}</div>
-          </div>
-        `).join('');
       }
 
       function renderDocument(payload) {
@@ -630,7 +547,6 @@
       function showMessage(message) {
         messageBox.hidden = false;
         messageBox.textContent = message;
-        summary.hidden = true;
         preview.hidden = true;
         printButton.disabled = true;
         exportWordButton.disabled = true;
@@ -642,7 +558,6 @@
         printButton.disabled = true;
         exportWordButton.disabled = true;
         messageBox.hidden = true;
-        summary.hidden = true;
         preview.hidden = true;
         statusText.textContent = 'Đang tải biên bản bàn giao xe từ Google Sheets...';
 
@@ -651,38 +566,24 @@
             throw new Error('Thiếu tham số ID_BienBanXe trên URL.');
           }
 
-          let row;
-          try {
-            const bundle = await fetchBanGiaoXeBundle(idBienBanXe, { includeRelated: false });
-            row = bundle.row || null;
-          } catch {
-            const selectorValue = escapeSelectorValue(idBienBanXe);
-            const rows = await legacyFind('XE_BANGIAO', `Filter(XE_BANGIAO, [ID_BienBanXe] = "${selectorValue}")`);
-            row = Array.isArray(rows) ? rows[0] : null;
-          }
+          const bundle = await fetchBanGiaoXeBundle(idBienBanXe, { includeRelated: false });
+          const row = bundle.row || null;
 
           if (!row) {
             throw new Error(`Không tìm thấy biên bản bàn giao xe với ID_BienBanXe = ${idBienBanXe}.`);
           }
 
           currentPayload = buildPayload(row);
-          renderSummary(currentPayload, 'Đang tải tên nhân sự...');
           renderDocument(currentPayload);
 
           statusText.textContent = `Đã tải biên bản ${idBienBanXe}. Đang tải thông tin nhân sự...`;
-          summary.hidden = false;
           preview.hidden = false;
           printButton.disabled = false;
           reloadButton.disabled = false;
 
           try {
-            const nhanSuById = await fetchNhanSuByIds([
-              row.DaiDienBenGiao1,
-              row.DaiDienBenGiao2,
-              row.Ref_LaiXe
-            ]);
+            const nhanSuById = await fetchBanGiaoXeNhanSu(row);
             currentPayload = buildPayload(row, { nhanSuById });
-            renderSummary(currentPayload);
             renderDocument(currentPayload);
             statusText.textContent = `Đã tải biên bản ${idBienBanXe}.`;
             exportWordButton.disabled = false;

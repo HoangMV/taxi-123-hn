@@ -194,23 +194,6 @@
         return cleanValue(hopDong?.Ref_DonViLamViec) || cleanValue(nhanSu?.Ref_DonViLamViecHienTai) || cleanValue(nhanSu?.Ref_DonViChuQuan);
       }
 
-      function escapeSelectorValue(value) {
-        return cleanValue(value).replace(/"/g, '\\"');
-      }
-
-      function buildEqualsSelector(tableName, keyName, value) {
-        const cleanId = cleanValue(value);
-        if (!cleanId) return '';
-        return `Filter(${tableName}, [${keyName}] = "${escapeSelectorValue(cleanId)}")`;
-      }
-
-      function buildRefSelector(tableName, keyName, ids) {
-        const uniqueIds = [...new Set(ids.map(cleanValue).filter(Boolean))];
-        if (uniqueIds.length === 0) return '';
-        const listValues = uniqueIds.map((id) => `"${escapeSelectorValue(id)}"`).join(', ');
-        return `Filter(${tableName}, IN([${keyName}], LIST(${listValues})))`;
-      }
-
       async function fetchBundle(includeRelated = true, sourceRow = null) {
         const params = new URLSearchParams({ ID_ChamDutHD: idChamDutHD });
         if (!includeRelated) params.set('includeRelated', '0');
