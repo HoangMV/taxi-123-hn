@@ -418,6 +418,30 @@ const featureConfigs = {
   }
 };
 
+featureConfigs['thoa-thuan-dan-su'] = {
+  idKeys: ['ID_TTDS', 'idTtds'],
+  missingIdMessage: 'Thiếu tham số ID_TTDS.',
+  notFoundPrefix: 'Không tìm thấy thỏa thuận trách nhiệm dân sự với ID_TTDS',
+  failedMessage: 'Không tải được dữ liệu thỏa thuận trách nhiệm dân sự từ Google Sheets.',
+  mainKey: 'ID_TTDS',
+  build: ({ id, includeRelated, providedRow, env }) => buildSimpleBundle({
+    id,
+    includeRelated,
+    providedRow,
+    env,
+    mainTable: 'XE_THOATHUAN_DANSU',
+    mainKey: 'ID_TTDS',
+    tableNames: ['XE_THOATHUAN_DANSU', 'DONVI', 'NHANSU', 'XE', 'LAIXE_GPLX'],
+    buildRelated: (row, tables) => ({
+      XE_THOATHUAN_DANSU: [row],
+      DONVI: findRowsByIds(tables.DONVI, 'ID_DonVi', [row.Ref_DonViBenA]),
+      NHANSU: findRowsByIds(tables.NHANSU, 'ID_NhanSu', [row.Ref_LaiXe]),
+      XE: findRowsByIds(tables.XE, 'ID_Xe', [row.Ref_Xe]),
+      LAIXE_GPLX: findRowsByValue(tables.LAIXE_GPLX, 'Ref_NhanSu', row.Ref_LaiXe)
+    })
+  })
+};
+
 featureConfigs['de-nghi-cap-phu-hieu-xe'] = {
   idKeys: ['ID_HoSoPhuHieu', 'idHoSoPhuHieu'],
   missingIdMessage: 'Thiếu tham số ID_HoSoPhuHieu.',

@@ -25,7 +25,8 @@ const apiRoutes = new Map(
     'de-nghi-cap-phu-hieu-xe',
     'thong-bao-ngung-phu-hieu',
     'thong-ke-phu-hieu-don-vi',
-    'quyet-dinh-thu-hoi-gpkd'
+    'quyet-dinh-thu-hoi-gpkd',
+    'thoa-thuan-dan-su'
   ].map((slug) => [`/api/${slug}`, createGoogleSheetsHandler(slug)])
 );
 

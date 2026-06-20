@@ -69,7 +69,7 @@ REACT_APP_API_BASE_URL=/api
 - `scripts/google-sheets-proxy.cjs`: proxy local cho Google Sheets API và static server.
 - `api/*.js`: endpoint nghiệp vụ cho Vercel/backend.
 
-`docs/appsheet-schema.md` và `docs/appsheet-relationships.md` vẫn được giữ tạm làm tài liệu tên bảng/cột vì Google Sheet đang dùng lại schema lịch sử. Không coi các cột `Related ...` là dữ liệu chính.
+`docs/google-sheets-schema.md` ghi lại tên bảng/cột đang đọc từ Google Sheets; `docs/google-sheets-relationships.md` ghi lại quan hệ Ref lịch sử cần dùng khi hiển thị dữ liệu. Không coi các cột `Related ...` là dữ liệu chính.
 
 ## Deploy Vercel
 

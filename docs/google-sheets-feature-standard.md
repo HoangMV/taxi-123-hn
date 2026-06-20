@@ -1,13 +1,23 @@
 # Quy chuẩn làm trang nghiệp vụ Google Sheets
 
-Tài liệu này giữ tên file cũ để các hướng dẫn hiện có không bị gãy, nhưng chuẩn triển khai hiện tại là Google Sheets API qua backend service account.
+Tài liệu này mô tả chuẩn triển khai nghiệp vụ hiện tại bằng Google Sheets API qua backend service account.
 
 ## Trước Khi Làm
 
-1. Đọc `docs/appsheet-schema.md` để biết tên bảng/cột hiện có.
-2. Đọc `docs/appsheet-relationships.md` để biết quan hệ Ref cần resolve.
+1. Đọc `docs/google-sheets-schema.md` để biết tên bảng/cột hiện có.
+2. Đọc `docs/google-sheets-relationships.md` để biết quan hệ Ref cần resolve; không suy luận quan hệ chỉ từ tên cột `Ref_` nếu tài liệu quan hệ đã có mapping rõ hơn.
 3. Kiểm tra feature helper hiện có trong `src/features/` trước khi thêm logic mới.
-4. Nếu phát hiện quan hệ Ref mới, cập nhật `docs/appsheet-relationships.md` ngay trong lượt làm đó.
+4. Nếu phát hiện quan hệ Ref mới, cập nhật `docs/google-sheets-relationships.md` ngay trong lượt làm đó.
+
+## Khi Thêm Bảng Hoặc Nghiệp Vụ Mới
+
+1. Thêm tên bảng mới vào `REACT_APP_SCHEMA_TABLES` trong `.env` để script schema đọc được bảng đó.
+2. Chạy `npm run schema:google-sheets` để cập nhật `docs/google-sheets-schema.md`.
+3. Đọc phần bảng mới trong schema, liệt kê các cột có dạng `Ref_...`, cột chứa ID bảng khác dù không bắt đầu bằng `Ref_`, và các cột hiển thị sẵn như `Ten...`, `HoTen...`, `Display`.
+4. Xác định bảng đích của từng Ref bằng tên cột, tên khóa chính, dữ liệu mẫu, tài liệu nghiệp vụ hoặc cấu hình AppSheet cũ nếu còn truy cập được. Nếu chưa chắc, ghi rõ `Cần kiểm tra thêm` trong `docs/google-sheets-relationships.md` và không tự render mã Ref như tên thật.
+5. Cập nhật `docs/google-sheets-relationships.md` với mapping: bảng nguồn, cột Ref, bảng đích, khóa bảng đích và cột nên hiển thị.
+6. Sau khi quan hệ đã rõ mới tạo hoặc sửa bundle trong `scripts/google-feature-bundles.cjs`, route trong `api/`, route local proxy và UI React/HTML.
+7. Nếu bảng mới có nhiều Ref, backend phải gom bảng liên quan trong bundle và trả về `related`; frontend không tự gọi Google Sheets và không tự đoán tên từ mã Ref.
 
 ## Luồng Dữ Liệu Chuẩn
 

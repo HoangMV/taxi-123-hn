@@ -66,6 +66,13 @@ export const menuSections = [
         path: config.ROUTES.BAN_GIAO_XE_REACT,
         icon: Car
       },
+
+      {
+        id: 'thoa-thuan-dan-su',
+        text: 'Thỏa thuận dân sự',
+        path: config.ROUTES.THOA_THUAN_DAN_SU_REACT,
+        icon: FileText
+      },
       {
         id: 'ky-quy-lai-xe',
         text: 'Ký quỹ lái xe',

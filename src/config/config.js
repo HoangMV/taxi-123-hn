@@ -25,7 +25,8 @@ const config = {
     BAN_GIAO_SO_BHXH_REACT: '/ban-giao-so-bhxh',
     HDLD_NHAN_VIEN_LAI_XE_REACT: '/hdld-nhan-vien-lai-xe',
     CHAM_DUT_HOP_DONG_LAO_DONG_REACT: '/cham-dut-hop-dong-lao-dong',
-    THANH_LY_HOP_DONG_LAO_DONG_REACT: '/thanh-ly-hop-dong-lao-dong'
+    THANH_LY_HOP_DONG_LAO_DONG_REACT: '/thanh-ly-hop-dong-lao-dong',
+    THOA_THUAN_DAN_SU_REACT: '/thoa-thuan-dan-su'
   }
 };
 

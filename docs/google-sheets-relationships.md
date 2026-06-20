@@ -1,14 +1,26 @@
 # Quan hệ bảng dữ liệu
 
-Tài liệu này giúp AI hiểu cách xử lý dữ liệu Ref trong các nghiệp vụ. Khi một cột lưu mã khóa như `V3B3GM6D`, không hiển thị trực tiếp mã đó nếu người dùng cần tên thật; hãy gọi bảng được tham chiếu và lấy cột hiển thị phù hợp như `HoTen`, `Display`, `Ten...` hoặc cột nghiệp vụ tương ứng.
+Tài liệu này là nguồn chính để AI hiểu cột Ref nào trỏ tới bảng nào trong các nghiệp vụ Google Sheets. `docs/google-sheets-schema.md` chỉ liệt kê tên cột và kiểu dữ liệu suy luận, không chứa metadata Ref đầy đủ như AppSheet Editor. Khi một cột lưu mã khóa như `V3B3GM6D`, không hiển thị trực tiếp mã đó nếu người dùng cần tên thật; hãy gọi bảng được tham chiếu và lấy cột hiển thị phù hợp như `HoTen`, `Display`, `Ten...` hoặc cột nghiệp vụ tương ứng.
 
 ## Quy tắc đọc Ref
 
 - Cột bắt đầu bằng `Ref_` hoặc cột nghiệp vụ đang chứa ID bảng khác là cột kết nối xuôi.
-- Cột bắt đầu bằng `Related ` là cột kết nối ngược từ schema lịch sử, cho biết bảng hiện tại đang được bảng nào tham chiếu.
+- Cột bắt đầu bằng `Related ` là cột kết nối ngược từ schema lịch sử của AppSheet, cho biết bảng hiện tại đang được bảng nào tham chiếu. Các cột này không còn là nguồn dữ liệu chính khi đọc Google Sheets, nhưng vẫn là manh mối để ghi lại quan hệ trong tài liệu này.
 - Khi render chứng từ, email, Word hoặc giao diện người dùng, phải resolve mã Ref sang dữ liệu thật trước khi hiển thị.
 - React và HTML standalone chỉ gọi API bundle `/api/<nghiep-vu>`; backend đọc Google Sheets và resolve Ref.
 - Không đoán tên từ mã Ref. Nếu chưa có dữ liệu hiển thị trong bảng chính, phải gọi bảng Ref.
+
+## Khi Phát Hiện Quan Hệ Mới
+
+Khi thêm bảng hoặc nghiệp vụ mới, không đủ để chỉ cập nhật `docs/google-sheets-schema.md`. Phải bổ sung quan hệ Ref vào tài liệu này để AI lần sau biết mã nào cần resolve sang bảng nào.
+
+Mẫu ghi quan hệ mới:
+
+| Bảng nguồn | Cột lưu mã Ref | Bảng đích cần đọc | Khóa bảng đích | Cột nên hiển thị | Mức chắc chắn |
+| --- | --- | --- | --- | --- | --- |
+| `TEN_BANG_NGUON` | `Ref_TruongDuLieu` | `TEN_BANG_DICH` | `ID_BangDich` | `Ten...`, `Display` | Đã xác minh / Cần kiểm tra thêm |
+
+Nếu chỉ thấy tên cột `Ref_...` nhưng chưa biết bảng đích, phải ghi là `Cần kiểm tra thêm` và kiểm tra dữ liệu mẫu hoặc cấu hình AppSheet cũ trước khi dùng để hiển thị chứng từ.
 
 ## Nghiệp vụ bàn giao xe
 
@@ -27,31 +39,31 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU` | `ID_NhanSu` | `XE_BANGIAO` | `Related XE_BANGIAOs` | `Ref_LaiXe`, `DaiDienBenGiao1`, `DaiDienBenGiao2` |
 | `NHANSU` | `ID_NhanSu` | `XE_BANGIAO` | `Related XE_BANGIAOs By DaiDienBenGiao1` | `DaiDienBenGiao1` |
 | `NHANSU` | `ID_NhanSu` | `XE_BANGIAO` | `Related XE_BANGIAOs By DaiDienBenGiao2` | `DaiDienBenGiao2` |
-| `XE_BANGIAO` | `ID_BienBanXe` | `XE_BANGIAO_HINHANH` | `Related XE_BANGIAO_HINHANHs` | Cần kiểm tra thêm trong schema l?ch s? |
+| `XE_BANGIAO` | `ID_BienBanXe` | `XE_BANGIAO_HINHANH` | `Related XE_BANGIAO_HINHANHs` | Cần kiểm tra thêm trong schema lịch sử |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_BHXH` | `Related NHANSU_BHXHs` | `Ref_NhanSu` |
 | `DM_CHUCDANH` | `ID_ChucDanh` | `NHANSU` | `Related NHANSUs` | `Ref_ChucDanh` |
-| `NHANSU` | `ID_NhanSu` | `NHANSU_NGUOITHAN` | `Related NHANSU_NGUOITHANs` | Cần kiểm tra thêm trong schema l?ch s? |
-| `NHANSU` | `ID_NhanSu` | `NHANSU_HOSO_CANHAN` | `Related NHANSU_HOSO_CANHANs` | Cần kiểm tra thêm trong schema l?ch s? |
-| `NHANSU` | `ID_NhanSu` | `NHANSU_QUATRINH_CONGTAC` | `Related NHANSU_QUATRINH_CONGTACs` | Cần kiểm tra thêm trong schema l?ch s? |
-| `NHANSU` | `ID_NhanSu` | `NHANSU_SUCKHOE` | `Related NHANSU_SUCKHOEs` | Cần kiểm tra thêm trong schema l?ch s? |
+| `NHANSU` | `ID_NhanSu` | `NHANSU_NGUOITHAN` | `Related NHANSU_NGUOITHANs` | Cần kiểm tra thêm trong schema lịch sử |
+| `NHANSU` | `ID_NhanSu` | `NHANSU_HOSO_CANHAN` | `Related NHANSU_HOSO_CANHANs` | Cần kiểm tra thêm trong schema lịch sử |
+| `NHANSU` | `ID_NhanSu` | `NHANSU_QUATRINH_CONGTAC` | `Related NHANSU_QUATRINH_CONGTACs` | Cần kiểm tra thêm trong schema lịch sử |
+| `NHANSU` | `ID_NhanSu` | `NHANSU_SUCKHOE` | `Related NHANSU_SUCKHOEs` | Cần kiểm tra thêm trong schema lịch sử |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_HOPDONG_LAODONG` | `Related NHANSU_HOPDONG_LAODONGs` | `Ref_NhanSu`, `Ref_NguoiKy` |
 | `DONVI` | `ID_DonVi` | `NHANSU_HOPDONG_LAODONG` | `Related NHANSU_HOPDONG_LAODONGs` | `Ref_DonViLamViec` |
-| `DM_BOPHAN` | `ID_BoPhan` | `NHANSU_HOPDONG_LAODONG` | Cần kiểm tra thêm trong schema l?ch s? | `Ref_BoPhan`; thực tế có dòng đang lưu mã chức danh nên cần thử thêm `DM_CHUCDANH.ID_ChucDanh` |
+| `DM_BOPHAN` | `ID_BoPhan` | `NHANSU_HOPDONG_LAODONG` | Cần kiểm tra thêm trong schema lịch sử | `Ref_BoPhan`; thực tế có dòng đang lưu mã chức danh nên cần thử thêm `DM_CHUCDANH.ID_ChucDanh` |
 | `DM_CHUCDANH` | `ID_ChucDanh` | `NHANSU_HOPDONG_LAODONG` | `Related NHANSU_HOPDONG_LAODONGs` | `Ref_BoPhan` khi giá trị thực tế là mã chức danh; ưu tiên `NHANSU.Ref_ChucDanh` cho chức danh nhân sự |
-| `DM_MUCLUONG_DONGBHXH` | `ID_MucLuong` | `NHANSU_HOPDONG_LAODONG` | Cần kiểm tra thêm trong schema l?ch s? | `MucLuongCoBan` |
+| `DM_MUCLUONG_DONGBHXH` | `ID_MucLuong` | `NHANSU_HOPDONG_LAODONG` | Cần kiểm tra thêm trong schema lịch sử | `MucLuongCoBan` |
 | `NHANSU` | `ID_NhanSu` | `LAIXE_DAOTAO` | `Related LAIXE_DAOTAOs` | `Ref_NhanSu` |
-| `NHANSU` | `ID_NhanSu` | `LAIXE_TAINAN` | `Related LAIXE_TAINANs` | Cần kiểm tra thêm trong schema l?ch s? |
+| `NHANSU` | `ID_NhanSu` | `LAIXE_TAINAN` | `Related LAIXE_TAINANs` | Cần kiểm tra thêm trong schema lịch sử |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_BHXH_BANGIAO_SO` | `Related NHANSU_BHXH_BANGIAO_SOs By NguoiGiao` | `NguoiGiao` |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_BHXH_BANGIAO_SO` | `Related NHANSU_BHXH_BANGIAO_SOs By NguoiNhan` | `NguoiNhan` |
-| `NHANSU` | `ID_NhanSu` | `DM_DOIXE` | `Related DM_DOIXEs` | Cần kiểm tra thêm trong schema l?ch s? |
+| `NHANSU` | `ID_NhanSu` | `DM_DOIXE` | `Related DM_DOIXEs` | Cần kiểm tra thêm trong schema lịch sử |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_KYQUY` | `Related NHANSU_KYQUYs` | `Ref_NhanSu` |
-| `DONVI` | `ID_DonVi` | `NHANSU_KYQUY` | Cần kiểm tra thêm trong schema l?ch s? | `Ref_DonViQuanLyHienTai`, dự phòng `Ref_DonVi` |
+| `DONVI` | `ID_DonVi` | `NHANSU_KYQUY` | Cần kiểm tra thêm trong schema lịch sử | `Ref_DonViQuanLyHienTai`, dự phòng `Ref_DonVi` |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_KYQUY_GIAODICH` | `Related NHANSU_KYQUY_GIAODICHs` | `Ref_NhanSu`, `Ref_KyQuy` |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_KYQUY_GIAODICH` | `Related NHANSU_KYQUY_GIAODICHs By Ref_NhanSu` | `Ref_NhanSu` |
 | `NHANSU` | `ID_NhanSu` | `LAIXE_KHENTHUONG_KYLUAT` | `Related LAIXE_KHENTHUONG_KYLUATs` | `Ref_NhanSu` |
-| `NHANSU` | `ID_NhanSu` | `LAIXE_VIPHAM_ATGT` | `Related LAIXE_VIPHAM_ATGTs` | Cần kiểm tra thêm trong schema l?ch s? |
+| `NHANSU` | `ID_NhanSu` | `LAIXE_VIPHAM_ATGT` | `Related LAIXE_VIPHAM_ATGTs` | Cần kiểm tra thêm trong schema lịch sử |
 | `NHANSU` | `ID_NhanSu` | `LAIXE_PHANCONG_XE` | `Related LAIXE_PHANCONG_XEs` | `Ref_NhanSu`, `Ref_Xe` |
-| `NHANSU` | `ID_NhanSu` | `NHANSU_CHAMDUT_HOPDONG` | `Related NHANSU_CHAMDUT_HOPDONGs` | Cần kiểm tra thêm trong schema l?ch s? |
+| `NHANSU` | `ID_NhanSu` | `NHANSU_CHAMDUT_HOPDONG` | `Related NHANSU_CHAMDUT_HOPDONGs` | Cần kiểm tra thêm trong schema lịch sử |
 | `NHANSU` | `ID_NhanSu` | `LAIXE_GPLX` | `Related LAIXE_GPLXs` | `Ref_NhanSu` |
 | `NHANSU` | `ID_NhanSu` | `KIEMTRA_XE_TAXI` | `Related KIEMTRA_XE_TAXIs By Ref_LaiXe` | `Ref_LaiXe` |
 | `NHANSU` | `ID_NhanSu` | `KIEMTRA_XE_TAXI` | `Related KIEMTRA_XE_TAXIs By NguoiChot` | `NguoiChot` |
@@ -60,10 +72,10 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU` | `ID_NhanSu` | `PHAN_ANH_KHIEU_NAI` | `Related PHAN_ANH_KHIEU_NAIs By Ref_CanBoXuLy` | `Ref_CanBoXuLy` |
 | `NHANSU` | `ID_NhanSu` | `NHANSU_THANHLY_HOPDONG` | `Related NHANSU_THANHLY_HOPDONGs` | `Ref_NhanSu` |
 | `NHANSU_BHXH` | `ID_BHXH` | `NHANSU_BHXH_BANGIAO_SO` | `Related NHANSU_BHXH_BANGIAO_SOs` | `Ref_BHXH` |
-| `NHANSU_HOPDONG_LAODONG` | `ID_HopDongLaoDong` | `NHANSU_CHAMDUT_HOPDONG` | `Related NHANSU_CHAMDUT_HOPDONGs` | Cần kiểm tra thêm trong schema l?ch s? |
+| `NHANSU_HOPDONG_LAODONG` | `ID_HopDongLaoDong` | `NHANSU_CHAMDUT_HOPDONG` | `Related NHANSU_CHAMDUT_HOPDONGs` | Cần kiểm tra thêm trong schema lịch sử |
 | `NHANSU_HOPDONG_LAODONG` | `ID_HopDongLaoDong` | `NHANSU_THANHLY_HOPDONG` | `Related NHANSU_THANHLY_HOPDONGs` | `Ref_HopDongLD` |
 | `NHANSU_KYQUY` | `ID_KyQuy` | `NHANSU_KYQUY_GIAODICH` | `Related NHANSU_KYQUY_GIAODICHs` | `Ref_KyQuy` |
-| `NHANSU_KYQUY` | `ID_KyQuy` | `NHANSU_KYQUY_MUC` | `Related NHANSU_KYQUY_MUCs` | Cần kiểm tra thêm trong schema l?ch s? |
+| `NHANSU_KYQUY` | `ID_KyQuy` | `NHANSU_KYQUY_MUC` | `Related NHANSU_KYQUY_MUCs` | Cần kiểm tra thêm trong schema lịch sử |
 | `NHANSU_KYQUY` | `ID_KyQuy` | `NHANSU_KYQUY_THANHLY` | `Related NHANSU_KYQUY_THANHLYs` | `Ref_KyQuy` |
 | `KIEMTRA_XE_TAXI` | `ID_KiemTra` | `KIEMTRA_XE_TAXI_CHITIET` | `Related KIEMTRA_XE_TAXI_CHITIETs` | `Ref_KiemTra` |
 | `DONVI` | `ID_DonVi` | `XE_THONGBAO_NGUNG` | `Related XE_THONGBAO_NGUNGs` | `Ref_DonVi` |
@@ -105,6 +117,17 @@ Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` v
 | `NHANSU_KYQUY_THANHLY` | Bảng con thanh lý ký quỹ; trang thanh lý ký quỹ lấy theo `ID_ThanhLy`, resolve thêm `Ref_KyQuy` sang `NHANSU_KYQUY` |
 | `NHANSU_THANHLY_HOPDONG` | Bảng thanh lý hợp đồng lao động, dùng `Ref_NhanSu` để tìm hồ sơ thanh lý HĐLĐ liên quan và lấy `Ref_HopDongLD` |
 | `KIEMTRA_XE_TAXI_CHITIET` | Bảng chi tiết kiểm tra xe taxi |
+
+## Nghiệp vụ thỏa thuận trách nhiệm dân sự
+
+| Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |
+| --- | --- | --- | --- | --- |
+| `XE_THOATHUAN_DANSU` | `Ref_DonViBenA` | `DONVI` | `ID_DonVi` | `TenDonVi`, `DiaChi`, `SoDienThoai`, `NguoiDaiDien`, `ChucVuNguoiDaiDien`, `MaSoThue` |
+| `XE_THOATHUAN_DANSU` | `Ref_LaiXe` | `NHANSU` | `ID_NhanSu` | `HoTen`, `Dia_Chi_Day_Du`, `Address`, `NgaySinh`, `CCCD`, `NgayCapCCCD`, `NoiCapCCCD`, `SoDienThoai` |
+| `XE_THOATHUAN_DANSU` | `Ref_LaiXe` | `LAIXE_GPLX` | `Ref_NhanSu` | `SoGPLX`, `NgayCap`, `NgayHetHan`, `HangGPLX`; ưu tiên dòng đang hiệu lực hoặc mới nhất |
+| `XE_THOATHUAN_DANSU` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam`, `NhanHieu`, `SoKhung`, `SoMay`, `NamSanXuat`, `MauSon`, `NgayDangKyXeLanDau` |
+
+Khi render preview, HTML standalone hoặc xuất Word thỏa thuận trách nhiệm dân sự, không hiển thị trực tiếp `Ref_DonViBenA`, `Ref_LaiXe` hoặc `Ref_Xe`. Nếu chưa resolve được dữ liệu liên kết thì để trống trường hiển thị và báo cảnh báo, không đưa mã Ref vào chứng từ.
 
 ## Nghiệp vụ HĐLĐ nhân viên lái xe
 

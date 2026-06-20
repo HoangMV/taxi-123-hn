@@ -70,6 +70,13 @@ const actions = [
     tone: 'bg-emerald-50 text-emerald-700'
   },
   {
+    title: 'Thỏa thuận dân sự',
+    description: 'Xem trước, in và xuất thỏa thuận trách nhiệm dân sự của lái xe từ Google Sheets.',
+    path: config.ROUTES.THOA_THUAN_DAN_SU_REACT,
+    icon: FileText,
+    tone: 'bg-indigo-50 text-indigo-700'
+  },
+  {
     title: 'Ký quỹ lái xe',
     description: 'Xem trước, in và xuất hợp đồng ký quỹ của lái xe từ Google Sheets.',
     path: config.ROUTES.KY_QUY_LAI_XE_REACT,

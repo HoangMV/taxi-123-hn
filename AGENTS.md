@@ -21,8 +21,8 @@
 
 - Nguồn đọc dữ liệu hiện tại là Google Sheets API qua backend service account.
 - React page và HTML standalone không gọi Google Sheets trực tiếp từ trình duyệt; chỉ gọi endpoint `/api/<nghiep-vu>`.
-- Trước khi làm chức năng mới có đọc dữ liệu nghiệp vụ, đọc `docs/appsheet-schema.md` để biết tên bảng/cột hiện có. Tên file này được giữ tạm vì Google Sheet đang dùng schema lịch sử giống nguồn cũ.
-- Trước khi hiển thị dữ liệu có mã Ref, đọc `docs/appsheet-relationships.md` để biết bảng nào liên kết với bảng nào.
+- Trước khi làm chức năng mới có đọc dữ liệu nghiệp vụ, đọc `docs/google-sheets-schema.md` để biết tên bảng/cột hiện có. Tài liệu này ghi lại tên bảng/cột đang đọc từ Google Sheets.
+- Trước khi hiển thị dữ liệu có mã Ref, đọc `docs/google-sheets-relationships.md` để biết bảng nào liên kết với bảng nào.
 - Cột bắt đầu bằng `Ref_` hoặc cột nghiệp vụ lưu ID bảng khác là dữ liệu kết nối xuôi, không được mặc định hiển thị thẳng cho người dùng.
 - Cột bắt đầu bằng `Related ` là kết nối ngược do hệ thống cũ sinh ra; chỉ dùng để hiểu quan hệ bảng, không coi đây là dữ liệu nhập chính.
 - Khi render giao diện, chứng từ, Word, PDF hoặc HTML, nếu dữ liệu đang là mã Ref như `V3B3GM6D` thì phải gọi bảng được tham chiếu và lấy thông tin thật như `HoTen`, `Display`, `Ten...`, `CCCD`, `SoGPLX` theo nghiệp vụ.
@@ -44,11 +44,12 @@
 - Dùng `scripts/google-feature-bundles.cjs` để gom dữ liệu nghiệp vụ từ nhiều tab.
 - Dùng `scripts/google-api-handler.cjs` để tạo API route backend.
 - Dùng `scripts/google-sheets-proxy.cjs` khi test local bằng `npm run proxy`.
-- Nếu phát hiện thêm quan hệ Ref quan trọng, cập nhật `docs/appsheet-relationships.md` để AI lần sau hiểu ngay.
+- Nếu phát hiện thêm quan hệ Ref quan trọng, cập nhật `docs/google-sheets-relationships.md` để AI lần sau hiểu ngay.
+- Khi thêm bảng mới vào `REACT_APP_SCHEMA_TABLES`, phải chạy `npm run schema:google-sheets`, đọc cột mới, xác định Ref trỏ tới bảng nào và ghi mapping vào `docs/google-sheets-relationships.md` trước khi render/export dữ liệu Ref.
 
 ## Quy Chuẩn Trang Nghiệp Vụ Google Sheets
 
-- Trước khi tạo hoặc sửa trang nghiệp vụ có đọc nhiều bảng, phải đọc `docs/appsheet-feature-standard.md`, `docs/appsheet-schema.md` và `docs/appsheet-relationships.md`.
+- Trước khi tạo hoặc sửa trang nghiệp vụ có đọc nhiều bảng, phải đọc `docs/google-sheets-feature-standard.md`, `docs/google-sheets-schema.md` và `docs/google-sheets-relationships.md`.
 - Với nghiệp vụ mới cần hồ sơ chính, chi tiết và dữ liệu Ref, tạo API bundle trong `api/` và route local tương ứng trong `scripts/google-sheets-proxy.cjs`; React page và HTML standalone chỉ gọi API bundle.
 - Không fallback sang API nguồn cũ.
 - Không cache dữ liệu bảng Google Sheets; chỉ cache OAuth token Google ở backend service.

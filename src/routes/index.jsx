@@ -17,6 +17,7 @@ import ThanhLyHopDongLaoDongPage from '../pages/ThanhLyHopDongLaoDongPage';
 import ThanhLyKyQuyLaiXePage from '../pages/ThanhLyKyQuyLaiXePage';
 import ThongBaoNgungPhuHieuPage from '../pages/ThongBaoNgungPhuHieuPage';
 import ThongKePhuHieuDonViPage from '../pages/ThongKePhuHieuDonViPage';
+import ThoaThuanDanSuPage from '../pages/ThoaThuanDanSuPage';
 
 export const appRoutes = [
   { path: config.ROUTES.HOME, element: <Navigate to={config.ROUTES.DASHBOARD} replace /> },
@@ -31,6 +32,7 @@ export const appRoutes = [
   { path: config.ROUTES.QUYET_DINH_THU_HOI_GPKD_REACT, element: <QuyetDinhThuHoiGPKDPage /> },
   { path: config.ROUTES.BAN_GIAO_XE_REACT, element: <BanGiaoXePage /> },
   { path: config.ROUTES.KY_QUY_LAI_XE_REACT, element: <KyQuyLaiXePage /> },
+  { path: config.ROUTES.THOA_THUAN_DAN_SU_REACT, element: <ThoaThuanDanSuPage /> },
   { path: config.ROUTES.THANH_LY_KY_QUY_LAI_XE_REACT, element: <ThanhLyKyQuyLaiXePage /> },
   { path: config.ROUTES.BAN_GIAO_SO_BHXH_REACT, element: <BanGiaoSoBHXHPage /> },
   { path: config.ROUTES.HDLD_NHAN_VIEN_LAI_XE_REACT, element: <HdldNhanVienLaiXePage /> },

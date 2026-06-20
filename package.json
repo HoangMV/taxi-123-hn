@@ -21,6 +21,7 @@
     "prestart": "node scripts/generate-runtime-config.cjs",
     "start": "vite --host 0.0.0.0 --force",
     "proxy": "node scripts/google-sheets-proxy.cjs",
+    "schema:google-sheets": "node scripts/list-google-sheets-schema.cjs --output=docs/google-sheets-schema.md",
     "check:encoding": "node scripts/check-vietnamese-encoding.cjs",
     "serve:proxy": "node scripts/generate-runtime-config.cjs && node scripts/google-sheets-proxy.cjs",
     "prebuild": "node scripts/generate-runtime-config.cjs",

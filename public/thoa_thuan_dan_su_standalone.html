@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thỏa thuận trách nhiệm dân sự</title>
+    <script src="/runtime-config.js"></script>
+    <style>
+      :root { --brand: #4338ca; --ink: #172033; --muted: #667085; --line: #e4e7ec; --bg: #f6f7f9; --danger: #b42318; --warn: #92400e; }
+      @page { size: A4; margin: 1.5cm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: Arial, sans-serif; }
+      .shell { width: 100%; margin: 0 auto; padding: 12px; }
+      .toolbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.96); padding: 14px; box-shadow: 0 10px 28px rgba(16,24,40,.06); backdrop-filter: blur(10px); }
+      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .brand img { width: 42px; height: 42px; border-radius: 8px; object-fit: contain; }
+      h1 { margin: 0; font-size: 18px; }
+      .status { margin-top: 4px; color: var(--muted); font-size: 13px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      button { min-height: 40px; border: 0; border-radius: 8px; background: var(--brand); color: #fff; cursor: pointer; font-weight: 700; padding: 0 14px; }
+      button.secondary { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+      button:disabled { cursor: not-allowed; opacity: .55; }
+      .message { margin-top: 16px; border: 1px dashed var(--line); border-radius: 8px; background: #fff; padding: 24px; color: var(--muted); text-align: center; }
+      .message.danger { border-color: #fecdca; background: #fffbfa; color: var(--danger); }
+      .warning { margin-top: 16px; border: 1px solid #fcd34d; border-radius: 8px; background: #fffbeb; padding: 14px; color: var(--warn); }
+      .warning ul { margin: 6px 0 0; padding-left: 20px; }
+      .preview { margin-top: 16px; overflow-x: hidden; border: 1px solid var(--line); border-radius: 8px; background: #eef2f7; padding: 0; }
+      .page { box-sizing: border-box; width: min(100%, 21cm); max-width: 21cm; min-height: 29.7cm; margin: 0 auto; background: #fff; padding: 1.6cm 1.8cm 1.6cm 2.2cm; color: #000; font-family: "Times New Roman", Times, serif; font-size: 13pt; line-height: 1.35; box-shadow: none; }
+      .center { text-align: center; }
+      .bold { font-weight: 700; }
+      .title { margin: 10px 0 6px; text-align: center; font-size: 16pt; font-weight: 700; text-transform: uppercase; }
+      .subtitle { margin: 2px 0 10px; text-align: center; }
+      .row { margin: 4px 0; text-align: justify; }
+      .line { margin: 3px 0; }
+      .section { margin-top: 8px; }
+      .indent { padding-left: 24px; }
+      .sign-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 24px; }
+      .sign-table td { text-align: center; vertical-align: top; }
+      .sign-title { font-weight: 700; text-transform: uppercase; }
+      .sign-note { margin-top: 4px; font-style: italic; }
+      .sign-space { height: 84px; }
+      @media (max-width: 820px) {
+        .shell { padding: 8px; }
+        .toolbar { align-items: flex-start; flex-direction: column; gap: 12px; }
+        .actions { width: 100%; }
+        .actions button { flex: 1 1 140px; }
+        .page { min-height: 0; padding: 18px 14px; font-size: 12pt; line-height: 1.32; }
+        .title { font-size: 14pt; }
+        .subtitle { margin-bottom: 8px; }
+        .row, .line { text-align: left; }
+        .indent { padding-left: 14px; }
+        .sign-table { table-layout: fixed; }
+        .sign-title, .sign-note { overflow-wrap: anywhere; }
+        .sign-space { height: 64px; }
+      }
+      @media print {
+        html, body { width: auto !important; height: auto !important; overflow: visible !important; background: #fff !important; }
+        .toolbar, .message, .warning { display: none !important; }
+        .shell, .preview { margin: 0 !important; padding: 0 !important; border: 0 !important; background: #fff !important; overflow: visible !important; }
+        .page { width: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }
+      }
+    </style>
+    <link rel="stylesheet" href="/document-preview-responsive.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <div class="toolbar">
+        <div class="brand">
+          <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
+          <div>
+            <h1>Thỏa thuận trách nhiệm dân sự</h1>
+            <div class="status" id="statusText">Đang kiểm tra tham số ID_TTDS.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="secondary" type="button" onclick="window.print()" id="printButton" disabled>In tài liệu</button>
+          <button type="button" onclick="exportWord()" id="exportButton" disabled>Xuất Word</button>
+        </div>
+      </div>
+      <div id="message" class="message">Đang tải dữ liệu...</div>
+      <div id="warning" class="warning" hidden></div>
+      <div id="preview" class="preview" hidden></div>
+    </div>
+
+    <script>
+      const idTtds = new URLSearchParams(window.location.search).get('ID_TTDS') || '';
+      const statusText = document.getElementById('statusText');
+      const message = document.getElementById('message');
+      const warning = document.getElementById('warning');
+      const preview = document.getElementById('preview');
+      const printButton = document.getElementById('printButton');
+      const exportButton = document.getElementById('exportButton');
+      let currentPayload = null;
+      let wordLibrariesPromise = null;
+
+      function cleanValue(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).trim();
+      }
+
+      function escapeHtml(value) {
+        return cleanValue(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function parseDateValue(value) {
+        if (!value) return null;
+        if (value instanceof Date) {
+          const dateValue = new Date(value.getTime());
+          return Number.isNaN(dateValue.getTime()) ? null : dateValue;
+        }
+        const text = String(value).trim();
+        if (!text) return null;
+        const isoDateMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+        if (isoDateMatch) {
+          const [, year, month, day] = isoDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (dateValue.getFullYear() === Number(year) && dateValue.getMonth() === Number(month) - 1 && dateValue.getDate() === Number(day)) return dateValue;
+        }
+        const vietnameseDateMatch = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:\s+.*)?$/);
+        if (vietnameseDateMatch) {
+          const [, day, month, year] = vietnameseDateMatch;
+          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+          if (dateValue.getFullYear() === Number(year) && dateValue.getMonth() === Number(month) - 1 && dateValue.getDate() === Number(day)) return dateValue;
+        }
+        const parsed = new Date(text);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+
+      function formatAdministrativeDate(value) {
+        const date = parseDateValue(value);
+        if (!date) return { day: '', month: '', year: '' };
+        const day = String(date.getDate()).padStart(2, '0');
+        const monthValue = date.getMonth() + 1;
+        const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+        return { day, month, year: String(date.getFullYear()) };
+      }
+
+      function formatAdministrativeDateString(value) {
+        const date = formatAdministrativeDate(value);
+        if (!date.day || !date.month || !date.year) return '';
+        return `${date.day}/${date.month}/${date.year}`;
+      }
+
+      function buildMap(rows, keyName) {
+        return new Map((Array.isArray(rows) ? rows : []).map((row) => [cleanValue(row?.[keyName]), row]).filter(([id]) => id));
+      }
+
+      function normalizeVietnameseText(value) {
+        return cleanValue(value)
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd')
+          .replace(/Đ/g, 'D')
+          .toLowerCase();
+      }
+
+      function getDonViDisplayName(donVi) {
+        if (!donVi) return '';
+        return cleanValue(donVi.TenDonVi) || cleanValue(donVi.Display);
+      }
+
+      function getNhanSuDisplayName(nhanSu) {
+        if (!nhanSu) return '';
+        return cleanValue(nhanSu.HoTen) || cleanValue(nhanSu.Display);
+      }
+
+      function pickGplxForNhanSu(gplxRows, nhanSuId) {
+        const targetId = cleanValue(nhanSuId);
+        if (!targetId) return null;
+        const rows = (Array.isArray(gplxRows) ? gplxRows : []).filter((row) => cleanValue(row?.Ref_NhanSu) === targetId);
+        if (rows.length === 0) return null;
+        const activeRow = rows.find((row) => normalizeVietnameseText(row?.TrangThai).includes('dang hieu luc'));
+        if (activeRow) return activeRow;
+        return [...rows].sort((a, b) => {
+          const dateA = parseDateValue(a?.NgayHetHan);
+          const dateB = parseDateValue(b?.NgayHetHan);
+          return (dateB ? dateB.getTime() : 0) - (dateA ? dateA.getTime() : 0);
+        })[0] || rows[0];
+      }
+
+      function formatMoney(value) {
+        const digits = cleanValue(value).replace(/[^\d]/g, '');
+        if (!digits) return '';
+        return Number(digits).toLocaleString('vi-VN');
+      }
+
+      const digitsText = ['không', 'một', 'hai', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+      digitsText.splice(3, 0, 'ba');
+      const scalesText = ['', ' nghìn', ' triệu', ' tỷ', ' nghìn tỷ', ' triệu tỷ'];
+
+      function normalizeSpaces(value) {
+        return value.replace(/\s+/g, ' ').trim();
+      }
+
+      function readTriple(number, isFull) {
+        const hundreds = Math.floor(number / 100);
+        const tensUnits = number % 100;
+        const tens = Math.floor(tensUnits / 10);
+        const units = tensUnits % 10;
+        const parts = [];
+        if (hundreds > 0 || isFull) parts.push(`${digitsText[hundreds]} trăm`);
+        if (tens > 1) {
+          parts.push(`${digitsText[tens]} mươi`);
+          if (units === 1) parts.push('mốt');
+          else if (units === 4) parts.push('tư');
+          else if (units === 5) parts.push('lăm');
+          else if (units > 0) parts.push(digitsText[units]);
+          return normalizeSpaces(parts.join(' '));
+        }
+        if (tens === 1) {
+          parts.push('mười');
+          if (units === 5) parts.push('lăm');
+          else if (units > 0) parts.push(digitsText[units]);
+          return normalizeSpaces(parts.join(' '));
+        }
+        if (units > 0) {
+          if (hundreds > 0 || isFull) parts.push('lẻ');
+          parts.push(digitsText[units]);
+        }
+        return normalizeSpaces(parts.join(' '));
+      }
+
+      function numberToWords(value) {
+        const normalized = String(value ?? '').replace(/[^\d]/g, '').replace(/^0+/, '') || '0';
+        if (normalized === '0') return 'Không';
+        const groups = [];
+        let remaining = normalized;
+        while (remaining.length > 0) {
+          groups.unshift(Number(remaining.slice(-3)));
+          remaining = remaining.slice(0, -3);
+        }
+        const firstNonZeroIndex = groups.findIndex((group) => group > 0);
+        const parts = [];
+        groups.forEach((group, index) => {
+          if (!group) return;
+          const scaleIndex = groups.length - index - 1;
+          parts.push(`${readTriple(group, index > firstNonZeroIndex)}${scalesText[scaleIndex] || ''}`);
+        });
+        const sentence = normalizeSpaces(parts.join(' '));
+        return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+      }
+
+      function buildPeriodText(startText, endText) {
+        if (startText && endText) return `từ ngày ${startText} đến ngày ${endText}`;
+        if (startText) return `từ ngày ${startText}`;
+        if (endText) return `đến ngày ${endText}`;
+        return '';
+      }
+
+      async function fetchBundle(options = {}) {
+        const params = new URLSearchParams({ ID_TTDS: idTtds });
+        if (options.includeRelated === false) params.set('includeRelated', '0');
+        const init = options.row
+          ? {
+              method: 'POST',
+              headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ID_TTDS: idTtds, row: options.row })
+            }
+          : { method: 'GET', headers: { Accept: 'application/json' } };
+        const response = await fetch(`/api/thoa-thuan-dan-su?${params.toString()}`, init);
+        const text = await response.text();
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          throw new Error('API /api/thoa-thuan-dan-su không trả JSON. Khi test local, hãy chạy npm run proxy hoặc npm start để proxy /api hoạt động.');
+        }
+        if (!response.ok) throw new Error(data.error || `Không tải được thỏa thuận dân sự (${response.status}).`);
+        return data;
+      }
+
+      function buildWarnings(row, donVi, laiXe, xe, gplx) {
+        const warnings = [];
+        if (cleanValue(row?.Ref_DonViBenA) && !donVi) warnings.push('Chưa tải được thông tin Bên A từ bảng DONVI.');
+        if (cleanValue(row?.Ref_LaiXe) && !laiXe) warnings.push('Chưa tải được thông tin lái xe từ bảng NHANSU.');
+        if (cleanValue(row?.Ref_Xe) && !xe) warnings.push('Chưa tải được thông tin xe từ bảng XE.');
+        if (cleanValue(row?.Ref_LaiXe) && !gplx) warnings.push('Chưa tải được thông tin GPLX đang hiệu lực từ bảng LAIXE_GPLX.');
+        return warnings;
+      }
+
+      function buildPayload(row, related = {}) {
+        const donViById = buildMap(related.DONVI, 'ID_DonVi');
+        const nhanSuById = buildMap(related.NHANSU, 'ID_NhanSu');
+        const xeById = buildMap(related.XE, 'ID_Xe');
+        const donVi = donViById.get(cleanValue(row.Ref_DonViBenA));
+        const laiXe = nhanSuById.get(cleanValue(row.Ref_LaiXe));
+        const xe = xeById.get(cleanValue(row.Ref_Xe));
+        const gplx = pickGplxForNhanSu(related.LAIXE_GPLX, row.Ref_LaiXe);
+        const ngayKy = formatAdministrativeDate(row.NgayKy);
+        const ngayHieuLucText = formatAdministrativeDateString(row.NgayHieuLuc);
+        const ngayHetHanText = formatAdministrativeDateString(row.NgayHetHan);
+        const tenDonVi = getDonViDisplayName(donVi);
+        const hoTenLaiXe = getNhanSuDisplayName(laiXe);
+        const depositDigits = cleanValue(row.SoTienDatCoc).replace(/[^\d]/g, '');
+        return {
+          idTtds: cleanValue(row.ID_TTDS),
+          soThoaThuan: cleanValue(row.SoThoaThuan),
+          ngayKy,
+          ngayKyText: formatAdministrativeDateString(row.NgayKy),
+          diaDiemKy: cleanValue(row.DiaDiemKy) || 'Hà Nội',
+          ngayHieuLucText,
+          ngayHetHanText,
+          thoiHanHieuLucText: buildPeriodText(ngayHieuLucText, ngayHetHanText),
+          tenDonVi,
+          tenDonViUpper: tenDonVi.toUpperCase(),
+          diaChiDonVi: cleanValue(donVi?.DiaChi),
+          dienThoaiDonVi: cleanValue(donVi?.SoDienThoai),
+          maSoThueDonVi: cleanValue(donVi?.MaSoThue),
+          daiDienBenA: cleanValue(donVi?.NguoiDaiDien),
+          chucVuBenA: cleanValue(donVi?.ChucVuNguoiDaiDien),
+          hoTenLaiXe,
+          hoTenLaiXeUpper: hoTenLaiXe.toUpperCase(),
+          diaChiLaiXe: cleanValue(laiXe?.Dia_Chi_Day_Du) || cleanValue(laiXe?.Address),
+          ngaySinhLaiXe: formatAdministrativeDateString(laiXe?.NgaySinh),
+          soCccd: cleanValue(laiXe?.CCCD),
+          ngayCapCccd: formatAdministrativeDateString(laiXe?.NgayCapCCCD),
+          noiCapCccd: cleanValue(laiXe?.NoiCapCCCD),
+          soDienThoaiLaiXe: cleanValue(laiXe?.SoDienThoai),
+          soGplx: cleanValue(gplx?.SoGPLX),
+          ngayCapGplx: formatAdministrativeDateString(gplx?.NgayCap),
+          ngayHetHanGplx: formatAdministrativeDateString(gplx?.NgayHetHan),
+          hangGplx: cleanValue(gplx?.HangGPLX),
+          bienSoXe: cleanValue(xe?.BienSo),
+          maDam: cleanValue(xe?.MaDam),
+          nhanHieuXe: cleanValue(xe?.NhanHieu),
+          soKhung: cleanValue(xe?.SoKhung),
+          soMay: cleanValue(xe?.SoMay),
+          namSanXuat: cleanValue(xe?.NamSanXuat),
+          mauSon: cleanValue(xe?.MauSon),
+          ngayDangKyLanDau: formatAdministrativeDateString(xe?.NgayDangKyXeLanDau),
+          hinhThucKhoan: cleanValue(row.HinhThucKhoan),
+          soTienDatCoc: formatMoney(row.SoTienDatCoc),
+          soTienDatCocBangChu: depositDigits ? `${numberToWords(depositDigits)} đồng` : '',
+          hinhThucThanhToan: cleanValue(row.HinhThucThanhToan),
+          tyLePhatChamNopNgay: cleanValue(row.TyLePhatChamNopNgay),
+          ghiChu: cleanValue(row.GhiChu),
+          trangThaiThoaThuan: cleanValue(row.TrangThaiThoaThuan),
+          warnings: buildWarnings(row, donVi, laiXe, xe, gplx)
+        };
+      }
+
+      function buildTemplateData(payload) {
+        return {
+          dia_diem_ky: payload.diaDiemKy,
+          ngay_ky: payload.ngayKy.day,
+          thang_ky: payload.ngayKy.month,
+          nam_ky: payload.ngayKy.year,
+          ngay_ky_text: payload.ngayKyText,
+          so_thoa_thuan: payload.soThoaThuan,
+          ten_don_vi: payload.tenDonVi,
+          ten_don_vi_upper: payload.tenDonViUpper,
+          dia_chi_don_vi: payload.diaChiDonVi,
+          dien_thoai_don_vi: payload.dienThoaiDonVi,
+          ma_so_thue_don_vi: payload.maSoThueDonVi,
+          dai_dien_ben_a: payload.daiDienBenA,
+          chuc_vu_ben_a: payload.chucVuBenA,
+          ho_ten_lai_xe: payload.hoTenLaiXe,
+          ho_ten_lai_xe_upper: payload.hoTenLaiXeUpper,
+          dia_chi_lai_xe: payload.diaChiLaiXe,
+          ngay_sinh_lai_xe: payload.ngaySinhLaiXe,
+          so_cccd: payload.soCccd,
+          ngay_cap_cccd: payload.ngayCapCccd,
+          noi_cap_cccd: payload.noiCapCccd,
+          so_dien_thoai_lai_xe: payload.soDienThoaiLaiXe,
+          so_gplx: payload.soGplx,
+          ngay_cap_gplx: payload.ngayCapGplx,
+          ngay_het_han_gplx: payload.ngayHetHanGplx,
+          hang_gplx: payload.hangGplx,
+          bien_so_xe: payload.bienSoXe,
+          ma_dam: payload.maDam,
+          nhan_hieu_xe: payload.nhanHieuXe,
+          so_khung: payload.soKhung,
+          so_may: payload.soMay,
+          nam_san_xuat: payload.namSanXuat,
+          mau_son: payload.mauSon,
+          ngay_dang_ky_lan_dau: payload.ngayDangKyLanDau,
+          hinh_thuc_khoan: payload.hinhThucKhoan,
+          so_tien_dat_coc: payload.soTienDatCoc,
+          so_tien_dat_coc_bang_chu: payload.soTienDatCocBangChu,
+          hinh_thuc_thanh_toan: payload.hinhThucThanhToan,
+          ty_le_phat_cham_nop_ngay: payload.tyLePhatChamNopNgay,
+          ngay_hieu_luc_text: payload.ngayHieuLucText,
+          ngay_het_han_text: payload.ngayHetHanText,
+          thoi_han_hieu_luc_text: payload.thoiHanHieuLucText,
+          ghi_chu: payload.ghiChu,
+          trang_thai_thoa_thuan: payload.trangThaiThoaThuan
+        };
+      }
+
+      function renderWarnings(payload, isLoadingRelated) {
+        if (isLoadingRelated || !payload.warnings.length) {
+          warning.hidden = true;
+          warning.innerHTML = '';
+          return;
+        }
+        warning.hidden = false;
+        warning.innerHTML = `<strong>Cần kiểm tra dữ liệu liên kết</strong><ul>${payload.warnings.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+      }
+
+      function render(payload, options = {}) {
+        currentPayload = payload;
+        preview.hidden = false;
+        message.hidden = true;
+        printButton.disabled = false;
+        exportButton.disabled = Boolean(options.loadingRelated);
+        renderWarnings(payload, Boolean(options.loadingRelated));
+        preview.innerHTML = `
+          <div class="page">
+            <div class="center bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+            <div class="center bold">Độc lập - Tự do - Hạnh phúc</div>
+            <div class="row center">${escapeHtml(payload.diaDiemKy || '...')}, ngày ${escapeHtml(payload.ngayKy.day || '...')} tháng ${escapeHtml(payload.ngayKy.month || '...')} năm ${escapeHtml(payload.ngayKy.year || '...')}</div>
+            <div class="title">Thỏa thuận trách nhiệm dân sự</div>
+            <div class="subtitle">Số: ${escapeHtml(payload.soThoaThuan || '...')}</div>
+            <div class="subtitle">(V/v: Nhận xe BKS: ${escapeHtml(payload.bienSoXe || '...')} - Mã đàm ${escapeHtml(payload.maDam || '...')} để kinh doanh taxi)</div>
+            <div class="section">
+              <div class="line">- Căn cứ vào quy chế, quy định, nội quy của ${escapeHtml(payload.tenDonVi || 'Công ty')}.</div>
+              <div class="line">- Căn cứ vào điều kiện và khả năng thực hiện việc khai thác kinh doanh taxi của hai bên.</div>
+              <div class="line">- Hôm nay, ngày ${escapeHtml(payload.ngayKy.day || '...')} tháng ${escapeHtml(payload.ngayKy.month || '...')} năm ${escapeHtml(payload.ngayKy.year || '...')}. Tại văn phòng ${escapeHtml(payload.tenDonVi || '...')}; Địa chỉ: ${escapeHtml(payload.diaChiDonVi || '...')}.</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>BÊN A:</strong> ${escapeHtml(payload.tenDonViUpper)}</div>
+              <div class="line">Địa chỉ: ${escapeHtml(payload.diaChiDonVi)}</div>
+              <div class="line">Điện thoại: ${escapeHtml(payload.dienThoaiDonVi)} ${payload.maSoThueDonVi ? `- Mã số thuế: ${escapeHtml(payload.maSoThueDonVi)}` : ''}</div>
+              <div class="line">Đại diện: ${escapeHtml(payload.daiDienBenA)} - Chức vụ: ${escapeHtml(payload.chucVuBenA)}</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>BÊN B:</strong> ${escapeHtml(payload.hoTenLaiXeUpper)}</div>
+              <div class="line">Địa chỉ: ${escapeHtml(payload.diaChiLaiXe)}</div>
+              <div class="line">Ngày sinh: ${escapeHtml(payload.ngaySinhLaiXe)}</div>
+              <div class="line">CCCD số: ${escapeHtml(payload.soCccd)}; cấp ngày: ${escapeHtml(payload.ngayCapCccd)}; nơi cấp: ${escapeHtml(payload.noiCapCccd)}</div>
+              <div class="line">GPLX số: ${escapeHtml(payload.soGplx)}; cấp ngày: ${escapeHtml(payload.ngayCapGplx)}; hạng: ${escapeHtml(payload.hangGplx)}; hạn đến: ${escapeHtml(payload.ngayHetHanGplx)}</div>
+              <div class="line">Điện thoại: ${escapeHtml(payload.soDienThoaiLaiXe)}</div>
+            </div>
+            <div class="section">
+              <div class="line">Trên cơ sở được đào tạo, bồi dưỡng nghiệp vụ taxi, văn hóa doanh nghiệp và nội quy quy chế của ${escapeHtml(payload.tenDonVi || 'Công ty')}. Bên B hoàn toàn thấu hiểu các quy định của pháp luật, nội quy, quy chế các văn bản của công ty, đảm bảo tuân thủ đầy đủ và đúng các điều kiện khi tham gia hoạt động kinh doanh dịch vụ vận tải hành khách bằng taxi.</div>
+              <div class="line">Để đảm bảo quyền lợi hợp pháp của hai bên, Bên A và Bên B cùng nhất trí thỏa thuận trách nhiệm dân sự với những điều kiện cụ thể sau:</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>ĐIỀU 1: ĐIỀU KHOẢN CHUNG</strong></div>
+              <div class="line">Bên B nhận quyền sử dụng của Bên A một chiếc xe ô tô đủ điều kiện kinh doanh Taxi theo quy định của Nhà nước, được trang bị đầy đủ thiết bị, phụ tùng và dụng cụ sửa chữa nhỏ để quản lý, sử dụng nhằm mục đích kinh doanh vận chuyển hành khách bằng taxi theo quy chế kinh doanh của Công ty ban hành. Thông tin về chiếc xe ô tô như sau:</div>
+              <div class="line indent">Biển số: ${escapeHtml(payload.bienSoXe)}; mã đàm: ${escapeHtml(payload.maDam)}; nhãn hiệu: ${escapeHtml(payload.nhanHieuXe)}.</div>
+              <div class="line indent">Số khung: ${escapeHtml(payload.soKhung)}; số máy: ${escapeHtml(payload.soMay)}; năm sản xuất: ${escapeHtml(payload.namSanXuat)}; màu sơn: ${escapeHtml(payload.mauSon)}.</div>
+              <div class="line indent">Ngày đăng ký lần đầu: ${escapeHtml(payload.ngayDangKyLanDau)}.</div>
+              <div class="line"><strong>Công việc và thời gian làm việc Bên B:</strong></div>
+              <div class="line">Công việc: Lái xe Taxi và bảo quản giữ gìn xe theo đúng các quy chế tổ chức, quản lý điều hành do công ty ban hành.</div>
+              <div class="line">Thời gian làm việc do Bên B đăng ký với Công ty qua phòng điều hành, đảm bảo tuân thủ theo quy định chung của pháp luật: Thời gian làm việc không quá 10h trong một ngày và không lái xe liên tục quá 4h.</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>ĐIỀU 2: ĐƠN GIÁ VÀ ĐẶT CỌC</strong></div>
+              <div class="line"><strong>Đơn giá khoán:</strong></div>
+              <div class="line indent">- Đơn giá căn cứ theo Quyết định của Bên A theo từng thời điểm và thông báo trước 07 ngày cho Bên B nếu có sự điều chỉnh.</div>
+              <div class="line indent">- Đơn giá khoán không bao gồm chi phí sạc điện và các loại chi phí nằm ngoài phần trách nhiệm của Bên A.</div>
+              <div class="line indent">- Hình thức khoán doanh thu: ${escapeHtml(payload.hinhThucKhoan || '................................')}.</div>
+              <div class="line"><strong>2.2 Đặt cọc:</strong></div>
+              <div class="line">Bên B đặt cọc cho Bên A một khoản cọc là: ${escapeHtml(payload.soTienDatCoc || '................................')} VNĐ (Bằng chữ: ${escapeHtml(payload.soTienDatCocBangChu || '................................')}).</div>
+              <div class="line">Khoản cọc sẽ được Bên A hoàn trả cho Bên B trong vòng 30 ngày kể từ thời điểm kết thúc thỏa thuận và/hoặc sau khi các bên ký Biên bản thanh lý thỏa thuận sau khi đã cấn trừ/thanh toán công nợ nếu có giữa các bên.</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>ĐIỀU 3: THANH TOÁN</strong></div>
+              <div class="line">3.1 Bên B có trách nhiệm nộp tiền doanh thu khoán cùng các chi phí phát sinh khác thuộc trách nhiệm của Bên B vào ngày 25 đến ngày 30 của tháng liền kề trước đó. Đối với trường hợp khoán ngày, Bên B nộp doanh thu khoán trước 05 ngày.</div>
+              <div class="line">3.2 Chi phí sạc điện được tính theo hóa đơn thực tế của nhà cung cấp, thanh toán 02 lần/tháng.</div>
+              <div class="line">3.3 Nếu thực hiện chậm nộp các nghĩa vụ tài chính với công ty thì:</div>
+              <div class="line indent">+ Sau 03 (ba) ngày làm việc kể từ ngày hết hạn nộp tiền, Bên A có quyền cấn trừ Khoản Đặt Cọc để đảm bảo nghĩa vụ nộp tiền của Bên B;</div>
+              <div class="line indent">+ Trong trường hợp khoản cấn trừ lớn hơn Khoản Đặt Cọc thì Bên B phải chịu phạt theo lãi suất ${escapeHtml(payload.tyLePhatChamNopNgay || '................................')} trên số tiền chậm nộp sau khi đã trừ Khoản Đặt Cọc kể từ ngày đến hạn cho đến ngày nộp tiền thực tế.</div>
+              <div class="line indent">+ Mọi khoản chậm nộp của Bên B không được muộn quá 05 (năm) ngày kể từ ngày hết hạn nộp, sau 05 (năm) ngày mà Bên B không hoàn thành việc nộp bổ sung Khoản Đặt Cọc thì Bên A hoặc Bên thứ 3 (do Bên A chỉ định) tiến hành hạn chế/khóa hệ thống để dừng hoạt động của xe và tiến tới thu hồi tài sản và chấm dứt Thỏa thuận.</div>
+              <div class="line">3.4 Hình thức thanh toán: ${escapeHtml(payload.hinhThucThanhToan || '................................')}.</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>ĐIỀU 4: NGHĨA VỤ, TRÁCH NHIỆM VÀ QUYỀN HẠN CỦA HAI BÊN</strong></div>
+              <div class="line"><strong>Nghĩa vụ, trách nhiệm và quyền hạn của Bên A:</strong></div>
+              <div class="line">4.1.1 Lựa chọn đơn vị bảo hiểm, kí kết hợp đồng và thực hiện gia hạn bảo hiểm trách nhiệm dân sự bắt buộc và bảo hiểm vật chất xe khi đến hạn.</div>
+              <div class="line">4.1.2 Chịu trách nhiệm về pháp lý về nguồn gốc và quyền sở hữu, sử dụng xe.</div>
+              <div class="line">4.1.3 Phối hợp cùng Bên B phát triển thị trường.</div>
+              <div class="line">4.1.4 Trả lại tiền đặt cọc cho Bên B theo điều kiện quy định tại khoản 2.2 nếu Bên B không vi phạm các điều khoản của thỏa thuận và phụ lục khác.</div>
+              <div class="line">4.1.5 Bên A có quyền chấm dứt thỏa thuận trước thời hạn nếu:</div>
+              <div class="line indent">- Bên B không chấp hành đúng chế độ tài chính và quy định và nghĩa vụ thanh toán tài chính hàng tháng với bên A.</div>
+              <div class="line indent">- Bên B phạm pháp, vi phạm pháp luật nghiêm trọng như buôn bán, vận chuyển, tàng trữ, sử dụng chất ma túy và các hàng cấm khác.</div>
+              <div class="line indent">- Sự thay đổi về chính sách Nhà nước, đình chỉ kinh doanh vận chuyển hành khách bằng xe Taxi đối với Công ty.</div>
+              <div class="line">4.1.6 Trường hợp xe bị hỏng do lỗi của nhà sản xuất và/hoặc pin xe không đáp ứng hoạt động bình thường của xe và thiết bị trong xe khiến xe không thể vận hành di chuyển được thì Bên A có thể cung cấp xe thay thế để Bên B sử dụng. Trong trường hợp Bên A không thể cung cấp xe thay thế, Bên A có trách nhiệm giảm trừ doanh thu tương ứng với số ngày xe không thể sử dụng. Để làm rõ, ngoài trách nhiệm giảm trừ doanh thu, Bên A không phải chịu bất kỳ trách nhiệm nào khác, kể cả các thiệt hại gián tiếp của Bên B (nếu có), bao gồm nhưng không giới hạn sự sụt giảm doanh thu, trách nhiệm với bên thứ ba.</div>
+              <div class="line">4.1.7 Bên A chỉ có trách nhiệm chi trả các chi phí liên quan đến việc sửa chữa xe do lỗi của Nhà sản xuất trong phạm vi bảo hành, sửa chữa/thay thế khi pin không đáp ứng hoạt động bình thường của xe và thiết bị trong xe khiến xe không thể vận hành di chuyển được nhưng không bao gồm chi phí thay thế xe trong thời gian xe bảo dưỡng định kỳ theo quy định của nhà sản xuất hoặc Bên A xét thấy cần thiết. Mọi chi phí sửa chữa xe ngoài trách nhiệm của Bên A và ngoài phạm vi bồi thường của cơ quan bảo hiểm sẽ do Bên B chi trả.</div>
+              <div class="line"><strong>Nghĩa vụ, trách nhiệm và quyền hạn của Bên B:</strong></div>
+              <div class="line">4.2.1 Tôn trọng, chấp hành đầy đủ quy chế, nội quy về phục vụ hành khách bằng xe taxi của bên A (có nội quy, quy chế và điều khoản thi hành kèm theo) cũng như các thỏa thuận kí kết khác giữa 2 bên, bao gồm tuân thủ các tiêu chuẩn đối với lái xe khi Bên A ký các thỏa thuận, hợp đồng hợp tác với đối tác, nhà cung cấp khác.</div>
+              <div class="line">4.2.2 Bảo quản, giữ gìn giấy tờ xe được bàn giao. Chịu trách nhiệm kiểm tra theo dõi thời hạn giấy tờ như: Đăng ký, Đăng kiểm, Tem kinh doanh Taxi, Bảo hiểm trách nhiệm dân sự, Bảo hiểm vật chất... Kịp thời thông báo cho bên A để cấp đổi trước khi hết hạn. Các vi phạm do lỗi hết hạn các giấy tờ liên quan đến phương tiện nói trên do Bên B không báo hay không đến Công ty để lấy giấy tờ kịp thời, Bên B phải hoàn toàn chịu trách nhiệm.</div>
+              <div class="line">4.2.3 Thanh toán các khoản phải nộp như chi phí sạc điện, chi phí bảo hiểm vật chất xe,... cho Bên A đúng thời hạn quy định.</div>
+              <div class="line">4.2.4 Sử dụng, vận hành, bảo dưỡng, bảo quản, giữ gìn tài sản được giao (xe ô tô, dụng cụ trên xe và các thiết bị bộ đàm, thiết bị giám sát hành trình, đồng hồ taximet, máy in biên lai, ứng dụng của tài xế,...) đúng mục đích kinh doanh và theo đúng quy trình, hướng dẫn của nhà sản xuất và Công ty.</div>
+              <div class="line">4.2.5 Trong quá trình sử dụng nếu phát sinh hỏng hóc, thiệt hại về xe hoặc xe gặp tai nạn, Bên B phải thông báo ngay cho bên A và/hoặc đơn vị bảo hiểm theo thông tin do bên A cung cấp tại từng thời điểm, đồng thời có trách nhiệm giải quyết mọi tranh chấp khiếu nại với bên thứ 3, phối hợp với cơ quan chức năng và phối hợp với bên A để hoàn tất các thủ tục bảo hiểm.</div>
+              <div class="line">4.2.6 Bên B có trách nhiệm cuối cùng đối với mọi hỏng hóc, thiệt hại của xe và thiệt hại với bên thứ 3 nếu do lỗi của bên B, kể cả trong trường hợp thiệt hại được đơn vị bảo hiểm chi trả. Trường hợp xe gây tai nạn hoặc liên quan đến vụ việc trái pháp luật khác do lỗi của bên B thì bên B hoàn toàn chịu trách nhiệm. Bên B có nghĩa vụ thanh toán mọi chi phí từ sự cố, hỏng hóc hoặc tai nạn không sử dụng được do lỗi của Bên B, bao gồm cả doanh thu khoán.</div>
+              <div class="line">4.2.7 Nếu Bên B hủy bỏ thỏa thuận trước thời hạn tại Điều 6, đồng thời:</div>
+              <div class="line indent">- Không thông báo trước đủ 30 ngày cho Bên A bằng văn bản thì phải bồi thường cho Bên A một khoản tương ứng 10 ca xe ngừng hoạt động theo mục 9.2 điều 9 Chương 2 trong Quy chế đối với nhân viên lái xe.</div>
+              <div class="line indent">- Thông báo trước đủ 30 ngày cho Bên A bằng văn bản; hoặc trong trường hợp Bên A có thể bố trí nhân sự thay thế Bên B sớm hơn thời gian chờ 30 ngày thì Bên B không phải chịu bồi thường ca xe.</div>
+              <div class="line indent">- Khoản bồi thường này không bao gồm các khoản bồi thường, phạt theo các hợp đồng hoặc thỏa thuận khác.</div>
+              <div class="line">4.2.8 Bên B chỉ được sử dụng xe vào các mục đích theo quy định của Bên A và phù hợp với các quy định của pháp luật, không sử dụng xe để đặt cọc, cầm cố, thế chấp, đảm bảo cho việc thực hiện nghĩa vụ dân sự hoặc sử dụng cho hoạt động vi phạm quy định pháp luật, bao gồm nhưng không giới hạn: Vận chuyển ma túy, động vật quý hiếm, tiền giả, hàng hóa dễ cháy, nổ cấm lưu thông.</div>
+              <div class="line">4.2.9 Bên B không được phép bóc tem niêm phong, tem đảm bảo, tác động hoặc can thiệp vào các hệ thống kỹ thuật, an toàn, giám sát hoặc tiện nghi của xe, tự ý thay thế, trao đổi bất kỳ phụ tùng, linh kiện xe. Trường hợp có nhu cầu điều chỉnh, thay thế liên quan đến nội thất, ngoại thất, hệ thống điện, kết cấu của xe thì Bên B phải gửi phương án kỹ thuật, thi công cho Bên A để Bên A thẩm định. Việc thi công chỉ được phép triển khai khi nhận được sự chấp thuận bằng văn bản của Bên A. Bên B cam kết chịu trách nhiệm và chi trả mọi chi phí phát sinh để sửa chữa xe hoặc khắc phục sự cố do các tác động hoặc can thiệp của Bên B vào xe mà không được sự chấp thuận của Bên A.</div>
+              <div class="line">Thực hiện đúng lịch bảo dưỡng, bảo trì theo hướng dẫn của nhà sản xuất hoặc theo yêu cầu của Bên A, bảo trì bảo dưỡng và sửa chữa xe tại các cơ sở bảo hành hoặc trạm dịch vụ của nhà sản xuất hoặc được sự ủy quyền của Bên A, sử dụng đúng danh mục vật tư, thiết bị mà nhà sản xuất khuyến cáo sử dụng xe và phải được sự đồng ý của Bên A. Trường hợp Bên B không thực hiện việc bảo dưỡng bảo trì theo thỏa thuận này, Bên A có quyền can thiệp đến vận hành của phương tiện và thu hồi phương tiện không được bảo dưỡng, bảo trì theo quy định.</div>
+              <div class="line">Bên B phải thực hiện giá cước theo quy định cho từng thời điểm của Bên A và chấp hành nghiêm chỉnh quy định pháp luật khi tham gia giao thông.</div>
+              <div class="line">4.2.13 Có quyền đề xuất thay đổi một số điều khoản của thỏa thuận này và Bên A sẽ xem xét.</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>ĐIỀU 5: ĐIỀU KHOẢN CHUNG</strong></div>
+              <div class="line">Hai bên cam kết thực hiện đúng những điều khoản trong thỏa thuận này.</div>
+              <div class="line">Nếu xảy ra tranh chấp, hai bên sẽ giải quyết bằng thương lượng trên nguyên tắc tôn trọng quyền lợi của hai bên; nếu không thỏa mãn thì chuyển sự việc đến Tòa án dân sự để giải quyết, chi phí do bên có lỗi chịu.</div>
+            </div>
+            <div class="section">
+              <div class="line"><strong>ĐIỀU 6: HIỆU LỰC THỎA THUẬN</strong></div>
+              <div class="line">6.1 Thỏa thuận có hiệu lực ${escapeHtml(payload.thoiHanHieuLucText || '................................')}.</div>
+              <div class="line">Bên B đã được Bên A giải thích các nội dung trong thỏa thuận và hoàn toàn thống nhất, đồng thuận với các điều khoản trước khi ký và nhận bàn giao xe.</div>
+            </div>
+            ${payload.ghiChu ? `<div class="section"><div class="line"><strong>Ghi chú:</strong> ${escapeHtml(payload.ghiChu)}</div></div>` : ''}
+            <table class="sign-table">
+              <tr><td><div class="sign-title">Đại diện bên A</div><div class="sign-note">(Ký, ghi rõ họ tên)</div></td><td><div class="sign-title">Bên B</div><div class="sign-note">(Ký, ghi rõ họ tên)</div></td></tr>
+              <tr><td><div class="sign-space"></div></td><td><div class="sign-space"></div></td></tr>
+              <tr><td class="bold">${escapeHtml(payload.daiDienBenA)}</td><td class="bold">${escapeHtml(payload.hoTenLaiXe)}</td></tr>
+            </table>
+          </div>
+        `;
+      }
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const existed = document.querySelector(`script[src="${src}"]`);
+          if (existed) {
+            resolve();
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = src;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error(`Không tải được thư viện ${src}.`));
+          document.head.appendChild(script);
+        });
+      }
+
+      async function loadWordLibraries() {
+        if (!wordLibrariesPromise) {
+          wordLibrariesPromise = Promise.all([
+            loadScript('https://unpkg.com/pizzip@3.1.4/dist/pizzip.js'),
+            loadScript('https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js'),
+            loadScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js')
+          ]);
+        }
+        return wordLibrariesPromise;
+      }
+
+      function normalizeDocxZipEntryNames(zip) {
+        const normalizedZip = new PizZip();
+        Object.entries(zip.files).forEach(([entryName, file]) => {
+          if (file.dir) return;
+          normalizedZip.file(entryName.replace(/\\/g, '/'), file.asUint8Array());
+        });
+        return normalizedZip;
+      }
+
+      async function exportWord() {
+        if (!currentPayload) return;
+        exportButton.disabled = true;
+        try {
+          await loadWordLibraries();
+          const response = await fetch('/thoa_thuan_dan_su_lai_xe_template.docx?v=20260620-fieldfix');
+          if (!response.ok) throw new Error('Không thể tải template Word.');
+          const content = await response.arrayBuffer();
+          const sourceZip = new PizZip(content);
+          const zip = normalizeDocxZipEntryNames(sourceZip);
+          const Docxtemplater = window.docxtemplater?.Docxtemplater || window.docxtemplater;
+          const doc = new Docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+            nullGetter: () => ''
+          });
+          doc.render(buildTemplateData(currentPayload));
+          const blob = doc.getZip().generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          });
+          window.saveAs(blob, `Thoa_thuan_dan_su_${currentPayload.soThoaThuan || currentPayload.idTtds || 'new'}.docx`);
+        } catch (error) {
+          alert(`Xuất Word thất bại: ${error.message}`);
+        } finally {
+          exportButton.disabled = !currentPayload;
+        }
+      }
+
+      async function init() {
+        try {
+          if (!idTtds) throw new Error('Thiếu tham số ID_TTDS trên URL.');
+          statusText.textContent = 'Đang tải hồ sơ chính từ Google Sheets...';
+          const rowBundle = await fetchBundle({ includeRelated: false });
+          const row = rowBundle.row || null;
+          if (!row) throw new Error(`Không tìm thấy thỏa thuận dân sự với ID_TTDS = ${idTtds}.`);
+          render(buildPayload(row), { loadingRelated: true });
+          statusText.textContent = 'Đã tải hồ sơ chính, đang tải dữ liệu liên kết...';
+
+          try {
+            const fullBundle = await fetchBundle({ row });
+            render(buildPayload(row, fullBundle.related || {}));
+            statusText.textContent = `Đã tải thỏa thuận dân sự ${idTtds}.`;
+          } catch (relatedError) {
+            render(buildPayload(row));
+            statusText.textContent = 'Đã tải hồ sơ chính, nhưng chưa tải được dữ liệu liên kết.';
+            warning.hidden = false;
+            warning.innerHTML = `<strong>Cần kiểm tra dữ liệu liên kết</strong><ul><li>${escapeHtml(relatedError.message || 'Không tải được dữ liệu liên kết.')}</li></ul>`;
+          }
+        } catch (error) {
+          statusText.textContent = 'Không tải được thỏa thuận dân sự.';
+          message.hidden = false;
+          message.classList.add('danger');
+          message.textContent = error.message || 'Không tải được thỏa thuận dân sự.';
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
