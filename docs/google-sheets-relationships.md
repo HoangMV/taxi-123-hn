@@ -32,6 +32,8 @@ Nếu chỉ thấy tên cột `Ref_...` nhưng chưa biết bảng đích, phả
 
 Ví dụ: nếu `XE_BANGIAO.DaiDienBenGiao1 = V3B3GM6D`, phải gọi `NHANSU` với điều kiện `[ID_NhanSu] = "V3B3GM6D"` rồi hiển thị `NHANSU.HoTen`, không hiển thị mã `V3B3GM6D` trong biên bản.
 
+Một số dòng `XE_BANGIAO` hiện có snapshot lái xe bị lệch sau cột `Ref_LaiXe`: `Ref_LaiXe` có thể là số thứ tự nội bộ, còn `HoTenLaiXe` mới là `NHANSU.ID_NhanSu`; các trường hiển thị tiếp theo lần lượt có thể nằm ở `SoCCCD` (họ tên), `TrangThaiQuanLyXe` (CCCD), `TrangThaiBienBan` (số GPLX), `FileBienBan` (hạn GPLX). Khi gặp dạng này, phải ưu tiên resolve `HoTenLaiXe` sang `NHANSU.ID_NhanSu`, không in trực tiếp mã hoặc dữ liệu snapshot bị lệch.
+
 ## Quan hệ đã phát hiện
 
 | Bảng đang được tham chiếu | Khóa chính dự đoán | Bảng liên kết tới bảng này | Cột Related trong bảng hiện tại | Cột Ref có khả năng dùng ở bảng liên kết |

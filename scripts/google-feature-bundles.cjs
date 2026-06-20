@@ -17,6 +17,20 @@ function uniqueValues(values) {
   return [...new Set((Array.isArray(values) ? values : []).map(cleanValue).filter(Boolean))];
 }
 
+function isLikelyAppSheetId(value) {
+  const text = cleanValue(value);
+  return /^[A-Z0-9]{6,12}$/i.test(text) && /[A-Z]/i.test(text);
+}
+
+function getBanGiaoXeNhanSuIds(row) {
+  return uniqueValues([
+    row?.DaiDienBenGiao1,
+    row?.DaiDienBenGiao2,
+    row?.Ref_LaiXe,
+    isLikelyAppSheetId(row?.HoTenLaiXe) ? row?.HoTenLaiXe : ''
+  ]);
+}
+
 function findRowsByValue(rows, keyName, value) {
   const cleanTarget = cleanValue(value);
   if (!cleanTarget) return [];
@@ -145,7 +159,7 @@ const featureConfigs = {
       mainKey: 'ID_BienBanXe',
       tableNames: ['XE_BANGIAO', 'NHANSU'],
       buildRelated: (row, tables) => ({
-        NHANSU: findRowsByIds(tables.NHANSU, 'ID_NhanSu', [row.DaiDienBenGiao1, row.DaiDienBenGiao2, row.Ref_LaiXe])
+        NHANSU: findRowsByIds(tables.NHANSU, 'ID_NhanSu', getBanGiaoXeNhanSuIds(row))
       })
     })
   },

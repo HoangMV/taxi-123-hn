@@ -10,6 +10,11 @@ function cleanValue(value) {
   return String(value).trim();
 }
 
+function isLikelyAppSheetId(value) {
+  const text = cleanValue(value);
+  return /^[A-Z0-9]{6,12}$/i.test(text) && /[A-Z]/i.test(text);
+}
+
 function getNhanSuDisplayName(nhanSu) {
   if (!nhanSu) return '';
   return cleanValue(nhanSu.HoTen) || cleanValue(nhanSu.Display) || cleanValue(nhanSu.ID_NhanSu);
@@ -86,7 +91,12 @@ export async function fetchBanGiaoXeRow(idBienBanXe) {
 }
 
 export function getBanGiaoXeNhanSuIds(row) {
-  return [row?.DaiDienBenGiao1, row?.DaiDienBenGiao2, row?.Ref_LaiXe];
+  return [
+    row?.DaiDienBenGiao1,
+    row?.DaiDienBenGiao2,
+    row?.Ref_LaiXe,
+    isLikelyAppSheetId(row?.HoTenLaiXe) ? row?.HoTenLaiXe : ''
+  ];
 }
 
 export function buildBanGiaoXeNhanSuMap(rows) {
@@ -100,15 +110,35 @@ export async function fetchBanGiaoXeNhanSu(row) {
   return buildNhanSuMap(bundle.related?.NHANSU);
 }
 
+function resolveLaiXeContext(row, nhanSuById) {
+  const rawLaiXeId = cleanValue(row?.Ref_LaiXe);
+  const snapshotLaiXeId = cleanValue(row?.HoTenLaiXe);
+  const relatedLaiXeId = [rawLaiXeId, snapshotLaiXeId].find((id) => id && nhanSuById.has(id)) || '';
+  const hasShiftedSnapshot =
+    !nhanSuById.has(rawLaiXeId) &&
+    isLikelyAppSheetId(snapshotLaiXeId) &&
+    (!isLikelyAppSheetId(rawLaiXeId) || nhanSuById.has(snapshotLaiXeId));
+  const laiXeId = relatedLaiXeId || (hasShiftedSnapshot ? snapshotLaiXeId : rawLaiXeId);
+
+  return {
+    laiXeId,
+    laiXe: nhanSuById.get(laiXeId),
+    hoTenFallback: hasShiftedSnapshot ? cleanValue(row?.SoCCCD) : cleanValue(row?.HoTenLaiXe),
+    soCccdFallback: hasShiftedSnapshot ? cleanValue(row?.TrangThaiQuanLyXe) : cleanValue(row?.SoCCCD),
+    soGplxFallback: hasShiftedSnapshot ? cleanValue(row?.TrangThaiBienBan) : cleanValue(row?.SoGPLX),
+    hanGplxFallback: hasShiftedSnapshot ? cleanValue(row?.FileBienBan) : cleanValue(row?.HanGPLX)
+  };
+}
+
 export function buildBanGiaoXePayload(row, relatedData = {}) {
   const ngayBanGiao = formatAdministrativeDate(row?.NgayBanGiao);
   const nhanSuById = relatedData.nhanSuById || new Map();
   const daiDienBenGiao1Id = cleanValue(row?.DaiDienBenGiao1);
   const daiDienBenGiao2Id = cleanValue(row?.DaiDienBenGiao2);
-  const laiXeId = cleanValue(row?.Ref_LaiXe);
   const daiDienBenGiao1 = nhanSuById.get(daiDienBenGiao1Id);
   const daiDienBenGiao2 = nhanSuById.get(daiDienBenGiao2Id);
-  const laiXe = nhanSuById.get(laiXeId);
+  const laiXeContext = resolveLaiXeContext(row, nhanSuById);
+  const laiXe = laiXeContext.laiXe;
 
   return {
     raw: row,
@@ -123,11 +153,11 @@ export function buildBanGiaoXePayload(row, relatedData = {}) {
     daiDienBenGiao2Id,
     daiDienBenGiao2: getNhanSuDisplayName(daiDienBenGiao2) || daiDienBenGiao2Id,
     chucVuBenGiao2: cleanValue(row?.ChucVuBenGiao2),
-    laiXeId,
-    hoTenLaiXe: getNhanSuDisplayName(laiXe) || cleanValue(row?.HoTenLaiXe),
-    soCccd: cleanValue(laiXe?.CCCD) || cleanValue(row?.SoCCCD),
-    soGplx: cleanValue(laiXe?.SoGPLX) || cleanValue(row?.SoGPLX),
-    hanGplx: formatAdministrativeDateString(laiXe?.HanGPLX || row?.HanGPLX),
+    laiXeId: laiXeContext.laiXeId,
+    hoTenLaiXe: getNhanSuDisplayName(laiXe) || laiXeContext.hoTenFallback,
+    soCccd: cleanValue(laiXe?.CCCD) || laiXeContext.soCccdFallback,
+    soGplx: cleanValue(laiXe?.SoGPLX) || laiXeContext.soGplxFallback,
+    hanGplx: formatAdministrativeDateString(laiXe?.HanGPLX || laiXeContext.hanGplxFallback),
     bienSoXe: cleanValue(row?.BienSoXe),
     maDam: cleanValue(row?.MaDam),
     soKhung: cleanValue(row?.SoKhung),
