@@ -129,6 +129,7 @@ Một số dòng `XE_BANGIAO` hiện có snapshot lái xe bị lệch sau cột 
 | `NHANSU` | `Ref_BoPhan` | `DM_BOPHAN` | `ID_BoPhan` | `TenBoPhan`, dự phòng `MaBoPhan`, `Display` | Đã xác minh qua schema |
 | `NHANSU` | `Ref_ChucDanh` | `DM_CHUCDANH` | `ID_ChucDanh` | `TenChucDanh`, dự phòng `Display` | Đã xác minh qua schema |
 | `NHANSU` | `Ref_DoiXe` | `DM_DOIXE` | `ID_DoiXe` | `TenDoiXe`, dự phòng `MaDoiXe`, `Display` | Cần kiểm tra thêm nếu schema bị Google quota |
+| `NHANSU` | `Ref_DoiXe` mã cũ | `LOG_GAN_DOIXE_NHANSU` | `Ref_DoiXe_Moi`, dự phòng `Ref_DoiXe_Cu` | `TenDoiXe`, dự phòng `Xa_Truoc` | Đã xác minh ngày 21/06/2026; dùng làm fallback khi mã cũ không có trong `DM_DOIXE` |
 | `NHANSU_HOPDONG_LAODONG` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `CCCD`, `SoDienThoai` | Đã xác minh qua schema |
 | `NHANSU_BHXH` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `CCCD` | Đã xác minh qua schema |
 | `LAIXE_GPLX` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `CCCD` | Đã xác minh qua schema |
@@ -137,6 +138,7 @@ Một số dòng `XE_BANGIAO` hiện có snapshot lái xe bị lệch sau cột 
 | `LAIXE_PHANCONG_XE` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
 | `XE` | `Ref_DonViChuQuan`, `Ref_DonViQuanLyHienTai` | `DONVI` | `ID_DonVi` | `TenDonVi`, dự phòng `TenVietTat`, `Display` | Đã xác minh qua schema |
 | `XE` | `Ref_DoiXe` | `DM_DOIXE` | `ID_DoiXe` | `TenDoiXe`, dự phòng `MaDoiXe`, `Display` | Cần kiểm tra thêm nếu schema bị Google quota |
+| `XE` | đội xe suy từ lái xe hiện tại | `LOG_GAN_DOIXE_NHANSU` | `Ref_DoiXe_Moi`, dự phòng `Ref_DoiXe_Cu` | `TenDoiXe`, dự phòng `Xa_Truoc` | Dùng khi `XE.Ref_DoiXe` trống nhưng lái xe có `NHANSU.Ref_DoiXe` mã cũ |
 | `XE_PHUHIEU` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
 | `XE_DANGKIEM` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Cần kiểm tra thêm nếu schema bị Google quota |
 | `XE_BAOHIEM` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |

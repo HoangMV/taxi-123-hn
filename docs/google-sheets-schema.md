@@ -41,7 +41,7 @@ Số dòng tải được: 1.
 
 ## NHANSU
 
-Số dòng tải được: 1360.
+Số dòng tải được: 1359.
 
 | Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
 | --- | --- | ---: |
@@ -88,8 +88,8 @@ Số dòng tải được: 1360.
 | GhiChu | Trống | 0 |
 | NgayTao | Trống | 0 |
 | NguoiTao | Trống | 0 |
-| NgayCapNhat | Văn bản | 7 |
-| NguoiCapNhat | Văn bản | 7 |
+| NgayCapNhat | Văn bản | 9 |
+| NguoiCapNhat | Văn bản | 9 |
 | HinhThucAnChia | Trống | 0 |
 | NguoiQuanLyTrucTiep | Trống | 0 |
 | FilePDFChanDung | Trống | 0 |
@@ -97,6 +97,14 @@ Số dòng tải được: 1360.
 | NgayTaoPDFChanDung | Trống | 0 |
 | TrangThaiTaoPDFChanDung | Văn bản | 100 |
 | PdfAnh | Trống | 0 |
+| HoSoNhanSuPDF | Văn bản | 2 |
+| NgayTaoHoSoNhanSu | Ngày | 2 |
+| TrangThaiTaoHoSo | Văn bản | 2 |
+| HashHoSoNhanSu | Trống | 0 |
+| CanTaoLaiHoSo | Trống | 0 |
+| LyDoTaoLaiHoSo | Trống | 0 |
+| LanCuoiKiemTraHoSo | Trống | 0 |
+| FileIdHoSoNhanSuPDF | Trống | 0 |
 
 ## DONVI
 
@@ -319,29 +327,29 @@ Số dòng tải được: 1.
 
 ## NHANSU_THANHLY_HOPDONG
 
-Số dòng tải được: 6.
+Số dòng tải được: 7.
 
 | Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
 | --- | --- | ---: |
-| ID_ThanhLyHD | Văn bản hoặc Số nguyên | 6 |
-| SoBienBan | Văn bản | 6 |
-| Ref_ChamDutHD | Văn bản | 6 |
-| Ref_HopDongLD | Văn bản | 6 |
-| Ref_NhanSu | Văn bản | 6 |
-| NgayThanhLy | Ngày | 6 |
-| NgayChamDut | Ngày | 6 |
-| LyDoThanhLy | Văn bản | 6 |
-| DaBanGiaoTaiSan | Boolean | 6 |
-| DaThanhToanCongNo | Boolean | 6 |
-| DaHoanTatKyQuy | Boolean | 6 |
-| DaKetThucPhanCongXe | Boolean | 6 |
+| ID_ThanhLyHD | Văn bản hoặc Số nguyên | 7 |
+| SoBienBan | Văn bản | 7 |
+| Ref_ChamDutHD | Văn bản | 7 |
+| Ref_HopDongLD | Văn bản | 7 |
+| Ref_NhanSu | Văn bản | 7 |
+| NgayThanhLy | Ngày | 7 |
+| NgayChamDut | Ngày | 7 |
+| LyDoThanhLy | Văn bản | 7 |
+| DaBanGiaoTaiSan | Boolean | 7 |
+| DaThanhToanCongNo | Boolean | 7 |
+| DaHoanTatKyQuy | Boolean | 7 |
+| DaKetThucPhanCongXe | Boolean | 7 |
 | FileBienBan | Văn bản | 1 |
-| TrangThaiThanhLy | Văn bản | 6 |
+| TrangThaiThanhLy | Văn bản | 7 |
 | GhiChu | Trống | 0 |
-| NgayTao | Văn bản | 6 |
-| NguoiTao | Văn bản | 6 |
-| NgayCapNhat | Văn bản | 6 |
-| NguoiCapNhat | Văn bản | 6 |
+| NgayTao | Văn bản | 7 |
+| NguoiTao | Văn bản | 7 |
+| NgayCapNhat | Văn bản | 7 |
+| NguoiCapNhat | Văn bản | 7 |
 
 ## HS_DE_NGHI_PHUHIEU
 
@@ -431,6 +439,12 @@ Số dòng tải được: 1378.
 | Ref_TheChapHienTai | Trống | 0 |
 | TrangThaiTaiSan | Trống | 0 |
 | TextDkyxe | Trống | 0 |
+| FilePDFHoSoXe | Trống | 0 |
+| IdFilePDFHoSoXe | Trống | 0 |
+| NamPDFHoSoXe | Trống | 0 |
+| NgayTaoPDFHoSoXe | Trống | 0 |
+| TrangThaiTaoPDFHoSoXe | Trống | 0 |
+| GhiChuPDFHoSoXe | Trống | 0 |
 
 ## XE_PHUHIEU
 
@@ -872,7 +886,7 @@ Số dòng tải được: 1291.
 
 ## LAIXE_DAOTAO
 
-Số dòng tải được: 1263.
+Số dòng tải được: 1264.
 
 | Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
 | --- | --- | ---: |
@@ -917,6 +931,21 @@ Số dòng tải được: 1273.
 | NguoiTao | Trống | 0 |
 | NgayCapNhat | Trống | 0 |
 | NguoiCapNhat | Trống | 0 |
+
+## LOG_GAN_DOIXE_NHANSU
+
+Số dòng tải được: 1359.
+
+| Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
+| --- | --- | ---: |
+| ThoiGian | Ngày | 100 |
+| Dong_NHANSU | Số nguyên | 100 |
+| Xa_Truoc | Văn bản | 100 |
+| Ref_DoiXe_Cu | Văn bản | 97 |
+| Ref_DoiXe_Moi | Văn bản | 97 |
+| TenDoiXe | Văn bản | 97 |
+| KetQua | Văn bản | 100 |
+| GhiChu | Văn bản | 100 |
 
 ## DM_DOIXE
 
@@ -1086,32 +1115,32 @@ Số dòng tải được: 8568.
 
 ## PHAN_ANH_KHIEU_NAI
 
-Số dòng tải được: 3.
+Số dòng tải được: 4.
 
 | Cột | Kiểu dữ liệu suy luận | Số dòng có dữ liệu trong mẫu |
 | --- | --- | ---: |
-| ID_PhanAnh | Văn bản | 3 |
-| SoVuViec | Văn bản | 3 |
-| NgayPhanAnh | Ngày | 3 |
-| Ref_NguonPhanAnh | Văn bản | 3 |
-| Ref_Xe | Văn bản | 3 |
-| MaDam | Số nguyên | 3 |
-| Ref_NhanSuBiPhanAnh | Văn bản | 2 |
-| Ref_DoiXe | Văn bản | 1 |
-| NoiDungPhanAnh | Văn bản | 3 |
-| NoiDungKhac | Văn bản | 2 |
-| MoTaChiTiet | Văn bản | 3 |
-| KetQuaXacMinh | Văn bản | 3 |
+| ID_PhanAnh | Văn bản | 4 |
+| SoVuViec | Văn bản | 4 |
+| NgayPhanAnh | Ngày | 4 |
+| Ref_NguonPhanAnh | Văn bản | 4 |
+| Ref_Xe | Văn bản | 4 |
+| MaDam | Số nguyên | 4 |
+| Ref_NhanSuBiPhanAnh | Văn bản | 3 |
+| Ref_DoiXe | Văn bản | 2 |
+| NoiDungPhanAnh | Văn bản | 4 |
+| NoiDungKhac | Văn bản | 3 |
+| MoTaChiTiet | Văn bản | 4 |
+| KetQuaXacMinh | Văn bản | 4 |
 | MucDo | Trống | 0 |
-| TrangThaiXuLy | Văn bản | 3 |
-| Ref_CanBoXuLy | Văn bản | 3 |
-| HinhThuXuLy | Văn bản | 3 |
+| TrangThaiXuLy | Văn bản | 4 |
+| Ref_CanBoXuLy | Văn bản | 4 |
+| HinhThuXuLy | Văn bản | 4 |
 | NgayHoanThanh | Ngày | 3 |
 | GhiChu | Văn bản | 1 |
 | TepDinhKem | Trống | 0 |
-| NguoiTao | Văn bản | 3 |
-| ThoiDiemTao | Văn bản | 3 |
-| NguoiCapNhat | Văn bản | 3 |
-| ThoiDiemCapNhat | Văn bản | 3 |
+| NguoiTao | Văn bản | 4 |
+| ThoiDiemTao | Văn bản | 4 |
+| NguoiCapNhat | Văn bản | 4 |
+| ThoiDiemCapNhat | Văn bản | 4 |
 
 Ghi chú: Kiểu dữ liệu ở đây được suy luận từ dữ liệu bảng. File này chỉ liệt kê tên cột/kiểu dữ liệu; quan hệ Ref phải xem thêm `docs/google-sheets-relationships.md`.

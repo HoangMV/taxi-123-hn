@@ -81,7 +81,7 @@ function donutBackground(items) {
   return `conic-gradient(${stops.join(', ')})`;
 }
 
-function SelectFilter({ label, value, options, onChange }) {
+function SelectFilter({ label, value, options, onChange, getOptionLabel = (option) => option }) {
   return (
     <label className="min-w-0 space-y-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
       <span>{label}</span>
@@ -92,7 +92,7 @@ function SelectFilter({ label, value, options, onChange }) {
       >
         <option value="">Tất cả</option>
         {options.map((option) => (
-          <option key={option} value={option}>{option}</option>
+          <option key={option} value={option}>{getOptionLabel(option)}</option>
         ))}
       </select>
     </label>
@@ -366,7 +366,7 @@ const DashboardPage = () => {
             <SelectFilter label="Loại xe" value={filters.loaiXe} options={getOptions(data, 'loaiXe')} onChange={(value) => setFilter('loaiXe', value)} />
             <SelectFilter label="Trạng thái xe" value={filters.trangThaiXe} options={getOptions(data, 'trangThaiXe')} onChange={(value) => setFilter('trangThaiXe', value)} />
             <SelectFilter label="Trạng thái nhân sự" value={filters.trangThaiNhanSu} options={getOptions(data, 'trangThaiNhanSu')} onChange={(value) => setFilter('trangThaiNhanSu', value)} />
-            <SelectFilter label="Cảnh báo" value={filters.nhomCanhBao} options={getOptions(data, 'nhomCanhBao')} onChange={(value) => setFilter('nhomCanhBao', value)} />
+            <SelectFilter label="Cảnh báo" value={filters.nhomCanhBao} options={getOptions(data, 'nhomCanhBao')} getOptionLabel={(option) => warningLabels[option] || option} onChange={(value) => setFilter('nhomCanhBao', value)} />
             <label className="min-w-0 space-y-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
               <span>Từ tháng</span>
               <Input className="h-9" type="month" value={filters.tuThang} onChange={(event) => setFilter('tuThang', event.target.value)} />
