@@ -12,6 +12,7 @@ import DeNghiCapPhuHieuXePage from '../pages/DeNghiCapPhuHieuXePage';
 import DashboardPage from '../pages/DashboardPage';
 import HdldNhanVienLaiXePage from '../pages/HdldNhanVienLaiXePage';
 import KyQuyLaiXePage from '../pages/KyQuyLaiXePage';
+import MenuPage from '../pages/MenuPage';
 import QuyetDinhThuHoiGPKDPage from '../pages/QuyetDinhThuHoiGPKDPage';
 import ThanhLyHopDongLaoDongPage from '../pages/ThanhLyHopDongLaoDongPage';
 import ThanhLyKyQuyLaiXePage from '../pages/ThanhLyKyQuyLaiXePage';
@@ -20,8 +21,9 @@ import ThongKePhuHieuDonViPage from '../pages/ThongKePhuHieuDonViPage';
 import ThoaThuanDanSuPage from '../pages/ThoaThuanDanSuPage';
 
 export const appRoutes = [
-  { path: config.ROUTES.HOME, element: <Navigate to={config.ROUTES.DASHBOARD} replace /> },
+  { path: config.ROUTES.HOME, element: <Navigate to={config.ROUTES.MENU} replace /> },
   { path: config.ROUTES.DASHBOARD, element: <DashboardPage /> },
+  { path: config.ROUTES.MENU, element: <MenuPage /> },
   { path: config.ROUTES.THONG_KE_PHU_HIEU_REACT, element: <ThongKePhuHieuDonViPage /> },
   { path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT, element: <DeNghiCapPhuHieuXePage /> },
   { path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT, element: <ThongBaoNgungPhuHieuPage /> },
@@ -38,5 +40,5 @@ export const appRoutes = [
   { path: config.ROUTES.HDLD_NHAN_VIEN_LAI_XE_REACT, element: <HdldNhanVienLaiXePage /> },
   { path: config.ROUTES.CHAM_DUT_HOP_DONG_LAO_DONG_REACT, element: <ChamDutHopDongLaoDongPage /> },
   { path: config.ROUTES.THANH_LY_HOP_DONG_LAO_DONG_REACT, element: <ThanhLyHopDongLaoDongPage /> },
-  { path: '*', element: <Navigate to={config.ROUTES.DASHBOARD} replace /> }
+  { path: '*', element: <Navigate to={config.ROUTES.MENU} replace /> }
 ];

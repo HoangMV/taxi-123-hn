@@ -1,159 +1,443 @@
-import React from 'react';
-import { ArrowRight, BookMarked, Car, FileText, Gauge, GraduationCap, Landmark, HandCoins, IdCard, ScrollText, ShieldCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  BriefcaseBusiness,
+  Car,
+  Download,
+  FileSpreadsheet,
+  Gauge,
+  Loader2,
+  Menu,
+  RefreshCw,
+  ShieldCheck,
+  UserCircle,
+  Users
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import config from '../config/config';
+import { Input } from '../components/ui/input';
+import {
+  EMPTY_FILTERS,
+  buildDashboardExcelFileName,
+  buildDashboardExcelWorkbook,
+  countBy,
+  fetchDashboardQlvt,
+  filterNhanSuRows,
+  filterXeRows
+} from '../features/dashboardQlvt';
 
-const actions = [
-  {
-    title: 'Thống kê phù hiệu',
-    description: 'Xem, lọc và xuất thống kê phù hiệu theo đơn vị vận tải.',
-    path: config.ROUTES.THONG_KE_PHU_HIEU_REACT,
-    icon: IdCard,
-    tone: 'bg-red-50 text-red-700'
-  },
-  {
-    title: 'Thông báo ngừng phù hiệu',
-    description: 'Xem trước, in và xuất giấy đề nghị hủy phù hiệu, biển hiệu từ thông báo Google Sheets.',
-    path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT,
-    icon: IdCard,
-    tone: 'bg-rose-50 text-rose-700'
-  },
-  {
-    title: 'Đề nghị cấp phù hiệu',
-    description: 'Xem trước, in và xuất đơn đề nghị cấp phù hiệu xe từ hồ sơ Google Sheets.',
-    path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT,
-    icon: FileText,
-    tone: 'bg-slate-50 text-slate-700'
-  },
-  {
-    title: 'Đề nghị đào tạo lái xe',
-    description: 'Xem trước, in và xuất Excel danh sách lái xe đề nghị đào tạo từ hồ sơ Google Sheets.',
-    path: config.ROUTES.DE_NGHI_DAO_TAO_LAI_XE_REACT,
-    icon: GraduationCap,
-    tone: 'bg-emerald-50 text-emerald-700'
-  },
-  {
-    title: 'Đề nghị cấp bảo hiểm',
-    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị cấp bảo hiểm từ hồ sơ Google Sheets.',
-    path: config.ROUTES.DE_NGHI_CAP_BAO_HIEM_REACT,
-    icon: ShieldCheck,
-    tone: 'bg-sky-50 text-sky-700'
-  },
-  {
-    title: 'Đề nghị kiểm định taximet',
-    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị kiểm định taximet từ hồ sơ Google Sheets.',
-    path: config.ROUTES.DE_NGHI_KIEM_DINH_TAXIMET_REACT,
-    icon: Gauge,
-    tone: 'bg-violet-50 text-violet-700'
-  },
-  {
-    title: 'Đề nghị thế chấp',
-    description: 'Xem trước, in và xuất Excel danh sách xe đề nghị thế chấp từ hồ sơ Google Sheets.',
-    path: config.ROUTES.DE_NGHI_THE_CHAP_REACT,
-    icon: Landmark,
-    tone: 'bg-amber-50 text-amber-700'
-  },
-  {
-    title: 'Thu hồi GPKD',
-    description: 'Xem trước, in và xuất quyết định thu hồi giấy phép.',
-    path: `${config.ROUTES.QUYET_DINH_THU_HOI_GPKD_REACT}?IDQuyetDinh=`,
-    icon: FileText,
-    tone: 'bg-amber-50 text-amber-700'
-  },
-  {
-    title: 'Bàn giao xe',
-    description: 'Quản lý, lập và xuất biên bản bàn giao xe chi tiết cho lái xe.',
-    path: config.ROUTES.BAN_GIAO_XE_REACT,
-    icon: Car,
-    tone: 'bg-emerald-50 text-emerald-700'
-  },
-  {
-    title: 'Thỏa thuận dân sự',
-    description: 'Xem trước, in và xuất thỏa thuận trách nhiệm dân sự của lái xe từ Google Sheets.',
-    path: config.ROUTES.THOA_THUAN_DAN_SU_REACT,
-    icon: FileText,
-    tone: 'bg-indigo-50 text-indigo-700'
-  },
-  {
-    title: 'Ký quỹ lái xe',
-    description: 'Xem trước, in và xuất hợp đồng ký quỹ của lái xe từ Google Sheets.',
-    path: config.ROUTES.KY_QUY_LAI_XE_REACT,
-    icon: HandCoins,
-    tone: 'bg-sky-50 text-sky-700'
-  },
-  {
-    title: 'Thanh lý ký quỹ',
-    description: 'Xem trước, in và xuất biên bản thanh lý hợp đồng đặt cọc lái xe từ Google Sheets.',
-    path: config.ROUTES.THANH_LY_KY_QUY_LAI_XE_REACT,
-    icon: FileText,
-    tone: 'bg-emerald-50 text-emerald-700'
-  },
-  {
-    title: 'Bàn giao sổ BHXH',
-    description: 'Xem trước, in và xuất biên bản bàn giao sổ bảo hiểm xã hội.',
-    path: config.ROUTES.BAN_GIAO_SO_BHXH_REACT,
-    icon: BookMarked,
-    tone: 'bg-violet-50 text-violet-700'
-  },
-  {
-    title: 'HĐLĐ nhân viên lái xe',
-    description: 'Xem trước, in và xuất hợp đồng lao động nhân viên lái xe từ Google Sheets.',
-    path: config.ROUTES.HDLD_NHAN_VIEN_LAI_XE_REACT,
-    icon: ScrollText,
-    tone: 'bg-indigo-50 text-indigo-700'
-  },
-  {
-    title: 'Chấm dứt HĐLĐ',
-    description: 'Xem trước, in và xuất quyết định chấm dứt hợp đồng lao động từ Google Sheets.',
-    path: config.ROUTES.CHAM_DUT_HOP_DONG_LAO_DONG_REACT,
-    icon: FileText,
-    tone: 'bg-rose-50 text-rose-700'
-  },
-  {
-    title: 'Thanh lý HĐLĐ',
-    description: 'Xem trước, in và xuất biên bản thanh lý hợp đồng lao động từ Google Sheets.',
-    path: config.ROUTES.THANH_LY_HOP_DONG_LAO_DONG_REACT,
-    icon: FileText,
-    tone: 'bg-cyan-50 text-cyan-700'
-  }
-];
+const chartPalette = ['#2563eb', '#16a34a', '#f59e0b', '#7c3aed', '#ef4444', '#06b6d4'];
+const warningLabels = { do: 'Đỏ', vang: 'Vàng', xanh: 'Xanh', xam: 'Xám' };
+const warningClasses = {
+  do: 'border-red-200 bg-red-50 text-red-700',
+  vang: 'border-amber-200 bg-amber-50 text-amber-700',
+  xanh: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  xam: 'border-slate-200 bg-slate-100 text-slate-600'
+};
+
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString('vi-VN');
+}
+
+function getPercent(value, total) {
+  if (!total) return '0%';
+  return `${Math.round((Number(value || 0) / total) * 100)}%`;
+}
+
+function getOptions(data, key) {
+  return Array.isArray(data?.filters?.[key]) ? data.filters[key].filter(Boolean) : [];
+}
+
+function toNumber(value) {
+  if (typeof value === 'number') return value;
+  const clean = String(value || '').replace(/[^0-9.-]/g, '');
+  return Number(clean || 0);
+}
+
+function buildTopRows(rows, key, labelKey) {
+  return [...rows]
+    .map((row) => ({ label: row[labelKey] || row.bienSo || row.idXe || 'Chưa có dữ liệu', value: toNumber(row[key]) }))
+    .sort((left, right) => right.value - left.value)
+    .slice(0, 10);
+}
+
+function buildDonutItems(rows, key) {
+  const items = countBy(rows, key)
+    .sort((left, right) => Number(right.value || 0) - Number(left.value || 0))
+    .slice(0, 6);
+  return items.length ? items : [{ label: 'Chưa có dữ liệu', value: 0 }];
+}
+
+function donutBackground(items) {
+  const total = items.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  if (!total) return '#e2e8f0';
+  let current = 0;
+  const stops = items.map((item, index) => {
+    const start = current;
+    current += (Number(item.value || 0) / total) * 360;
+    return `${chartPalette[index % chartPalette.length]} ${start}deg ${current}deg`;
+  });
+  return `conic-gradient(${stops.join(', ')})`;
+}
+
+function SelectFilter({ label, value, options, onChange }) {
+  return (
+    <label className="min-w-0 space-y-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+      <span>{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm font-medium normal-case tracking-normal text-slate-800 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      >
+        <option value="">Tất cả</option>
+        {options.map((option) => (
+          <option key={option} value={option}>{option}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function MetricCard({ icon: Icon, label, value, percent, tone, bars }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-slate-500">{label}</p>
+          <p className="mt-2 text-3xl font-bold leading-none text-slate-950">{formatNumber(value)}</p>
+          <p className="mt-2 text-xs font-semibold text-slate-500">{percent}</p>
+        </div>
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${tone}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+      <div className="mt-4 flex h-9 items-end gap-1.5 overflow-hidden">
+        {bars.map((height, index) => (
+          <span key={`${label}-${index}`} className="flex-1 rounded-t bg-slate-200" style={{ height: `${height}%` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DonutChart({ title, rows, keyName, icon: Icon }) {
+  const items = buildDonutItems(rows, keyName);
+  const total = items.reduce((sum, item) => sum + Number(item.value || 0), 0);
+
+  return (
+    <div className="min-w-0 rounded-md border border-slate-100 bg-slate-50/80 p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3 className="truncate text-sm font-bold text-slate-800">{title}</h3>
+        <span className="text-xs font-semibold text-slate-500">{formatNumber(total)}</span>
+      </div>
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+        <div className="relative h-36 w-36 shrink-0 rounded-full" style={{ background: donutBackground(items) }}>
+          <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white shadow-inner">
+            <Icon className="h-5 w-5 text-blue-700" />
+            <span className="mt-1 text-xl font-bold text-slate-950">{formatNumber(total)}</span>
+          </div>
+        </div>
+        <div className="w-full min-w-0 space-y-2">
+          {items.map((item, index) => (
+            <div key={`${title}-${item.label}`} className="flex items-center gap-2 text-xs text-slate-600">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: chartPalette[index % chartPalette.length] }} />
+              <span className="min-w-0 flex-1 truncate">{item.label}</span>
+              <span className="shrink-0 font-bold text-slate-900">{formatNumber(item.value)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChartPanel({ title, totalLabel, children }) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+        <h2 className="text-base font-bold text-slate-950">{title}</h2>
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{totalLabel}</span>
+      </div>
+      <div className="grid gap-4 p-4 xl:grid-cols-2">{children}</div>
+    </section>
+  );
+}
+
+function TopBarChart({ title, rows, unit }) {
+  const max = rows.reduce((value, item) => Math.max(value, Number(item.value || 0)), 0);
+  const data = rows.length ? rows : [{ label: 'Chưa có dữ liệu', value: 0 }];
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 px-5 py-4">
+        <h2 className="text-base font-bold text-slate-950">{title}</h2>
+      </div>
+      <div className="space-y-3 p-5">
+        {data.map((item, index) => (
+          <div key={`${title}-${item.label}-${index}`} className="grid grid-cols-[minmax(90px,160px)_1fr_auto] items-center gap-3 text-sm">
+            <span className="truncate font-semibold text-slate-600">{item.label}</span>
+            <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${max ? Math.max(5, Math.round((item.value / max) * 100)) : 0}%`, backgroundColor: chartPalette[index % chartPalette.length] }}
+              />
+            </div>
+            <span className="w-20 text-right text-xs font-bold text-slate-900">{formatNumber(item.value)} {unit}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function WarningBadge({ level }) {
+  const cleanLevel = level || 'xam';
+  return (
+    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-bold ${warningClasses[cleanLevel] || warningClasses.xam}`}>
+      {warningLabels[cleanLevel] || 'Xám'}
+    </span>
+  );
+}
+
+function DataTable({ type, rows }) {
+  const columns = type === 'nhan-su'
+    ? [
+      ['stt', 'STT'], ['hoTen', 'Họ tên'], ['cccd', 'CCCD'], ['doiXe', 'Đội xe'],
+      ['chucDanh', 'Chức danh'], ['trangThaiLamViec', 'Trạng thái'], ['bienSoXe', 'Biển số'],
+      ['hanGplx', 'Hạn GPLX'], ['hanSucKhoe', 'Hạn sức khỏe'], ['canhBao', 'Cảnh báo']
+    ]
+    : [
+      ['stt', 'STT'], ['bienSo', 'Biển số'], ['maDam', 'Mã đàm'], ['loaiXe', 'Loại xe'],
+      ['doiXe', 'Đội xe'], ['trangThaiXe', 'Trạng thái'], ['laiXeDangLai', 'Lái xe'],
+      ['hanPhuHieu', 'Hạn phù hiệu'], ['hanDangKiem', 'Hạn đăng kiểm'], ['canhBao', 'Cảnh báo']
+    ];
+
+  return (
+    <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
+      <table className="min-w-full text-left text-sm">
+        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th className="w-20 px-3 py-3">Mức</th>
+            {columns.map(([, label]) => <th key={label} className="whitespace-nowrap px-3 py-3 font-bold">{label}</th>)}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.slice(0, 30).map((row) => (
+            <tr key={`${type}-${row.stt}-${row.idNhanSu || row.idXe}`} className="align-top hover:bg-slate-50">
+              <td className="px-3 py-3"><WarningBadge level={row.warningLevel} /></td>
+              {columns.map(([key]) => (
+                <td key={key} className="max-w-[240px] px-3 py-3 text-slate-700">
+                  <span className="line-clamp-2">{row[key] || ''}</span>
+                </td>
+              ))}
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={columns.length + 1} className="px-3 py-8 text-center text-sm text-slate-500">Không có dữ liệu phù hợp bộ lọc.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [activeTab, setActiveTab] = useState('nhan-su');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState('');
+  const [error, setError] = useState('');
+
+  async function loadDashboard(isRefresh = false) {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError('');
+    try {
+      setData(await fetchDashboardQlvt());
+    } catch (requestError) {
+      setError(requestError.message || 'Không tải được dashboard QLVT.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  useEffect(() => { loadDashboard(false); }, []);
+
+  const filteredNhanSu = useMemo(() => filterNhanSuRows(data?.reports?.nhanSu || [], filters), [data, filters]);
+  const filteredXe = useMemo(() => filterXeRows(data?.reports?.xe || [], filters), [data, filters]);
+  const summary = useMemo(() => {
+    const nhanSuDangLamViec = filteredNhanSu.filter((item) => item.trangThaiLamViec && !item.trangThaiLamViec.toLowerCase().includes('nghỉ')).length;
+    const xeHoatDong = filteredXe.filter((item) => item.trangThaiXe && !item.trangThaiXe.toLowerCase().includes('ngừng')).length;
+    return {
+      tongNhanSu: filteredNhanSu.length,
+      nhanSuDangLamViec,
+      nhanSuNghiViec: filteredNhanSu.length - nhanSuDangLamViec,
+      tongXe: filteredXe.length,
+      xeHoatDong,
+      xeNgung: filteredXe.length - xeHoatDong
+    };
+  }, [filteredNhanSu, filteredXe]);
+  const topKmRows = useMemo(() => buildTopRows(filteredXe, 'kmLuyKe', 'bienSo'), [filteredXe]);
+  const topTripRows = useMemo(() => buildTopRows(filteredXe, 'soChuyenThang', 'bienSo'), [filteredXe]);
+  const updatedAt = data?.generatedAt ? new Date(data.generatedAt).toLocaleString('vi-VN') : 'Chưa cập nhật';
+
+  function setFilter(key, value) {
+    setFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  async function exportExcel(type) {
+    const rows = type === 'xe' ? filteredXe : filteredNhanSu;
+    if (rows.length === 0) {
+      toast.info('Không có dữ liệu để xuất Excel.');
+      return;
+    }
+    setExporting(type);
+    try {
+      const [ExcelJS, fileSaver] = await Promise.all([import('exceljs'), import('file-saver')]);
+      const workbook = await buildDashboardExcelWorkbook(ExcelJS, type, rows);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const saveAs = fileSaver.saveAs || fileSaver.default;
+      saveAs(blob, buildDashboardExcelFileName(type));
+    } catch (exportError) {
+      toast.error(`Xuất Excel thất bại: ${exportError.message}`);
+    } finally {
+      setExporting('');
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[420px] items-center justify-center rounded-md border border-slate-200 bg-white">
+        <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+          Đang tải dashboard QLVT...
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-950">Chức năng chính</h1>
-        <p className="mt-1 text-sm text-slate-500">Chọn nghiệp vụ cần thực hiện.</p>
+    <div className="-mx-4 -my-6 min-h-full bg-slate-100 lg:-mx-8">
+      <div className="bg-[#0b2d5c] px-4 py-4 text-white shadow-sm lg:px-8">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <button type="button" onClick={() => navigate('/menu')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/10 text-white hover:bg-white/20" aria-label="Mở menu chức năng">
+              <Menu className="h-5 w-5" />
+            </button>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-blue-800">
+              <ShieldCheck className="h-6 w-6" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-bold tracking-normal text-white">Trung tâm điều hành QLVT TAXI123</h1>
+              <p className="mt-0.5 text-sm font-medium text-blue-100">Cập nhật: {updatedAt}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="secondary" className="h-9 bg-white/10 text-white hover:bg-white/20" onClick={() => loadDashboard(true)} disabled={refreshing}>
+              {refreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              Cập nhật
+            </Button>
+            <Button type="button" className="h-9 bg-blue-500 hover:bg-blue-600" onClick={() => exportExcel('nhan-su')} disabled={Boolean(exporting)}>
+              {exporting === 'nhan-su' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSpreadsheet className="mr-2 h-4 w-4" />}
+              Xuất nhân sự
+            </Button>
+            <Button type="button" className="h-9 bg-emerald-500 hover:bg-emerald-600" onClick={() => exportExcel('xe')} disabled={Boolean(exporting)}>
+              {exporting === 'xe' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+              Xuất phương tiện
+            </Button>
+            <UserCircle className="hidden h-9 w-9 text-blue-100 sm:block" />
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {actions.map((item) => {
-          const Icon = item.icon;
+      <div className="px-4 pb-8 lg:px-8">
+        <section className="-mt-1 rounded-b-lg border border-t-0 border-slate-200 bg-white p-4 shadow-sm">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-8">
+            <SelectFilter label="Đơn vị" value={filters.donVi} options={getOptions(data, 'donVi')} onChange={(value) => setFilter('donVi', value)} />
+            <SelectFilter label="Đội xe" value={filters.doiXe} options={getOptions(data, 'doiXe')} onChange={(value) => setFilter('doiXe', value)} />
+            <SelectFilter label="Loại xe" value={filters.loaiXe} options={getOptions(data, 'loaiXe')} onChange={(value) => setFilter('loaiXe', value)} />
+            <SelectFilter label="Trạng thái xe" value={filters.trangThaiXe} options={getOptions(data, 'trangThaiXe')} onChange={(value) => setFilter('trangThaiXe', value)} />
+            <SelectFilter label="Trạng thái nhân sự" value={filters.trangThaiNhanSu} options={getOptions(data, 'trangThaiNhanSu')} onChange={(value) => setFilter('trangThaiNhanSu', value)} />
+            <SelectFilter label="Cảnh báo" value={filters.nhomCanhBao} options={getOptions(data, 'nhomCanhBao')} onChange={(value) => setFilter('nhomCanhBao', value)} />
+            <label className="min-w-0 space-y-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              <span>Từ tháng</span>
+              <Input className="h-9" type="month" value={filters.tuThang} onChange={(event) => setFilter('tuThang', event.target.value)} />
+            </label>
+            <label className="min-w-0 space-y-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              <span>Đến tháng</span>
+              <Input className="h-9" type="month" value={filters.denThang} onChange={(event) => setFilter('denThang', event.target.value)} />
+            </label>
+          </div>
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-slate-100 pt-3">
+            <div className="grid flex-1 gap-3 md:grid-cols-3">
+              <SelectFilter label="Loại hợp đồng" value={filters.loaiHopDong} options={getOptions(data, 'loaiHopDong')} onChange={(value) => setFilter('loaiHopDong', value)} />
+              <SelectFilter label="Trạng thái hợp đồng" value={filters.trangThaiHopDong} options={getOptions(data, 'trangThaiHopDong')} onChange={(value) => setFilter('trangThaiHopDong', value)} />
+              <SelectFilter label="Trạng thái BHXH" value={filters.trangThaiBhxh} options={getOptions(data, 'trangThaiBhxh')} onChange={(value) => setFilter('trangThaiBhxh', value)} />
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={() => toast.success('Đã áp dụng bộ lọc dashboard.')}>Áp dụng</Button>
+              <Button type="button" variant="secondary" onClick={() => setFilters(EMPTY_FILTERS)}>Xóa lọc</Button>
+            </div>
+          </div>
+        </section>
 
-          return (
-            <Card key={item.title} className="flex flex-col justify-between transition hover:border-red-200 hover:shadow-md">
-              <CardHeader className="flex flex-row items-start gap-4 space-y-0">
-                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${item.tone}`}>
-                  <Icon className="h-6 w-6" />
-                </div>
-                <div className="space-y-1.5">
-                  <CardTitle className="text-lg font-semibold text-slate-900">{item.title}</CardTitle>
-                  <CardDescription className="text-sm leading-relaxed text-slate-500">{item.description}</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <Button asChild className="w-full justify-between">
-                  <Link to={item.path}>
-                    Mở chức năng
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {error && <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+        {data?.missingSources?.length > 0 && (
+          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Một số bảng chưa đọc được: {data.missingSources.map((item) => item.table).join(', ')}. Các cột liên quan sẽ để trống và có cảnh báo.
+          </div>
+        )}
+
+        <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+          <MetricCard icon={Users} label="Tổng nhân sự" value={summary.tongNhanSu} percent="Theo bộ lọc" tone="bg-blue-50 text-blue-700" bars={[45, 70, 50, 82, 62, 78]} />
+          <MetricCard icon={BriefcaseBusiness} label="Đang làm việc" value={summary.nhanSuDangLamViec} percent={getPercent(summary.nhanSuDangLamViec, summary.tongNhanSu)} tone="bg-emerald-50 text-emerald-700" bars={[35, 52, 68, 58, 76, 84]} />
+          <MetricCard icon={AlertTriangle} label="Nghỉ việc" value={summary.nhanSuNghiViec} percent={getPercent(summary.nhanSuNghiViec, summary.tongNhanSu)} tone="bg-amber-50 text-amber-700" bars={[25, 42, 36, 55, 32, 44]} />
+          <MetricCard icon={Car} label="Tổng số xe" value={summary.tongXe} percent="Theo bộ lọc" tone="bg-indigo-50 text-indigo-700" bars={[52, 48, 63, 72, 66, 80]} />
+          <MetricCard icon={Gauge} label="Xe hoạt động" value={summary.xeHoatDong} percent={getPercent(summary.xeHoatDong, summary.tongXe)} tone="bg-cyan-50 text-cyan-700" bars={[38, 58, 74, 61, 83, 90]} />
+          <MetricCard icon={AlertTriangle} label="Xe ngừng" value={summary.xeNgung} percent={getPercent(summary.xeNgung, summary.tongXe)} tone="bg-red-50 text-red-700" bars={[18, 30, 24, 36, 28, 42]} />
+        </section>
+
+        <section className="mt-5 grid gap-5 xl:grid-cols-2">
+          <ChartPanel title="Cơ cấu nhân sự" totalLabel={`${formatNumber(filteredNhanSu.length)} nhân sự`}>
+            <DonutChart title="Nhân sự theo trạng thái" rows={filteredNhanSu} keyName="trangThaiLamViec" icon={Users} />
+            <DonutChart title="Nhân sự theo chức danh" rows={filteredNhanSu} keyName="chucDanh" icon={BriefcaseBusiness} />
+          </ChartPanel>
+          <ChartPanel title="Cơ cấu đội xe" totalLabel={`${formatNumber(filteredXe.length)} xe`}>
+            <DonutChart title="Xe theo trạng thái" rows={filteredXe} keyName="trangThaiXe" icon={Car} />
+            <DonutChart title="Xe theo loại" rows={filteredXe} keyName="loaiXe" icon={Gauge} />
+          </ChartPanel>
+        </section>
+
+        <section className="mt-5 grid gap-5 xl:grid-cols-2">
+          <TopBarChart title="Top 10 xe chạy nhiều km nhất" rows={topKmRows} unit="km" />
+          <TopBarChart title="Top 10 xe có nhiều chuyến nhất" rows={topTripRows} unit="chuyến" />
+        </section>
+
+        <section className="mt-5 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-950">Tra cứu và báo cáo tổng hợp</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Đang hiển thị {activeTab === 'nhan-su' ? formatNumber(filteredNhanSu.length) : formatNumber(filteredXe.length)} dòng. Excel xuất toàn bộ dữ liệu đang lọc.
+              </p>
+            </div>
+            <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-1">
+              <button type="button" onClick={() => setActiveTab('nhan-su')} className={`rounded px-3 py-1.5 text-sm font-bold ${activeTab === 'nhan-su' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}>Nhân sự</button>
+              <button type="button" onClick={() => setActiveTab('xe')} className={`rounded px-3 py-1.5 text-sm font-bold ${activeTab === 'xe' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}>Phương tiện</button>
+            </div>
+          </div>
+          <div className="p-4">
+            <DataTable type={activeTab} rows={activeTab === 'nhan-su' ? filteredNhanSu : filteredXe} />
+          </div>
+        </section>
       </div>
     </div>
   );

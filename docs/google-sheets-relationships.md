@@ -120,6 +120,38 @@ Một số dòng `XE_BANGIAO` hiện có snapshot lái xe bị lệch sau cột 
 | `NHANSU_THANHLY_HOPDONG` | Bảng thanh lý hợp đồng lao động, dùng `Ref_NhanSu` để tìm hồ sơ thanh lý HĐLĐ liên quan và lấy `Ref_HopDongLD` |
 | `KIEMTRA_XE_TAXI_CHITIET` | Bảng chi tiết kiểm tra xe taxi |
 
+## Dashboard QLVT
+
+| Bảng nguồn | Cột lưu mã Ref | Bảng đích cần đọc | Khóa bảng đích | Cột nên hiển thị | Mức chắc chắn |
+| --- | --- | --- | --- | --- | --- |
+| `NHANSU` | `Ref_XeHienTai` | `XE` | `ID_Xe` | `BienSo`, `MaDam`, `LoaiXe`, `TrangThaiXe` | Đã xác minh qua schema |
+| `NHANSU` | `Ref_DonViLamViecHienTai`, `Ref_DonViDuocCapPH` | `DONVI` | `ID_DonVi` | `TenDonVi`, dự phòng `TenVietTat`, `Display` | Đã xác minh qua schema |
+| `NHANSU` | `Ref_BoPhan` | `DM_BOPHAN` | `ID_BoPhan` | `TenBoPhan`, dự phòng `MaBoPhan`, `Display` | Đã xác minh qua schema |
+| `NHANSU` | `Ref_ChucDanh` | `DM_CHUCDANH` | `ID_ChucDanh` | `TenChucDanh`, dự phòng `Display` | Đã xác minh qua schema |
+| `NHANSU` | `Ref_DoiXe` | `DM_DOIXE` | `ID_DoiXe` | `TenDoiXe`, dự phòng `MaDoiXe`, `Display` | Cần kiểm tra thêm nếu schema bị Google quota |
+| `NHANSU_HOPDONG_LAODONG` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `CCCD`, `SoDienThoai` | Đã xác minh qua schema |
+| `NHANSU_BHXH` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `CCCD` | Đã xác minh qua schema |
+| `LAIXE_GPLX` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `CCCD` | Đã xác minh qua schema |
+| `NHANSU_SUCKHOE` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `CCCD` | Đã xác minh qua schema |
+| `LAIXE_PHANCONG_XE` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `CCCD` | Đã xác minh qua schema |
+| `LAIXE_PHANCONG_XE` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE` | `Ref_DonViChuQuan`, `Ref_DonViQuanLyHienTai` | `DONVI` | `ID_DonVi` | `TenDonVi`, dự phòng `TenVietTat`, `Display` | Đã xác minh qua schema |
+| `XE` | `Ref_DoiXe` | `DM_DOIXE` | `ID_DoiXe` | `TenDoiXe`, dự phòng `MaDoiXe`, `Display` | Cần kiểm tra thêm nếu schema bị Google quota |
+| `XE_PHUHIEU` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_DANGKIEM` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Cần kiểm tra thêm nếu schema bị Google quota |
+| `XE_BAOHIEM` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_TAXIMET` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_THECHAP_NGANHANG` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_THECHAP_NGANHANG` | `Ref_NganHang` | `DM_NGANHANG` | `ID_NganHang` | `TenNganHang`, dự phòng `TenVietTat`, `Display` | Đã xác minh qua schema |
+| `XE_SO_KM_THANG` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `KIEMTRA_XE_TAXI` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `KIEMTRA_XE_TAXI` | `Ref_LaiXe`, `CanBoKT`, `NguoiChot` | `NHANSU` | `ID_NhanSu` | `HoTen`, dự phòng `Display` | Đã xác minh qua schema |
+| `KIEMTRA_XE_TAXI_CHITIET` | `Ref_KiemTra` | `KIEMTRA_XE_TAXI` | `ID_KiemTra` | `SoPhieuKiemTra`, `Ref_Xe`, `NgayKiemTra` | Đã xác minh qua schema |
+| `PHAN_ANH_KHIEU_NAI` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `PHAN_ANH_KHIEU_NAI` | `Ref_NhanSuBiPhanAnh`, `Ref_CanBoXuLy` | `NHANSU` | `ID_NhanSu` | `HoTen`, dự phòng `Display` | Đã xác minh qua schema |
+
+Dashboard QLVT không hiển thị trực tiếp mã Ref trong KPI, bảng chi tiết hoặc Excel. Nếu một bảng liên kết bị thiếu do Google quota, endpoint phải trả `missingSources` và để trống trường hiển thị liên quan kèm `Ghi chú cảnh báo`, không tự đoán tên từ mã Ref.
+
 ## Nghiệp vụ thỏa thuận trách nhiệm dân sự
 
 | Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |

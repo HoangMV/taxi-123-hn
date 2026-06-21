@@ -222,6 +222,10 @@ function escapeMarkdown(value) {
   return String(value).replace(/\|/g, '\\|');
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -244,26 +248,30 @@ async function main() {
     throw new Error('Chưa có tên bảng. Hãy truyền --tables=TenBang1,TenBang2 hoặc khai báo REACT_APP_SCHEMA_TABLES trong .env.');
   }
 
-  const schema = await Promise.all(tables.map(async (tableName) => {
+  const schema = [];
+  for (const [index, tableName] of tables.entries()) {
     process.stderr.write(`Đang đọc bảng ${tableName}...\n`);
     try {
       const tableRows = await readGoogleSheetTables([tableName], env);
       const rows = tableRows[tableName] || [];
       const safeRows = Array.isArray(rows) ? rows : [];
-      return {
+      schema.push({
         name: tableName,
         rowCount: safeRows.length,
         columns: inferColumns(safeRows, options.sampleSize)
-      };
+      });
     } catch (error) {
-      return {
+      schema.push({
         name: tableName,
         error: error.message || 'Lỗi không xác định.',
         rowCount: 0,
         columns: []
-      };
+      });
     }
-  }));
+    if (index < tables.length - 1) {
+      await delay(1100);
+    }
+  }
 
   const output = options.format === 'json'
     ? `${JSON.stringify(schema, null, 2)}\n`

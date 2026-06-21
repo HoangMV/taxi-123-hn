@@ -7,8 +7,14 @@ export const menuSections = [
     title: 'Nghiệp vụ',
     items: [
       {
+        id: 'menu',
+        text: 'Menu chức năng',
+        path: config.ROUTES.MENU,
+        icon: LayoutDashboard
+      },
+      {
         id: 'dashboard',
-        text: 'Tổng quan',
+        text: 'Dashboard điều hành',
         path: config.ROUTES.DASHBOARD,
         icon: LayoutDashboard
       },

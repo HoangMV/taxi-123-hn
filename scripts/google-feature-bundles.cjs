@@ -126,6 +126,368 @@ function getXeDonViIds(xeRows) {
   );
 }
 
+const DASHBOARD_WARNING_DAYS = 30;
+const DASHBOARD_TABLES = [
+  'NHANSU',
+  'NHANSU_HOPDONG_LAODONG',
+  'NHANSU_BHXH',
+  'LAIXE_GPLX',
+  'NHANSU_SUCKHOE',
+  'LAIXE_DAOTAO',
+  'LAIXE_PHANCONG_XE',
+  'DONVI',
+  'DM_BOPHAN',
+  'DM_CHUCDANH',
+  'DM_DOIXE',
+  'DM_NGANHANG',
+  'XE',
+  'XE_PHUHIEU',
+  'XE_DANGKIEM',
+  'XE_BAOHIEM',
+  'XE_TAXIMET',
+  'XE_THECHAP_NGANHANG',
+  'XE_SO_KM_THANG',
+  'KIEMTRA_XE_TAXI',
+  'KIEMTRA_XE_TAXI_CHITIET',
+  'PHAN_ANH_KHIEU_NAI'
+];
+
+function chunkArray(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+async function readDashboardTables(tableNames, env) {
+  const dashboardEnv = {
+    ...env,
+    GOOGLE_SHEETS_DEFAULT_RANGE: env.GOOGLE_SHEETS_DEFAULT_RANGE || 'A:AZ'
+  };
+  const tables = {};
+  const missingSources = [];
+
+  for (const chunk of chunkArray(tableNames, 4)) {
+    try {
+      Object.assign(tables, await readTables(chunk, dashboardEnv));
+    } catch (chunkError) {
+      for (const tableName of chunk) {
+        try {
+          Object.assign(tables, await readTables([tableName], dashboardEnv));
+        } catch (tableError) {
+          tables[tableName] = [];
+          missingSources.push({
+            table: tableName,
+            message: tableError.message || chunkError.message || 'Không đọc được bảng Google Sheets.'
+          });
+        }
+      }
+    }
+  }
+
+  return { tables, missingSources };
+}
+
+function normalizeVietnameseText(value) {
+  return cleanValue(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+}
+
+function valueContains(value, keywords) {
+  const text = normalizeVietnameseText(value);
+  return (Array.isArray(keywords) ? keywords : [keywords]).some((keyword) => text.includes(normalizeVietnameseText(keyword)));
+}
+
+function getFirstValue(row, keys) {
+  for (const key of keys) {
+    const value = cleanValue(row?.[key]);
+    if (value) return value;
+  }
+  return '';
+}
+
+function buildLookupMap(rows, keys) {
+  const map = new Map();
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    keys.forEach((key) => {
+      const value = cleanValue(row?.[key]);
+      if (value && !map.has(value)) map.set(value, row);
+    });
+  });
+  return map;
+}
+
+function groupRowsBy(rows, keyName) {
+  const map = new Map();
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const key = cleanValue(row?.[keyName]);
+    if (!key) return;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(row);
+  });
+  return map;
+}
+
+function sortRowsByDateDesc(rows, fields) {
+  return [...(Array.isArray(rows) ? rows : [])].sort((a, b) => {
+    const dateA = getDateTime(getFirstValue(a, fields));
+    const dateB = getDateTime(getFirstValue(b, fields));
+    return dateB - dateA;
+  });
+}
+
+function pickCurrentRow(rows, options = {}) {
+  const candidates = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  if (candidates.length === 0) return null;
+  const statusFields = options.statusFields || ['TrangThai', 'TrangThaiBHXH', 'TrangThaiBaoHiem', 'TrangThaiXe'];
+  const activeKeywords = options.activeKeywords || ['đang hiệu lực', 'hiệu lực', 'đang tham gia', 'đang phân công', 'đang hoạt động'];
+  const dateFields = options.dateFields || ['NgayHetHan', 'NgayKetThuc', 'NgayBatDau', 'NgayCap'];
+  const activeRows = candidates.filter((row) => statusFields.some((field) => valueContains(row?.[field], activeKeywords)));
+  return sortRowsByDateDesc(activeRows.length ? activeRows : candidates, dateFields)[0] || candidates[0];
+}
+
+function formatDashboardDate(value) {
+  const date = parseDateValue(value);
+  if (!date) return '';
+  const day = String(date.getDate()).padStart(2, '0');
+  const monthValue = date.getMonth() + 1;
+  const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
+function getWarningLevel(value, today = new Date()) {
+  const date = parseDateValue(value);
+  if (!date) return { level: 'xam', label: 'Thiếu dữ liệu', days: null };
+  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const days = Math.ceil((target.getTime() - startToday.getTime()) / 86400000);
+  if (days < 0) return { level: 'do', label: 'Quá hạn', days };
+  if (days <= DASHBOARD_WARNING_DAYS) return { level: 'vang', label: 'Sắp hết hạn', days };
+  return { level: 'xanh', label: 'Còn hiệu lực', days };
+}
+
+function buildWarningNote(items) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => item && item.level && item.level !== 'xanh')
+    .map((item) => `${item.label}: ${item.name}${item.date ? ` (${item.date})` : ''}`)
+    .join('; ');
+}
+
+function countBy(items, keyName) {
+  const counts = new Map();
+  (Array.isArray(items) ? items : []).forEach((item) => {
+    const key = cleanValue(item?.[keyName]) || 'Chưa có dữ liệu';
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return [...counts.entries()].map(([label, value]) => ({ label, value }));
+}
+
+function getNumberValue(value) {
+  const number = Number(cleanValue(value).replace(/[^\d.-]/g, ''));
+  return Number.isFinite(number) ? number : 0;
+}
+
+function getDisplayName(row, fields, fallback = '') {
+  return getFirstValue(row, fields) || fallback;
+}
+
+function buildDashboardReport(tables, missingSources) {
+  const nhanSuRows = tables.NHANSU || [];
+  const xeRows = tables.XE || [];
+  const donViById = buildLookupMap(tables.DONVI, ['ID_DonVi', 'MaDonVi', 'TenVietTat', 'TenDonVi']);
+  const boPhanById = buildLookupMap(tables.DM_BOPHAN, ['ID_BoPhan', 'MaBoPhan', 'TenBoPhan']);
+  const chucDanhById = buildLookupMap(tables.DM_CHUCDANH, ['ID_ChucDanh', 'TenChucDanh']);
+  const doiXeById = buildLookupMap(tables.DM_DOIXE, ['ID_DoiXe', 'ID_Doi', 'ID_DM_DOIXE', 'MaDoiXe', 'MaDoi', 'TenDoiXe', 'Display']);
+  const nganHangById = buildLookupMap(tables.DM_NGANHANG, ['ID_NganHang', 'MaNganHang', 'TenNganHang', 'TenVietTat']);
+  const xeById = buildLookupMap(xeRows, ['ID_Xe', 'BienSo']);
+  const nhanSuById = buildLookupMap(nhanSuRows, ['ID_NhanSu']);
+  const hopDongByNhanSu = groupRowsBy(tables.NHANSU_HOPDONG_LAODONG, 'Ref_NhanSu');
+  const bhxhByNhanSu = groupRowsBy(tables.NHANSU_BHXH, 'Ref_NhanSu');
+  const gplxByNhanSu = groupRowsBy(tables.LAIXE_GPLX, 'Ref_NhanSu');
+  const sucKhoeByNhanSu = groupRowsBy(tables.NHANSU_SUCKHOE, 'Ref_NhanSu');
+  const phanCongByNhanSu = groupRowsBy(tables.LAIXE_PHANCONG_XE, 'Ref_NhanSu');
+  const phanCongByXe = groupRowsBy(tables.LAIXE_PHANCONG_XE, 'Ref_Xe');
+  const phuHieuByXe = groupRowsBy(tables.XE_PHUHIEU, 'Ref_Xe');
+  const dangKiemByXe = groupRowsBy(tables.XE_DANGKIEM, 'Ref_Xe');
+  const baoHiemByXe = groupRowsBy(tables.XE_BAOHIEM, 'Ref_Xe');
+  const taximetByXe = groupRowsBy(tables.XE_TAXIMET, 'Ref_Xe');
+  const theChapByXe = groupRowsBy(tables.XE_THECHAP_NGANHANG, 'Ref_Xe');
+  const kmByXe = groupRowsBy(tables.XE_SO_KM_THANG, 'Ref_Xe');
+
+  const warnings = [];
+  const nhanSuReport = nhanSuRows.map((nhanSu, index) => {
+    const nhanSuId = cleanValue(nhanSu.ID_NhanSu);
+    const hopDong = pickCurrentRow(hopDongByNhanSu.get(nhanSuId), { dateFields: ['NgayKetThuc', 'NgayBatDau', 'NgayKy'] });
+    const bhxh = pickCurrentRow(bhxhByNhanSu.get(nhanSuId), { statusFields: ['TrangThaiBHXH'], activeKeywords: ['đang tham gia'], dateFields: ['NgayBatDauThamGia', 'NgayKetThucThamGia'] });
+    const gplx = pickCurrentRow(gplxByNhanSu.get(nhanSuId), { dateFields: ['NgayHetHan', 'NgayCap'] });
+    const sucKhoe = pickCurrentRow(sucKhoeByNhanSu.get(nhanSuId), { dateFields: ['NgayHetHan', 'NgayKham'] });
+    const phanCong = pickCurrentRow(phanCongByNhanSu.get(nhanSuId), { dateFields: ['NgayBatDau', 'NgayKetThuc'] });
+    const xe = xeById.get(cleanValue(phanCong?.Ref_Xe)) || xeById.get(cleanValue(nhanSu.Ref_XeHienTai));
+    const donVi = donViById.get(cleanValue(nhanSu.Ref_DonViLamViecHienTai)) || donViById.get(cleanValue(nhanSu.Ref_DonViDuocCapPH));
+    const boPhan = boPhanById.get(cleanValue(nhanSu.Ref_BoPhan));
+    const chucDanh = chucDanhById.get(cleanValue(nhanSu.Ref_ChucDanh)) || chucDanhById.get(cleanValue(hopDong?.Ref_ChucDanh));
+    const doiXe = doiXeById.get(cleanValue(nhanSu.Ref_DoiXe));
+    const warningItems = [
+      { name: 'Hợp đồng lao động', date: formatDashboardDate(hopDong?.NgayKetThuc), ...getWarningLevel(hopDong?.NgayKetThuc) },
+      { name: 'GPLX', date: formatDashboardDate(gplx?.NgayHetHan), ...getWarningLevel(gplx?.NgayHetHan) },
+      { name: 'Sức khỏe', date: formatDashboardDate(sucKhoe?.NgayHetHan), ...getWarningLevel(sucKhoe?.NgayHetHan) }
+    ];
+    warningItems.forEach((item) => {
+      if (item.level !== 'xanh') warnings.push({ scope: 'nhan-su', subject: getDisplayName(nhanSu, ['HoTen', 'Display'], nhanSuId), id: nhanSuId, ...item });
+    });
+
+    return {
+      stt: index + 1,
+      idNhanSu: nhanSuId,
+      hoTen: getDisplayName(nhanSu, ['HoTen', 'Display'], nhanSuId),
+      cccd: cleanValue(nhanSu.CCCD),
+      ngaySinh: formatDashboardDate(nhanSu.NgaySinh),
+      soDienThoai: cleanValue(nhanSu.SoDienThoai),
+      donVi: getDisplayName(donVi, ['TenDonVi', 'TenVietTat', 'Display']),
+      doiXe: getDisplayName(doiXe, ['TenDoiXe', 'TenDoi', 'Ten', 'MaDoiXe', 'Display'], cleanValue(nhanSu.Ref_DoiXe)),
+      boPhan: getDisplayName(boPhan, ['TenBoPhan', 'MaBoPhan', 'Display'], cleanValue(nhanSu.Ref_BoPhan)),
+      chucDanh: getDisplayName(chucDanh, ['TenChucDanh', 'Display'], cleanValue(nhanSu.Ref_ChucDanh)),
+      trangThaiLamViec: cleanValue(nhanSu.TrangThai),
+      xeDangLai: getDisplayName(xe, ['BienSo', 'Display'], cleanValue(phanCong?.Ref_Xe || nhanSu.Ref_XeHienTai)),
+      bienSoXe: cleanValue(xe?.BienSo),
+      loaiHopDong: cleanValue(hopDong?.LoaiHopDong),
+      soHopDong: cleanValue(hopDong?.SoHopDong),
+      ngayKyHopDong: formatDashboardDate(hopDong?.NgayKy),
+      ngayBatDau: formatDashboardDate(hopDong?.NgayBatDau),
+      ngayKetThuc: formatDashboardDate(hopDong?.NgayKetThuc),
+      trangThaiHopDong: cleanValue(hopDong?.TrangThai),
+      soGplx: cleanValue(gplx?.SoGPLX),
+      hangGplx: cleanValue(gplx?.HangGPLX),
+      hanGplx: formatDashboardDate(gplx?.NgayHetHan),
+      hanSucKhoe: formatDashboardDate(sucKhoe?.NgayHetHan),
+      soSoBhxh: cleanValue(bhxh?.SoSoBHXH),
+      maSoBhxh: cleanValue(bhxh?.MaSoBHXH),
+      trangThaiBhxh: cleanValue(bhxh?.TrangThaiBHXH),
+      mucLuongDongBhxh: cleanValue(bhxh?.MucLuongDongBHXH),
+      canhBao: buildWarningNote(warningItems),
+      warningLevel: warningItems.some((item) => item.level === 'do') ? 'do' : warningItems.some((item) => item.level === 'vang') ? 'vang' : warningItems.some((item) => item.level === 'xam') ? 'xam' : 'xanh'
+    };
+  });
+
+  const xeReport = xeRows.map((xe, index) => {
+    const xeId = cleanValue(xe.ID_Xe);
+    const phanCong = pickCurrentRow(phanCongByXe.get(xeId), { dateFields: ['NgayBatDau', 'NgayKetThuc'] });
+    const laiXe = nhanSuById.get(cleanValue(phanCong?.Ref_NhanSu)) || nhanSuRows.find((item) => cleanValue(item.Ref_XeHienTai) === xeId);
+    const phuHieu = pickCurrentRow(phuHieuByXe.get(xeId), { dateFields: ['NgayHetHan', 'NgayCap'] });
+    const dangKiem = pickCurrentRow(dangKiemByXe.get(xeId), { dateFields: ['NgayHetHan', 'HanDangKiem', 'NgayHetHanDangKiem', 'NgayHetHanKiemDinh'] });
+    const baoHiemRows = baoHiemByXe.get(xeId) || [];
+    const baoHiemTnds = pickCurrentRow(baoHiemRows.filter((row) => valueContains(row.LoaiBaoHiem, ['tnds', 'trach nhiem', 'trách nhiệm'])), { statusFields: ['TrangThaiBaoHiem'], dateFields: ['NgayHetHan', 'NgayCap'] });
+    const baoHiemThanVo = pickCurrentRow(baoHiemRows.filter((row) => valueContains(row.LoaiBaoHiem, ['than vo', 'thân vỏ', 'vat chat', 'vật chất'])), { statusFields: ['TrangThaiBaoHiem'], dateFields: ['NgayHetHan', 'NgayCap'] });
+    const taximet = pickCurrentRow(taximetByXe.get(xeId), { dateFields: ['NgayHetHanKiemDinh', 'NgayKiemDinh'] });
+    const theChap = pickCurrentRow(theChapByXe.get(xeId), { statusFields: ['TrangThaiTheChap', 'TrangThaiKhoanVay'], dateFields: ['NgayHetHan', 'NgayTheChap'] });
+    const kmRow = pickCurrentRow(kmByXe.get(xeId), { dateFields: ['Nam', 'Thang', 'NgayTao'] });
+    const donViChuQuan = donViById.get(cleanValue(xe.Ref_DonViChuQuan));
+    const donViQuanLy = donViById.get(cleanValue(xe.Ref_DonViQuanLyHienTai));
+    const doiXe = doiXeById.get(cleanValue(xe.Ref_DoiXe)) || doiXeById.get(cleanValue(laiXe?.Ref_DoiXe));
+    const nganHang = nganHangById.get(cleanValue(theChap?.Ref_NganHang));
+    const warningItems = [
+      { name: 'Phù hiệu', date: formatDashboardDate(phuHieu?.NgayHetHan), ...getWarningLevel(phuHieu?.NgayHetHan) },
+      { name: 'Đăng kiểm', date: formatDashboardDate(getFirstValue(dangKiem, ['NgayHetHan', 'HanDangKiem', 'NgayHetHanDangKiem', 'NgayHetHanKiemDinh'])), ...getWarningLevel(getFirstValue(dangKiem, ['NgayHetHan', 'HanDangKiem', 'NgayHetHanDangKiem', 'NgayHetHanKiemDinh'])) },
+      { name: 'Bảo hiểm TNDS', date: formatDashboardDate(baoHiemTnds?.NgayHetHan), ...getWarningLevel(baoHiemTnds?.NgayHetHan) },
+      { name: 'Bảo hiểm thân vỏ', date: formatDashboardDate(baoHiemThanVo?.NgayHetHan), ...getWarningLevel(baoHiemThanVo?.NgayHetHan) },
+      { name: 'Taximet', date: formatDashboardDate(taximet?.NgayHetHanKiemDinh), ...getWarningLevel(taximet?.NgayHetHanKiemDinh) },
+      { name: 'Thế chấp', date: formatDashboardDate(theChap?.NgayHetHan), ...getWarningLevel(theChap?.NgayHetHan) }
+    ];
+    warningItems.forEach((item) => {
+      if (item.level !== 'xanh') warnings.push({ scope: 'xe', subject: cleanValue(xe.BienSo) || xeId, id: xeId, ...item });
+    });
+
+    return {
+      stt: index + 1,
+      idXe: xeId,
+      bienSo: cleanValue(xe.BienSo),
+      maDam: cleanValue(xe.MaDam),
+      tenDangKyXe: cleanValue(xe.TenDangKyXe),
+      soKhung: cleanValue(xe.SoKhung),
+      soMay: cleanValue(xe.SoMay),
+      nhanHieu: cleanValue(xe.NhanHieu),
+      loaiXe: cleanValue(xe.LoaiXe),
+      soCho: cleanValue(xe.SoCho),
+      namSanXuat: cleanValue(xe.NamSanXuat),
+      mauSon: cleanValue(xe.MauSon),
+      donViChuQuan: getDisplayName(donViChuQuan, ['TenDonVi', 'TenVietTat', 'Display'], cleanValue(xe.Ref_DonViChuQuan)),
+      donViQuanLyHienTai: getDisplayName(donViQuanLy, ['TenDonVi', 'TenVietTat', 'Display'], cleanValue(xe.Ref_DonViQuanLyHienTai)),
+      doiXe: getDisplayName(doiXe, ['TenDoiXe', 'TenDoi', 'Ten', 'MaDoiXe', 'Display'], cleanValue(xe.Ref_DoiXe || laiXe?.Ref_DoiXe)),
+      trangThaiXe: cleanValue(xe.TrangThaiXe),
+      laiXeDangLai: getDisplayName(laiXe, ['HoTen', 'Display'], cleanValue(phanCong?.Ref_NhanSu)),
+      soPhuHieu: cleanValue(phuHieu?.SoPhuHieu),
+      hanPhuHieu: formatDashboardDate(phuHieu?.NgayHetHan),
+      hanDangKiem: formatDashboardDate(getFirstValue(dangKiem, ['NgayHetHan', 'HanDangKiem', 'NgayHetHanDangKiem', 'NgayHetHanKiemDinh'])),
+      hanBaoHiemTnds: formatDashboardDate(baoHiemTnds?.NgayHetHan),
+      hanBaoHiemThanVo: formatDashboardDate(baoHiemThanVo?.NgayHetHan),
+      hanTaximet: formatDashboardDate(taximet?.NgayHetHanKiemDinh),
+      coTheChapKhong: theChap ? 'Có' : cleanValue(xe.IsTheChap),
+      nganHangTheChap: getDisplayName(nganHang, ['TenNganHang', 'TenVietTat', 'Display'], cleanValue(theChap?.Ref_NganHang)),
+      hanTheChap: formatDashboardDate(theChap?.NgayHetHan),
+      trangThaiKhoanVay: cleanValue(theChap?.TrangThaiKhoanVay),
+      kmLuyKe: cleanValue(kmRow?.LuyKeKmXeChay) || cleanValue(kmRow?.SoKmHoatDong),
+      soChuyenThang: cleanValue(kmRow?.SoChuyenTrongThang),
+      canhBao: buildWarningNote(warningItems),
+      warningLevel: warningItems.some((item) => item.level === 'do') ? 'do' : warningItems.some((item) => item.level === 'vang') ? 'vang' : warningItems.some((item) => item.level === 'xam') ? 'xam' : 'xanh'
+    };
+  });
+
+  const activeNhanSu = nhanSuReport.filter((item) => valueContains(item.trangThaiLamViec, ['đang', 'lam viec', 'làm việc']));
+  const inactiveNhanSu = nhanSuReport.filter((item) => valueContains(item.trangThaiLamViec, ['nghi', 'nghỉ']));
+  const activeXe = xeReport.filter((item) => valueContains(item.trangThaiXe, ['đang', 'hoat dong', 'hoạt động']));
+  const inactiveXe = xeReport.filter((item) => valueContains(item.trangThaiXe, ['ngung', 'ngừng']));
+  const warningCounts = countBy(warnings, 'level');
+
+  return {
+    row: {},
+    related: {},
+    summary: {
+      tongNhanSu: nhanSuReport.length,
+      nhanSuDangLamViec: activeNhanSu.length,
+      nhanSuNghiViec: inactiveNhanSu.length,
+      tongXe: xeReport.length,
+      xeHoatDong: activeXe.length,
+      xeNgung: inactiveXe.length,
+      canhBaoDo: warnings.filter((item) => item.level === 'do').length,
+      canhBaoVang: warnings.filter((item) => item.level === 'vang').length,
+      canhBaoXam: warnings.filter((item) => item.level === 'xam').length
+    },
+    filters: {
+      donVi: uniqueValues([...nhanSuReport.map((item) => item.donVi), ...xeReport.map((item) => item.donViQuanLyHienTai)]),
+      doiXe: uniqueValues([...nhanSuReport.map((item) => item.doiXe), ...xeReport.map((item) => item.doiXe)]),
+      loaiXe: uniqueValues(xeReport.map((item) => item.loaiXe)),
+      trangThaiXe: uniqueValues(xeReport.map((item) => item.trangThaiXe)),
+      trangThaiNhanSu: uniqueValues(nhanSuReport.map((item) => item.trangThaiLamViec)),
+      loaiHopDong: uniqueValues(nhanSuReport.map((item) => item.loaiHopDong)),
+      trangThaiHopDong: uniqueValues(nhanSuReport.map((item) => item.trangThaiHopDong)),
+      trangThaiBhxh: uniqueValues(nhanSuReport.map((item) => item.trangThaiBhxh)),
+      nhomCanhBao: ['do', 'vang', 'xanh', 'xam']
+    },
+    charts: {
+      nhanSuTheoTrangThai: countBy(nhanSuReport, 'trangThaiLamViec'),
+      nhanSuTheoChucDanh: countBy(nhanSuReport, 'chucDanh'),
+      xeTheoTrangThai: countBy(xeReport, 'trangThaiXe'),
+      xeTheoLoai: countBy(xeReport, 'loaiXe'),
+      canhBaoTheoMuc: warningCounts,
+      topKm: [...xeReport].sort((a, b) => getNumberValue(b.kmLuyKe) - getNumberValue(a.kmLuyKe)).slice(0, 10).map((item) => ({ label: item.bienSo || item.idXe, value: getNumberValue(item.kmLuyKe) })),
+      topChuyen: [...xeReport].sort((a, b) => getNumberValue(b.soChuyenThang) - getNumberValue(a.soChuyenThang)).slice(0, 10).map((item) => ({ label: item.bienSo || item.idXe, value: getNumberValue(item.soChuyenThang) }))
+    },
+    reports: {
+      nhanSu: nhanSuReport,
+      xe: xeReport
+    },
+    warnings,
+    missingSources,
+    generatedAt: new Date().toISOString(),
+    warningDays: DASHBOARD_WARNING_DAYS
+  };
+}
+
 async function readTables(tableNames, env) {
   return readGoogleSheetTables(tableNames, env);
 }
@@ -144,6 +506,18 @@ async function buildSimpleBundle({ id, includeRelated, providedRow, env, mainTab
 }
 
 const featureConfigs = {
+  'dashboard-qlvt': {
+    idKeys: [],
+    missingIdMessage: '',
+    notFoundPrefix: '',
+    failedMessage: 'Không tải được dữ liệu dashboard QLVT từ Google Sheets.',
+    mainKey: '',
+    build: async ({ env }) => {
+      const { tables, missingSources } = await readDashboardTables(DASHBOARD_TABLES, env);
+      return buildDashboardReport(tables, missingSources);
+    }
+  },
+
   'ban-giao-xe': {
     idKeys: ['ID_BienBanXe', 'idBienBanXe'],
     missingIdMessage: 'Thiếu tham số ID_BienBanXe.',
