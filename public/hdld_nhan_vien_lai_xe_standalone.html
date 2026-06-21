@@ -397,6 +397,20 @@
         return normalizedZip;
       }
 
+      function normalizeFileNamePart(value) {
+        return String(value || '')
+          .trim()
+          .replace(/[\\/:*?"<>|]+/g, '')
+          .replace(/\s+/g, '_')
+          .replace(/^_+|_+$/g, '');
+      }
+
+      function buildExportFileName(payload) {
+        const personName = normalizeFileNamePart(payload && payload.hoTenNhanSu);
+        const identifier = normalizeFileNamePart((payload && (payload.soHopDong || payload.idHopDongLaoDong)) || 'new');
+        return ['HDLD_nhan_vien_lai_xe', personName, identifier].filter(Boolean).join('_') + '.docx';
+      }
+
       function render(payload) {
         currentPayload = payload;
         preview.hidden = false;
@@ -455,7 +469,7 @@
         if (!currentPayload) return;
         exportButton.disabled = true;
         try {
-          const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=thoi-han-20260618');
+          const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=sign-name-20260621');
           if (!response.ok) throw new Error('Không thể tải template Word.');
           const content = await response.arrayBuffer();
           const sourceZip = new PizZip(content);
@@ -471,7 +485,7 @@
             type: 'blob',
             mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
           });
-          window.saveAs(blob, `HDLD_nhan_vien_lai_xe_${currentPayload.soHopDong || currentPayload.idHopDongLaoDong || 'new'}.docx`);
+          window.saveAs(blob, buildExportFileName(currentPayload));
         } catch (error) {
           alert(`Xuất Word thất bại: ${error.message}`);
         } finally {

@@ -84,6 +84,45 @@ if (index < 146) {
   throw new Error(`File mẫu chỉ có ${index} text node, thấp hơn số node cần thay.`);
 }
 
-zip.file('word/document.xml', nextXml);
+function buildSignatureNameParagraph(tag) {
+  return [
+    '<w:p>',
+    '<w:pPr>',
+    '<w:spacing w:before="1200" w:after="0" w:line="259" w:lineRule="auto"/>',
+    '<w:contextualSpacing w:val="0"/>',
+    '<w:jc w:val="center"/>',
+    '<w:rPr><w:b/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>',
+    '</w:pPr>',
+    '<w:r><w:rPr><w:b/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>',
+    `<w:t>${tag}</w:t>`,
+    '</w:r>',
+    '</w:p>'
+  ].join('');
+}
+
+function normalizeSignatureCell(cell, tag) {
+  const cellProperties = cell.match(/<w:tcPr>[\s\S]*?<\/w:tcPr>/)?.[0] || '';
+  const paragraphs = [...cell.matchAll(/<w:p[\s\S]*?<\/w:p>/g)].map((match) => match[0]);
+  if (paragraphs.length < 2) return cell;
+  return `<w:tc>${cellProperties}${paragraphs[0]}${paragraphs[1]}${buildSignatureNameParagraph(tag)}</w:tc>`;
+}
+
+function normalizeSignatureTable(xml) {
+  const tables = [...xml.matchAll(/<w:tbl[\s\S]*?<\/w:tbl>/g)].map((match) => match[0]);
+  const table = tables[1];
+  if (!table) return xml;
+
+  const cells = [...table.matchAll(/<w:tc[\s\S]*?<\/w:tc>/g)].map((match) => match[0]);
+  if (cells.length < 2) return xml;
+
+  const nextTable = table
+    .replace(cells[0], normalizeSignatureCell(cells[0], '{ho_ten_nguoi_ky}'))
+    .replace(cells[1], normalizeSignatureCell(cells[1], '{ho_ten_nhan_su}'));
+  return xml.replace(table, nextTable);
+}
+
+const templateXml = normalizeSignatureTable(nextXml);
+
+zip.file('word/document.xml', templateXml);
 fs.writeFileSync(outputPath, zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }));
 console.log(`Đã tạo template Word: ${outputPath}`);

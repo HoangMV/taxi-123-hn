@@ -14,7 +14,7 @@ import {
   getHdldNhanVienLaiXeIdFromSearch
 } from '../features/hdldNhanVienLaiXe';
 
-const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=thoi-han-20260618';
+const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=sign-name-20260621';
 
 function normalizeDocxZipEntryNames(zip, PizZip) {
   const normalizedZip = new PizZip();
@@ -25,6 +25,20 @@ function normalizeDocxZipEntryNames(zip, PizZip) {
   });
 
   return normalizedZip;
+}
+
+function normalizeFileNamePart(value) {
+  return String(value || '')
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function buildExportFileName(payload) {
+  const personName = normalizeFileNamePart(payload?.hoTenNhanSu);
+  const identifier = normalizeFileNamePart(payload?.soHopDong || payload?.idHopDongLaoDong || 'new');
+  return ['HDLD_nhan_vien_lai_xe', personName, identifier].filter(Boolean).join('_') + '.docx';
 }
 
 const previewStyles = `
@@ -183,7 +197,7 @@ const HdldNhanVienLaiXePage = () => {
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       });
 
-      saveAs(blob, `HDLD_nhan_vien_lai_xe_${payload.soHopDong || payload.idHopDongLaoDong || 'new'}.docx`);
+      saveAs(blob, buildExportFileName(payload));
     } catch (error) {
       toast.error(`Xuất Word thất bại: ${error.message}`);
     } finally {
