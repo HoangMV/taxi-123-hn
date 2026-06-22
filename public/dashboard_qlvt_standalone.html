@@ -35,8 +35,8 @@
       button.green { background: #10b981; }
       .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 28px; background: var(--navy); color: #fff; box-shadow: 0 2px 10px rgba(15, 23, 42, .14); }
       .brand { display: flex; min-width: 0; align-items: center; gap: 12px; }
-      .menu-btn, .brand-mark, .user-mark { display: grid; flex: 0 0 auto; place-items: center; height: 40px; width: 40px; border-radius: 7px; background: rgba(255,255,255,.12); color: #fff; }
-      .brand-mark { border-radius: 50%; background: #fff; color: #1e3a8a; font-weight: 800; }
+      .user-mark { display: grid; flex: 0 0 auto; place-items: center; height: 40px; width: 40px; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; font-weight: 800; }
+      .brand-logo { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
       .user-mark { border-radius: 50%; font-weight: 800; }
       h1 { margin: 0; overflow: hidden; color: #fff; font-size: 20px; font-weight: 700; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
       .updated { margin-top: 3px; color: #dbeafe; font-size: 14px; font-weight: 500; }
@@ -59,6 +59,7 @@
       .kpi-value { margin-top: 9px; color: #020617; font-size: 30px; font-weight: 700; line-height: 1; }
       .kpi-hint { margin-top: 8px; color: var(--muted); font-size: 12px; font-weight: 600; }
       .kpi-icon { display: grid; flex: 0 0 auto; place-items: center; height: 44px; width: 44px; border-radius: 50%; font-size: 13px; font-weight: 700; }
+      .kpi-icon svg { width: 20px; height: 20px; stroke: currentColor; }
       .tone-blue { background: #eff6ff; color: var(--blue); }
       .tone-green { background: #ecfdf5; color: var(--green); }
       .tone-amber { background: #fffbeb; color: #d97706; }
@@ -76,7 +77,9 @@
       .donut-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; color: #334155; font-size: 14px; font-weight: 700; }
       .donut-body { display: flex; align-items: center; gap: 16px; }
       .donut { position: relative; flex: 0 0 auto; width: 142px; height: 142px; border-radius: 50%; background: #e2e8f0; }
-      .donut::after { position: absolute; inset: 22px; display: grid; place-items: center; border-radius: 50%; background: #fff; box-shadow: inset 0 2px 8px rgba(15,23,42,.08); color: #020617; content: attr(data-total); font-size: 22px; font-weight: 700; }
+      .donut-inner { position: absolute; inset: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; background: #fff; box-shadow: inset 0 2px 8px rgba(15,23,42,.08); color: #020617; }
+      .donut-inner svg { width: 20px; height: 20px; margin-bottom: 4px; stroke: #1d4ed8; }
+      .donut-total { font-size: 22px; font-weight: 700; line-height: 1; }
       .legend { min-width: 0; flex: 1; display: grid; gap: 8px; }
       .legend-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 8px; color: #475569; font-size: 12px; }
       .dot { width: 10px; height: 10px; border-radius: 50%; }
@@ -92,15 +95,35 @@
       .tab { background: transparent; color: #64748b; padding: 7px 12px; }
       .tab.active { background: #fff; color: #1d4ed8; box-shadow: 0 1px 4px rgba(15, 23, 42, .08); }
       .table-info { color: var(--muted); font-size: 14px; font-weight: 700; }
-      .table-wrap { overflow: auto; max-height: 520px; padding: 16px; }
+      .table-wrap { overflow-x: auto; padding: 16px; }
+      .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid #eef2f7; color: var(--muted); font-size: 14px; font-weight: 700; }
+      .pager-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+      .pager-actions label { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; }
+      .pager-actions select { width: auto; min-width: 76px; }
+      .pager-actions button { min-width: 38px; padding: 8px 10px; background: #e8eef8; color: #1e3a8a; }
+      .pager-page { min-width: 94px; text-align: center; color: #334155; }
       table { width: 100%; min-width: 1100px; border-collapse: collapse; font-size: 13px; }
       th, td { border-bottom: 1px solid #edf2f7; padding: 10px; text-align: left; vertical-align: top; }
-      th { position: sticky; top: 0; z-index: 1; background: #f8fafc; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+      th { background: #f8fafc; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; }
       .badge { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 3px 8px; font-size: 12px; font-weight: 700; }
+      .warning-cell { display: grid; min-width: 150px; justify-items: start; gap: 5px; }
+      .warning-cell .badge { width: fit-content; }
       .do { border-color: #fecaca; background: #fef2f2; color: #dc2626; }
       .vang { border-color: #fde68a; background: #fffbeb; color: #d97706; }
       .xanh { border-color: #bbf7d0; background: #f0fdf4; color: #16a34a; }
       .xam { background: #f1f5f9; color: #475569; }
+      .skeleton { position: relative; overflow: hidden; border-radius: 6px; background: #e2e8f0; }
+      .skeleton::after { position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.72), transparent); content: ""; animation: skeleton-shimmer 1.3s infinite; }
+      .skeleton-line { height: 14px; }
+      .skeleton-field { height: 36px; }
+      .skeleton-label { width: 80px; height: 12px; }
+      .loading-card { min-height: 126px; padding: 16px; }
+      .loading-stack { display: grid; gap: 12px; }
+      .loading-chart { padding: 16px; }
+      .loading-chart-body { display: flex; align-items: center; gap: 18px; margin-top: 16px; }
+      .loading-donut { width: 120px; height: 120px; border-radius: 50%; }
+      .loading-table-row { display: grid; grid-template-columns: .5fr 1.3fr 1.2fr 1fr 1fr 1fr 1fr 1fr 1fr 1.2fr; gap: 14px; padding: 14px 10px; border-bottom: 1px solid #edf2f7; }
+      @keyframes skeleton-shimmer { 100% { transform: translateX(100%); } }
       @media (max-width: 1360px) { .filter-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } .donut-grid { grid-template-columns: 1fr; } }
       @media (max-width: 980px) { .topbar { align-items: flex-start; flex-direction: column; } .toolbar { justify-content: flex-start; } .filter-grid, .filter-extra, .dash-grid { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 640px) { main, .topbar { padding-left: 14px; padding-right: 14px; } h1 { font-size: 17px; } .toolbar button { flex: 1; } .kpis { grid-template-columns: 1fr; } .donut-body, .bar-row { grid-template-columns: 1fr; } .donut-body { flex-direction: column; } .bar-value { text-align: left; } }
@@ -109,8 +132,7 @@
   <body>
     <header class="topbar">
       <div class="brand">
-        <button type="button" class="menu-btn" id="menuButton" aria-label="Mở menu chức năng">☰</button>
-        <div class="brand-mark">QL</div>
+        <img class="brand-logo" src="/logo-taxi-123.png" alt="TAXI123">
         <div style="min-width:0;">
           <h1>Trung tâm điều hành QLVT TAXI123</h1>
           <div class="updated" id="updatedAt">Đang tải dữ liệu...</div>
@@ -144,6 +166,7 @@
           </div>
         </div>
         <div class="table-wrap"><table id="reportTable"></table></div>
+        <div class="pagination" id="pagination"></div>
       </section>
     </main>
 
@@ -151,7 +174,8 @@
       const EXCELJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
       const FILE_SAVER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js';
       const palette = ['#2563eb', '#16a34a', '#f59e0b', '#7c3aed', '#ef4444', '#06b6d4'];
-      const state = { data: null, filters: {}, tab: 'nhan-su', loadingLibs: false };
+      const state = { data: null, filters: {}, tab: 'nhan-su', page: 1, pageSize: 25, loadingLibs: false };
+      const pageSizeOptions = [25, 50, 100];
       const mainFilterDefs = [
         ['donVi', 'Đơn vị'], ['doiXe', 'Đội xe'], ['loaiXe', 'Loại xe'], ['trangThaiXe', 'Trạng thái xe'],
         ['trangThaiNhanSu', 'Trạng thái nhân sự'], ['nhomCanhBao', 'Cảnh báo']
@@ -160,7 +184,7 @@
         ['loaiHopDong', 'Loại hợp đồng'], ['trangThaiHopDong', 'Trạng thái hợp đồng'], ['trangThaiBhxh', 'Trạng thái BHXH']
       ];
       const nhanSuColumns = [
-        ['stt', 'STT'], ['idNhanSu', 'ID nhân sự'], ['hoTen', 'Họ tên'], ['cccd', 'CCCD'], ['ngaySinh', 'Ngày sinh'],
+        ['stt', 'STT'], ['hoTen', 'Họ tên'], ['cccd', 'CCCD'], ['ngaySinh', 'Ngày sinh'],
         ['soDienThoai', 'Số điện thoại'], ['doiXe', 'Đội xe'], ['boPhan', 'Bộ phận'], ['chucDanh', 'Chức danh'],
         ['trangThaiLamViec', 'Trạng thái làm việc'], ['xeDangLai', 'Xe đang lái'], ['bienSoXe', 'Biển số xe'],
         ['loaiHopDong', 'Loại hợp đồng'], ['soHopDong', 'Số hợp đồng'], ['ngayKyHopDong', 'Ngày ký hợp đồng'],
@@ -170,7 +194,7 @@
         ['mucLuongDongBhxh', 'Mức lương đóng BHXH'], ['canhBao', 'Ghi chú cảnh báo']
       ];
       const xeColumns = [
-        ['stt', 'STT'], ['idXe', 'ID xe'], ['bienSo', 'Biển số'], ['maDam', 'Mã đàm'], ['tenDangKyXe', 'Tên đăng ký xe'],
+        ['stt', 'STT'], ['bienSo', 'Biển số'], ['maDam', 'Mã đàm'], ['tenDangKyXe', 'Tên đăng ký xe'],
         ['soKhung', 'Số khung'], ['soMay', 'Số máy'], ['nhanHieu', 'Nhãn hiệu'], ['loaiXe', 'Loại xe'], ['soCho', 'Số chỗ'],
         ['namSanXuat', 'Năm sản xuất'], ['mauSon', 'Màu sơn'], ['donViChuQuan', 'Đơn vị chủ quản'],
         ['donViQuanLyHienTai', 'Đơn vị quản lý hiện tại'], ['doiXe', 'Đội xe'], ['trangThaiXe', 'Trạng thái xe'],
@@ -179,6 +203,16 @@
         ['hanTaximet', 'Hạn taximet'], ['coTheChapKhong', 'Có thế chấp không'], ['nganHangTheChap', 'Ngân hàng thế chấp'],
         ['hanTheChap', 'Hạn thế chấp'], ['trangThaiKhoanVay', 'Trạng thái khoản vay'], ['kmLuyKe', 'Km lũy kế'],
         ['soChuyenThang', 'Số chuyến tháng'], ['canhBao', 'Ghi chú cảnh báo']
+      ];
+      const nhanSuReportColumns = [
+        ['stt', 'STT'], ['hoTen', 'Họ tên'], ['cccd', 'CCCD'], ['doiXe', 'Đội xe'],
+        ['chucDanh', 'Chức danh'], ['trangThaiLamViec', 'Trạng thái'], ['bienSoXe', 'Biển số'],
+        ['hanGplx', 'Hạn GPLX'], ['hanSucKhoe', 'Hạn sức khỏe'], ['canhBao', 'Cảnh báo']
+      ];
+      const xeReportColumns = [
+        ['stt', 'STT'], ['bienSo', 'Biển số'], ['maDam', 'Mã đàm'], ['loaiXe', 'Loại xe'],
+        ['doiXe', 'Đội xe'], ['trangThaiXe', 'Trạng thái'], ['laiXeDangLai', 'Lái xe'],
+        ['hanPhuHieu', 'Hạn phù hiệu'], ['hanDangKiem', 'Hạn đăng kiểm'], ['canhBao', 'Cảnh báo']
       ];
 
       function clean(value) { return value == null ? '' : String(value).trim(); }
@@ -194,10 +228,46 @@
       async function ensureExcelLibs() { if (window.ExcelJS && window.saveAs) return; if (state.loadingLibs) return; state.loadingLibs = true; await script(EXCELJS_URL); await script(FILE_SAVER_URL); state.loadingLibs = false; }
       function warningText(level) { return ({ do: 'Đỏ', vang: 'Vàng', xanh: 'Xanh', xam: 'Xám' })[level] || 'Xám'; }
       function filterOptionText(key, value) { return key === 'nhomCanhBao' ? warningText(value) : value; }
+      function skeleton(width = '100%', className = 'skeleton-line') {
+        return `<div class="skeleton ${className}" style="width:${width};"></div>`;
+      }
+      function renderLoadingState() {
+        document.getElementById('filtersMain').innerHTML = Array.from({ length: 8 }).map(() => `<label>${skeleton('70px', 'skeleton-label')}${skeleton('100%', 'skeleton-field')}</label>`).join('');
+        document.getElementById('filtersExtra').innerHTML = Array.from({ length: 3 }).map(() => `<label>${skeleton('96px', 'skeleton-label')}${skeleton('100%', 'skeleton-field')}</label>`).join('') +
+          `<div style="display:flex;gap:8px;">${skeleton('76px', 'skeleton-field')}${skeleton('76px', 'skeleton-field')}</div>`;
+        document.getElementById('kpis').innerHTML = Array.from({ length: 6 }).map(() => `
+          <div class="panel loading-card">
+            <div class="kpi-top">
+              <div class="loading-stack" style="width:70%;">
+                ${skeleton('80%')}
+                ${skeleton('56px', 'skeleton-line')}
+                ${skeleton('48%')}
+              </div>
+              ${skeleton('44px', 'skeleton-field')}
+            </div>
+            <div class="spark">${[42, 64, 48, 78, 58, 84].map((height) => `<span class="skeleton" style="height:${height}%"></span>`).join('')}</div>
+          </div>`).join('');
+        document.getElementById('structurePanels').innerHTML = Array.from({ length: 2 }).map(() => `
+          <section class="panel">
+            <div class="panel-head">${skeleton('160px')}${skeleton('92px')}</div>
+            <div class="donut-grid">
+              ${Array.from({ length: 2 }).map(() => `<div class="donut-card loading-chart">${skeleton('140px')}<div class="loading-chart-body">${skeleton('120px', 'loading-donut')}<div class="loading-stack" style="flex:1;">${skeleton('100%')}${skeleton('82%')}${skeleton('92%')}${skeleton('70%')}</div></div></div>`).join('')}
+            </div>
+          </section>`).join('');
+        document.getElementById('topPanels').innerHTML = Array.from({ length: 2 }).map(() => `
+          <section class="panel bar-panel">
+            <div class="panel-head">${skeleton('190px')}</div>
+            <div class="panel-body">${Array.from({ length: 6 }).map(() => `<div class="bar-row">${skeleton('130px')}${skeleton('100%')}${skeleton('52px')}</div>`).join('')}</div>
+          </section>`).join('');
+        document.getElementById('tableCount').textContent = 'Đang chuẩn bị dữ liệu báo cáo...';
+        document.getElementById('reportTable').innerHTML = `<tbody>${Array.from({ length: 8 }).map(() => `<tr><td colspan="10"><div class="loading-table-row">${Array.from({ length: 10 }).map(() => skeleton('100%')).join('')}</div></td></tr>`).join('')}</tbody>`;
+        document.getElementById('pagination').innerHTML = `<div>${skeleton('220px')}</div><div class="pager-actions">${skeleton('92px', 'skeleton-field')}${skeleton('38px', 'skeleton-field')}${skeleton('110px')}${skeleton('38px', 'skeleton-field')}</div>`;
+      }
 
       async function loadData() {
         showMessage('', '');
         document.getElementById('updatedAt').textContent = 'Đang tải dữ liệu...';
+        renderLoadingState();
         try {
           const response = await fetch('/api/dashboard-qlvt', { headers: { Accept: 'application/json' } });
           const text = await response.text();
@@ -222,9 +292,9 @@
           `<label><span>Đến tháng</span><input type="month" data-filter="denThang" value="${escapeHtml(state.filters.denThang || '')}"></label>`;
         document.getElementById('filtersExtra').innerHTML = extraFilterDefs.map(([key, label]) => selectHtml(key, label)).join('') +
           `<div style="display:flex;gap:8px;"><button type="button" id="applyFilters">Áp dụng</button><button type="button" class="secondary" id="clearFilters">Xóa lọc</button></div>`;
-        document.querySelectorAll('[data-filter]').forEach((input) => input.addEventListener('change', (event) => { state.filters[event.target.dataset.filter] = event.target.value; renderAll(); }));
+        document.querySelectorAll('[data-filter]').forEach((input) => input.addEventListener('change', (event) => { state.filters[event.target.dataset.filter] = event.target.value; state.page = 1; renderAll(); }));
         document.getElementById('applyFilters').addEventListener('click', () => showMessage('Đã áp dụng bộ lọc dashboard.', 'warn'));
-        document.getElementById('clearFilters').addEventListener('click', () => { state.filters = {}; renderAll(); });
+        document.getElementById('clearFilters').addEventListener('click', () => { state.filters = {}; state.page = 1; renderAll(); });
       }
 
       function parseMonthValue(value) {
@@ -253,15 +323,15 @@
         return (state.data?.reports?.nhanSu || []).filter((row) => match(row.donVi, state.filters.donVi) && match(row.doiXe, state.filters.doiXe) && match(row.trangThaiLamViec, state.filters.trangThaiNhanSu) && match(row.loaiHopDong, state.filters.loaiHopDong) && match(row.trangThaiHopDong, state.filters.trangThaiHopDong) && match(row.trangThaiBhxh, state.filters.trangThaiBhxh) && match(row.warningLevel, state.filters.nhomCanhBao) && matchMonthRange(row, ['ngayKyHopDong', 'ngayBatDau', 'ngayKetThuc', 'hanGplx', 'hanSucKhoe'])).map((row, index) => ({ ...row, stt: index + 1 }));
       }
       function filterXe() {
-        return (state.data?.reports?.xe || []).filter((row) => match(row.donViQuanLyHienTai, state.filters.donVi) && match(row.doiXe, state.filters.doiXe) && match(row.loaiXe, state.filters.loaiXe) && match(row.trangThaiXe, state.filters.trangThaiXe) && match(row.warningLevel, state.filters.nhomCanhBao) && matchMonthRange(row, ['hanPhuHieu', 'hanDangKiem', 'hanBaoHiemTnds', 'hanBaoHiemThanVo', 'hanTaximet', 'hanTheChap'])).map((row, index) => ({ ...row, stt: index + 1 }));
+        return (state.data?.reports?.xe || []).filter((row) => match(row.donViChuQuan, state.filters.donVi) && match(row.doiXe, state.filters.doiXe) && match(row.loaiXe, state.filters.loaiXe) && match(row.trangThaiXe, state.filters.trangThaiXe) && match(row.warningLevel, state.filters.nhomCanhBao) && matchMonthRange(row, ['hanPhuHieu', 'hanDangKiem', 'hanBaoHiemTnds', 'hanBaoHiemThanVo', 'hanTaximet', 'hanTheChap'])).map((row, index) => ({ ...row, stt: index + 1 }));
       }
       function countBy(rows, key) { const map = new Map(); rows.forEach((row) => { const label = clean(row[key]) || 'Chưa có dữ liệu'; map.set(label, (map.get(label) || 0) + 1); }); return [...map].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 6); }
       function donutBg(items) { const total = items.reduce((sum, item) => sum + Number(item.value || 0), 0); if (!total) return '#e2e8f0'; let current = 0; return `conic-gradient(${items.map((item, index) => { const start = current; current += Number(item.value || 0) / total * 360; return `${palette[index % palette.length]} ${start}deg ${current}deg`; }).join(', ')})`; }
-      function renderDonut(title, rows, key) {
+      function renderDonut(title, rows, key, icon) {
         const items = countBy(rows, key);
         const safeItems = items.length ? items : [{ label: 'Chưa có dữ liệu', value: 0 }];
         const total = safeItems.reduce((sum, item) => sum + Number(item.value || 0), 0);
-        return `<div class="donut-card"><div class="donut-title"><span>${title}</span><strong>${number(total)}</strong></div><div class="donut-body"><div class="donut" data-total="${number(total)}" style="background:${donutBg(safeItems)}"></div><div class="legend">${safeItems.map((item, index) => `<div class="legend-row"><span class="dot" style="background:${palette[index % palette.length]}"></span><span class="legend-label">${escapeHtml(item.label)}</span><strong>${number(item.value)}</strong></div>`).join('')}</div></div></div>`;
+        return `<div class="donut-card"><div class="donut-title"><span>${title}</span><strong>${number(total)}</strong></div><div class="donut-body"><div class="donut" style="background:${donutBg(safeItems)}"><div class="donut-inner">${iconSvg(icon)}<span class="donut-total">${number(total)}</span></div></div><div class="legend">${safeItems.map((item, index) => `<div class="legend-row"><span class="dot" style="background:${palette[index % palette.length]}"></span><span class="legend-label">${escapeHtml(item.label)}</span><strong>${number(item.value)}</strong></div>`).join('')}</div></div></div>`;
       }
       function renderPanel(title, totalLabel, body) { return `<section class="panel"><div class="panel-head"><h2>${title}</h2><span class="total-pill">${totalLabel}</span></div><div class="donut-grid">${body}</div></section>`; }
       function topRows(rows, key) { return [...rows].map((row) => ({ label: row.bienSo || row.idXe || 'Chưa có dữ liệu', value: numeric(row[key]) })).sort((a, b) => b.value - a.value).slice(0, 10); }
@@ -271,25 +341,52 @@
         return `<section class="panel bar-panel"><div class="panel-head"><h2>${title}</h2></div><div class="panel-body">${safeRows.map((item, index) => `<div class="bar-row"><span class="bar-label">${escapeHtml(item.label)}</span><div class="bar-track"><div class="bar-fill" style="width:${max ? Math.max(5, Math.round(item.value / max * 100)) : 0}%;background:${palette[index % palette.length]}"></div></div><span class="bar-value">${number(item.value)} ${unit}</span></div>`).join('')}</div></section>`;
       }
 
+      function iconSvg(name) {
+        const paths = {
+          users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+          briefcase: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/><path d="M2 13h20"/>',
+          alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+          car: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18.4 5.6A2 2 0 0 0 16.5 4h-9A2 2 0 0 0 5.6 5.6L3.5 11.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+          gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/><path d="M12 20h.01"/>'
+        };
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.alert}</svg>`;
+      }
+
       function renderKpis(nhanSu, xe) {
         const nsActive = nhanSu.filter((item) => clean(item.trangThaiLamViec) && !normalize(item.trangThaiLamViec).includes('nghi')).length;
         const xeActive = xe.filter((item) => clean(item.trangThaiXe) && !normalize(item.trangThaiXe).includes('ngung')).length;
         const cards = [
-          ['Tổng nhân sự', nhanSu.length, 'Theo bộ lọc', 'NS', 'tone-blue', [45,70,50,82,62,78]],
-          ['Đang làm việc', nsActive, percent(nsActive, nhanSu.length), 'LV', 'tone-green', [35,52,68,58,76,84]],
-          ['Nghỉ việc', nhanSu.length - nsActive, percent(nhanSu.length - nsActive, nhanSu.length), 'NV', 'tone-amber', [25,42,36,55,32,44]],
-          ['Tổng số xe', xe.length, 'Theo bộ lọc', 'XE', 'tone-violet', [52,48,63,72,66,80]],
-          ['Xe hoạt động', xeActive, percent(xeActive, xe.length), 'HD', 'tone-cyan', [38,58,74,61,83,90]],
-          ['Xe ngừng', xe.length - xeActive, percent(xe.length - xeActive, xe.length), 'NG', 'tone-red', [18,30,24,36,28,42]]
+          ['Tổng nhân sự', nhanSu.length, 'Theo bộ lọc', 'users', 'tone-blue', [45,70,50,82,62,78]],
+          ['Đang làm việc', nsActive, percent(nsActive, nhanSu.length), 'briefcase', 'tone-green', [35,52,68,58,76,84]],
+          ['Nghỉ việc', nhanSu.length - nsActive, percent(nhanSu.length - nsActive, nhanSu.length), 'alert', 'tone-amber', [25,42,36,55,32,44]],
+          ['Tổng số xe', xe.length, 'Theo bộ lọc', 'car', 'tone-violet', [52,48,63,72,66,80]],
+          ['Xe hoạt động', xeActive, percent(xeActive, xe.length), 'gauge', 'tone-cyan', [38,58,74,61,83,90]],
+          ['Xe ngừng', xe.length - xeActive, percent(xe.length - xeActive, xe.length), 'alert', 'tone-red', [18,30,24,36,28,42]]
         ];
-        document.getElementById('kpis').innerHTML = cards.map(([label, value, hint, icon, tone, bars]) => `<div class="panel kpi"><div class="kpi-top"><div><div class="kpi-label">${label}</div><div class="kpi-value">${number(value)}</div><div class="kpi-hint">${hint}</div></div><div class="kpi-icon ${tone}">${icon}</div></div><div class="spark">${bars.map((height) => `<span style="height:${height}%"></span>`).join('')}</div></div>`).join('');
+        document.getElementById('kpis').innerHTML = cards.map(([label, value, hint, icon, tone, bars]) => `<div class="panel kpi"><div class="kpi-top"><div><div class="kpi-label">${label}</div><div class="kpi-value">${number(value)}</div><div class="kpi-hint">${hint}</div></div><div class="kpi-icon ${tone}">${iconSvg(icon)}</div></div><div class="spark">${bars.map((height) => `<span style="height:${height}%"></span>`).join('')}</div></div>`).join('');
       }
 
       function renderTable(rows, columns) {
-        const shownColumns = columns.slice(0, 10);
-        const head = `<thead><tr><th>Mức</th>${shownColumns.map(([, label]) => `<th>${label}</th>`).join('')}</tr></thead>`;
-        const body = rows.slice(0, 40).map((row) => `<tr><td><span class="badge ${row.warningLevel || 'xam'}">${warningText(row.warningLevel)}</span></td>${shownColumns.map(([key]) => `<td>${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:28px;">Không có dữ liệu phù hợp bộ lọc.</td></tr>`;
+        const shownColumns = columns;
+        const totalPages = Math.max(1, Math.ceil(rows.length / state.pageSize));
+        state.page = Math.min(Math.max(state.page, 1), totalPages);
+        const start = rows.length ? (state.page - 1) * state.pageSize : 0;
+        const end = Math.min(start + state.pageSize, rows.length);
+        const pageRows = rows.slice(start, end);
+        const head = `<thead><tr>${shownColumns.map(([, label]) => `<th>${label}</th>`).join('')}</tr></thead>`;
+        const body = pageRows.map((row) => `<tr>${shownColumns.map(([key]) => key === 'canhBao' ? `<td><div class="warning-cell"><span class="badge ${row.warningLevel || 'xam'}">${warningText(row.warningLevel)}</span><span>${escapeHtml(row[key])}</span></div></td>` : `<td>${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${shownColumns.length}" style="text-align:center;color:var(--muted);padding:28px;">Không có dữ liệu phù hợp bộ lọc.</td></tr>`;
         document.getElementById('reportTable').innerHTML = head + `<tbody>${body}</tbody>`;
+        document.getElementById('pagination').innerHTML = `
+          <div>${rows.length ? `Hiển thị ${number(start + 1)}-${number(end)} / ${number(rows.length)} dòng` : 'Không có dòng để hiển thị'}</div>
+          <div class="pager-actions">
+            <label>Dòng/trang <select id="pageSizeSelect">${pageSizeOptions.map((value) => `<option value="${value}" ${state.pageSize === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+            <button type="button" id="prevPage" ${state.page <= 1 ? 'disabled' : ''} aria-label="Trang trước">&lsaquo;</button>
+            <span class="pager-page">Trang ${number(state.page)} / ${number(totalPages)}</span>
+            <button type="button" id="nextPage" ${state.page >= totalPages ? 'disabled' : ''} aria-label="Trang sau">&rsaquo;</button>
+          </div>`;
+        document.getElementById('pageSizeSelect').addEventListener('change', (event) => { state.pageSize = Number(event.target.value); state.page = 1; renderAll(); });
+        document.getElementById('prevPage').addEventListener('click', () => { state.page = Math.max(1, state.page - 1); renderAll(); });
+        document.getElementById('nextPage').addEventListener('click', () => { state.page = Math.min(totalPages, state.page + 1); renderAll(); });
       }
 
       function renderAll() {
@@ -298,12 +395,12 @@
         renderFilters();
         renderKpis(nhanSu, xe);
         document.getElementById('structurePanels').innerHTML =
-          renderPanel('Cơ cấu nhân sự', `${number(nhanSu.length)} nhân sự`, renderDonut('Nhân sự theo trạng thái', nhanSu, 'trangThaiLamViec') + renderDonut('Nhân sự theo chức danh', nhanSu, 'chucDanh')) +
-          renderPanel('Cơ cấu đội xe', `${number(xe.length)} xe`, renderDonut('Xe theo trạng thái', xe, 'trangThaiXe') + renderDonut('Xe theo loại', xe, 'loaiXe'));
+          renderPanel('Cơ cấu nhân sự', `${number(nhanSu.length)} nhân sự`, renderDonut('Nhân sự theo trạng thái', nhanSu, 'trangThaiLamViec', 'users') + renderDonut('Nhân sự theo chức danh', nhanSu, 'chucDanh', 'briefcase')) +
+          renderPanel('Cơ cấu đội xe', `${number(xe.length)} xe`, renderDonut('Xe theo trạng thái', xe, 'trangThaiXe', 'car') + renderDonut('Xe theo loại', xe, 'loaiXe', 'gauge'));
         document.getElementById('topPanels').innerHTML = renderTopPanel('Top 10 xe chạy nhiều km nhất', topRows(xe, 'kmLuyKe'), 'km') + renderTopPanel('Top 10 xe có nhiều chuyến nhất', topRows(xe, 'soChuyenThang'), 'chuyến');
         const rows = state.tab === 'xe' ? xe : nhanSu;
-        document.getElementById('tableCount').textContent = `Đang hiển thị ${number(rows.length)} dòng. Excel xuất toàn bộ dữ liệu đang lọc.`;
-        renderTable(rows, state.tab === 'xe' ? xeColumns : nhanSuColumns);
+        document.getElementById('tableCount').textContent = `Có ${number(rows.length)} dòng sau lọc. Excel xuất toàn bộ dữ liệu đang lọc.`;
+        renderTable(rows, state.tab === 'xe' ? xeReportColumns : nhanSuReportColumns);
       }
 
       async function exportExcel(type) {
@@ -324,11 +421,10 @@
         saveAs(blob, `${type === 'xe' ? 'Bao_cao_phuong_tien' : 'Bao_cao_nhan_su'}_QLVT_${new Date().toISOString().slice(0, 10)}.xlsx`);
       }
 
-      document.getElementById('menuButton').addEventListener('click', () => { window.location.href = '/menu'; });
       document.getElementById('refreshButton').addEventListener('click', loadData);
       document.getElementById('exportNhanSuButton').addEventListener('click', () => exportExcel('nhan-su'));
       document.getElementById('exportXeButton').addEventListener('click', () => exportExcel('xe'));
-      document.querySelectorAll('.tab').forEach((button) => button.addEventListener('click', () => { state.tab = button.dataset.tab; document.querySelectorAll('.tab').forEach((item) => item.classList.toggle('active', item === button)); renderAll(); }));
+      document.querySelectorAll('.tab').forEach((button) => button.addEventListener('click', () => { state.tab = button.dataset.tab; state.page = 1; document.querySelectorAll('.tab').forEach((item) => item.classList.toggle('active', item === button)); renderAll(); }));
       loadData();
     </script>
   </body>

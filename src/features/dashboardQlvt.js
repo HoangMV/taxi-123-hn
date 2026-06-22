@@ -2,7 +2,6 @@ import { parseDateValue } from '../lib/dateFormat';
 
 export const NHAN_SU_COLUMNS = [
   ['stt', 'STT'],
-  ['idNhanSu', 'ID nhân sự'],
   ['hoTen', 'Họ tên'],
   ['cccd', 'CCCD'],
   ['ngaySinh', 'Ngày sinh'],
@@ -32,7 +31,6 @@ export const NHAN_SU_COLUMNS = [
 
 export const XE_COLUMNS = [
   ['stt', 'STT'],
-  ['idXe', 'ID xe'],
   ['bienSo', 'Biển số'],
   ['maDam', 'Mã đàm'],
   ['tenDangKyXe', 'Tên đăng ký xe'],
@@ -163,7 +161,7 @@ export function filterNhanSuRows(rows, filters) {
 
 export function filterXeRows(rows, filters) {
   return (Array.isArray(rows) ? rows : []).filter((row) => (
-    matchesText(row.donViQuanLyHienTai, filters.donVi) &&
+    matchesText(row.donViChuQuan, filters.donVi) &&
     matchesText(row.doiXe, filters.doiXe) &&
     matchesText(row.loaiXe, filters.loaiXe) &&
     matchesText(row.trangThaiXe, filters.trangThaiXe) &&

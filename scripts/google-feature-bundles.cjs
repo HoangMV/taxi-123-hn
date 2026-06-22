@@ -395,7 +395,7 @@ function buildDashboardReport(tables, missingSources) {
     const sucKhoe = pickCurrentRow(sucKhoeByNhanSu.get(nhanSuId), { dateFields: ['NgayHetHan', 'NgayKham'] });
     const phanCong = pickCurrentRow(phanCongByNhanSu.get(nhanSuId), { dateFields: ['NgayBatDau', 'NgayKetThuc'] });
     const xe = xeById.get(cleanValue(phanCong?.Ref_Xe)) || xeById.get(cleanValue(nhanSu.Ref_XeHienTai));
-    const donVi = donViById.get(cleanValue(nhanSu.Ref_DonViLamViecHienTai)) || donViById.get(cleanValue(nhanSu.Ref_DonViDuocCapPH));
+    const donVi = donViById.get(cleanValue(nhanSu.Ref_DonViDuocCapPH));
     const boPhan = boPhanById.get(cleanValue(nhanSu.Ref_BoPhan));
     const chucDanh = chucDanhById.get(cleanValue(nhanSu.Ref_ChucDanh)) || chucDanhById.get(cleanValue(hopDong?.Ref_ChucDanh));
     const doiXeRef = cleanValue(nhanSu.Ref_DoiXe);
@@ -531,7 +531,7 @@ function buildDashboardReport(tables, missingSources) {
       canhBaoXam: warnings.filter((item) => item.level === 'xam').length
     },
     filters: {
-      donVi: uniqueValues([...nhanSuReport.map((item) => item.donVi), ...xeReport.map((item) => item.donViQuanLyHienTai)]),
+      donVi: uniqueValues([...nhanSuReport.map((item) => item.donVi), ...xeReport.map((item) => item.donViChuQuan)]),
       doiXe: sortDoiXeValues([...nhanSuReport.map((item) => item.doiXe), ...xeReport.map((item) => item.doiXe)]),
       loaiXe: uniqueValues(xeReport.map((item) => item.loaiXe)),
       trangThaiXe: uniqueValues(xeReport.map((item) => item.trangThaiXe)),

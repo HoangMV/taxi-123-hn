@@ -139,6 +139,8 @@ Một số dòng `XE_BANGIAO` hiện có snapshot lái xe bị lệch sau cột 
 | `XE` | `Ref_DonViChuQuan`, `Ref_DonViQuanLyHienTai` | `DONVI` | `ID_DonVi` | `TenDonVi`, dự phòng `TenVietTat`, `Display` | Đã xác minh qua schema |
 | `XE` | `Ref_DoiXe` | `DM_DOIXE` | `ID_DoiXe` | `TenDoiXe`, dự phòng `MaDoiXe`, `Display` | Cần kiểm tra thêm nếu schema bị Google quota |
 | `XE` | đội xe suy từ lái xe hiện tại | `LOG_GAN_DOIXE_NHANSU` | `Ref_DoiXe_Moi`, dự phòng `Ref_DoiXe_Cu` | `TenDoiXe`, dự phòng `Xa_Truoc` | Dùng khi `XE.Ref_DoiXe` trống nhưng lái xe có `NHANSU.Ref_DoiXe` mã cũ |
+
+Với dashboard QLVT, bộ lọc `Đơn vị` dùng `NHANSU.Ref_DonViDuocCapPH` cho nhân sự và `XE.Ref_DonViChuQuan` cho phương tiện.
 | `XE_PHUHIEU` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
 | `XE_DANGKIEM` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Cần kiểm tra thêm nếu schema bị Google quota |
 | `XE_BAOHIEM` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |

@@ -3,17 +3,16 @@ import {
   AlertTriangle,
   BriefcaseBusiness,
   Car,
+  ChevronLeft,
+  ChevronRight,
   Download,
   FileSpreadsheet,
   Gauge,
   Loader2,
-  Menu,
   RefreshCw,
-  ShieldCheck,
   UserCircle,
   Users
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -28,6 +27,7 @@ import {
 } from '../features/dashboardQlvt';
 
 const chartPalette = ['#2563eb', '#16a34a', '#f59e0b', '#7c3aed', '#ef4444', '#06b6d4'];
+const PAGE_SIZE_OPTIONS = [25, 50, 100];
 const warningLabels = { do: 'Đỏ', vang: 'Vàng', xanh: 'Xanh', xam: 'Xám' };
 const warningClasses = {
   do: 'border-red-200 bg-red-50 text-red-700',
@@ -194,13 +194,140 @@ function TopBarChart({ title, rows, unit }) {
 function WarningBadge({ level }) {
   const cleanLevel = level || 'xam';
   return (
-    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-bold ${warningClasses[cleanLevel] || warningClasses.xam}`}>
+    <span className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-bold ${warningClasses[cleanLevel] || warningClasses.xam}`}>
       {warningLabels[cleanLevel] || 'Xám'}
     </span>
   );
 }
 
-function DataTable({ type, rows }) {
+function LoadingLine({ className = '', style }) {
+  return <div className={`animate-pulse rounded bg-slate-200 ${className}`} style={style} />;
+}
+
+function LoadingDashboard() {
+  return (
+    <div className="-mx-4 -my-6 min-h-full bg-slate-100 lg:-mx-8">
+      <div className="bg-[#0b2d5c] px-4 py-4 text-white shadow-sm lg:px-8">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <img className="h-[52px] w-[52px] shrink-0 rounded-full object-cover" src="/logo-taxi-123.png" alt="TAXI123" />
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-bold tracking-normal text-white">Trung tâm điều hành QLVT TAXI123</h1>
+              <div className="mt-1 flex items-center gap-2 text-sm font-medium text-blue-100">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Đang tải dữ liệu dashboard...
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <LoadingLine className="h-9 w-24 bg-white/20" />
+            <LoadingLine className="h-9 w-32 bg-white/20" />
+            <LoadingLine className="h-9 w-36 bg-white/20" />
+            <LoadingLine className="hidden h-9 w-9 rounded-full bg-white/20 sm:block" />
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 pb-8 lg:px-8">
+        <section className="-mt-1 rounded-b-lg border border-t-0 border-slate-200 bg-white p-4 shadow-sm">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-8">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={`filter-${index}`} className="space-y-2">
+                <LoadingLine className="h-3 w-20" />
+                <LoadingLine className="h-9 w-full rounded-md" />
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-slate-100 pt-3">
+            <div className="grid flex-1 gap-3 md:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={`extra-filter-${index}`} className="space-y-2">
+                  <LoadingLine className="h-3 w-28" />
+                  <LoadingLine className="h-9 w-full rounded-md" />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <LoadingLine className="h-10 w-20 rounded-md" />
+              <LoadingLine className="h-10 w-20 rounded-md" />
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={`metric-${index}`} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="w-full space-y-3">
+                  <LoadingLine className="h-4 w-28" />
+                  <LoadingLine className="h-8 w-20" />
+                  <LoadingLine className="h-3 w-16" />
+                </div>
+                <LoadingLine className="h-11 w-11 rounded-full" />
+              </div>
+              <div className="mt-4 flex h-9 items-end gap-2">
+                {[36, 58, 44, 76, 62, 82].map((height, barIndex) => (
+                  <LoadingLine key={`metric-${index}-bar-${barIndex}`} className="flex-1 rounded-t" style={{ height: `${height}%` }} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="mt-5 grid gap-5 xl:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={`chart-${index}`} className="rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <LoadingLine className="h-5 w-36" />
+                <LoadingLine className="h-7 w-24 rounded-full" />
+              </div>
+              <div className="grid gap-4 p-4 md:grid-cols-2">
+                {Array.from({ length: 2 }).map((__, cardIndex) => (
+                  <div key={`chart-${index}-${cardIndex}`} className="rounded-md border border-slate-100 bg-slate-50 p-4">
+                    <div className="mb-4 flex items-center justify-between">
+                      <LoadingLine className="h-4 w-32" />
+                      <LoadingLine className="h-5 w-5 rounded-full" />
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <LoadingLine className="h-28 w-28 rounded-full" />
+                      <div className="grid flex-1 gap-3">
+                        {Array.from({ length: 4 }).map((___, rowIndex) => <LoadingLine key={`legend-${rowIndex}`} className="h-3 w-full" />)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="mt-5 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <LoadingLine className="h-5 w-52" />
+              <LoadingLine className="h-4 w-72 max-w-full" />
+            </div>
+            <LoadingLine className="h-12 w-56 rounded-md" />
+          </div>
+          <div className="p-4">
+            <div className="overflow-hidden rounded-md border border-slate-200">
+              <div className="grid grid-cols-10 gap-3 bg-slate-50 px-3 py-3">
+                {Array.from({ length: 10 }).map((_, index) => <LoadingLine key={`head-${index}`} className="h-4" />)}
+              </div>
+              {Array.from({ length: 8 }).map((_, rowIndex) => (
+                <div key={`row-${rowIndex}`} className="grid grid-cols-10 gap-3 border-t border-slate-100 px-3 py-4">
+                  {Array.from({ length: 10 }).map((__, cellIndex) => <LoadingLine key={`row-${rowIndex}-${cellIndex}`} className="h-4" />)}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function DataTable({ type, rows, page, pageSize, onPageChange, onPageSizeChange }) {
   const columns = type === 'nhan-su'
     ? [
       ['stt', 'STT'], ['hoTen', 'Họ tên'], ['cccd', 'CCCD'], ['doiXe', 'Đội xe'],
@@ -213,39 +340,78 @@ function DataTable({ type, rows }) {
       ['hanPhuHieu', 'Hạn phù hiệu'], ['hanDangKiem', 'Hạn đăng kiểm'], ['canhBao', 'Cảnh báo']
     ];
 
+  const totalRows = rows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const safePage = Math.min(Math.max(page, 1), totalPages);
+  const startIndex = totalRows ? (safePage - 1) * pageSize : 0;
+  const endIndex = Math.min(startIndex + pageSize, totalRows);
+  const pageRows = rows.slice(startIndex, endIndex);
+
   return (
-    <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
-      <table className="min-w-full text-left text-sm">
-        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-          <tr>
-            <th className="w-20 px-3 py-3">Mức</th>
-            {columns.map(([, label]) => <th key={label} className="whitespace-nowrap px-3 py-3 font-bold">{label}</th>)}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {rows.slice(0, 30).map((row) => (
-            <tr key={`${type}-${row.stt}-${row.idNhanSu || row.idXe}`} className="align-top hover:bg-slate-50">
-              <td className="px-3 py-3"><WarningBadge level={row.warningLevel} /></td>
-              {columns.map(([key]) => (
-                <td key={key} className="max-w-[240px] px-3 py-3 text-slate-700">
-                  <span className="line-clamp-2">{row[key] || ''}</span>
-                </td>
-              ))}
-            </tr>
-          ))}
-          {rows.length === 0 && (
+    <div className="rounded-md border border-slate-200 bg-white">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <td colSpan={columns.length + 1} className="px-3 py-8 text-center text-sm text-slate-500">Không có dữ liệu phù hợp bộ lọc.</td>
+              {columns.map(([, label]) => <th key={label} className="whitespace-nowrap px-3 py-3 font-bold">{label}</th>)}
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {pageRows.map((row) => (
+              <tr key={`${type}-${row.stt}-${row.idNhanSu || row.idXe}`} className="align-top hover:bg-slate-50">
+                {columns.map(([key]) => (
+                  <td key={key} className="max-w-[240px] px-3 py-3 text-slate-700">
+                    {key === 'canhBao' ? (
+                      <div className="flex min-w-40 flex-col items-start gap-1">
+                        <WarningBadge level={row.warningLevel} />
+                        <span className="line-clamp-2">{row[key] || ''}</span>
+                      </div>
+                    ) : (
+                      <span className="line-clamp-2">{row[key] || ''}</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={columns.length} className="px-3 py-8 text-center text-sm text-slate-500">Không có dữ liệu phù hợp bộ lọc.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-col gap-3 border-t border-slate-100 px-3 py-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+        <div className="font-semibold">
+          {totalRows > 0
+            ? `Hiển thị ${formatNumber(startIndex + 1)}-${formatNumber(endIndex)} / ${formatNumber(totalRows)} dòng`
+            : 'Không có dòng để hiển thị'}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+            Dòng/trang
+            <select
+              className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm font-semibold normal-case tracking-normal text-slate-700"
+              value={pageSize}
+              onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            >
+              {PAGE_SIZE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+          <Button type="button" variant="secondary" className="h-9 px-2" onClick={() => onPageChange(safePage - 1)} disabled={safePage <= 1}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="min-w-24 text-center font-bold text-slate-700">Trang {formatNumber(safePage)} / {formatNumber(totalPages)}</span>
+          <Button type="button" variant="secondary" className="h-9 px-2" onClick={() => onPageChange(safePage + 1)} disabled={safePage >= totalPages}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
 
 const DashboardPage = () => {
-  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [activeTab, setActiveTab] = useState('nhan-su');
@@ -253,6 +419,8 @@ const DashboardPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState('');
   const [error, setError] = useState('');
+  const [tablePage, setTablePage] = useState(1);
+  const [tablePageSize, setTablePageSize] = useState(25);
 
   async function loadDashboard(isRefresh = false) {
     if (isRefresh) setRefreshing(true);
@@ -272,6 +440,14 @@ const DashboardPage = () => {
 
   const filteredNhanSu = useMemo(() => filterNhanSuRows(data?.reports?.nhanSu || [], filters), [data, filters]);
   const filteredXe = useMemo(() => filterXeRows(data?.reports?.xe || [], filters), [data, filters]);
+  const activeRows = activeTab === 'nhan-su' ? filteredNhanSu : filteredXe;
+  const totalTablePages = Math.max(1, Math.ceil(activeRows.length / tablePageSize));
+
+  useEffect(() => { setTablePage(1); }, [activeTab, filters, tablePageSize]);
+  useEffect(() => {
+    if (tablePage > totalTablePages) setTablePage(totalTablePages);
+  }, [tablePage, totalTablePages]);
+
   const summary = useMemo(() => {
     const nhanSuDangLamViec = filteredNhanSu.filter((item) => item.trangThaiLamViec && !item.trangThaiLamViec.toLowerCase().includes('nghỉ')).length;
     const xeHoatDong = filteredXe.filter((item) => item.trangThaiXe && !item.trangThaiXe.toLowerCase().includes('ngừng')).length;
@@ -290,6 +466,10 @@ const DashboardPage = () => {
 
   function setFilter(key, value) {
     setFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function setActiveReportTab(tab) {
+    setActiveTab(tab);
   }
 
   async function exportExcel(type) {
@@ -314,14 +494,7 @@ const DashboardPage = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center rounded-md border border-slate-200 bg-white">
-        <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-          Đang tải dashboard QLVT...
-        </div>
-      </div>
-    );
+    return <LoadingDashboard />;
   }
 
   return (
@@ -329,12 +502,7 @@ const DashboardPage = () => {
       <div className="bg-[#0b2d5c] px-4 py-4 text-white shadow-sm lg:px-8">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <button type="button" onClick={() => navigate('/menu')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/10 text-white hover:bg-white/20" aria-label="Mở menu chức năng">
-              <Menu className="h-5 w-5" />
-            </button>
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-blue-800">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
+            <img className="h-[52px] w-[52px] shrink-0 rounded-full object-cover" src="/logo-taxi-123.png" alt="TAXI123" />
             <div className="min-w-0">
               <h1 className="truncate text-xl font-bold tracking-normal text-white">Trung tâm điều hành QLVT TAXI123</h1>
               <p className="mt-0.5 text-sm font-medium text-blue-100">Cập nhật: {updatedAt}</p>
@@ -426,16 +594,23 @@ const DashboardPage = () => {
             <div>
               <h2 className="text-base font-bold text-slate-950">Tra cứu và báo cáo tổng hợp</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Đang hiển thị {activeTab === 'nhan-su' ? formatNumber(filteredNhanSu.length) : formatNumber(filteredXe.length)} dòng. Excel xuất toàn bộ dữ liệu đang lọc.
+                Có {formatNumber(activeRows.length)} dòng sau lọc. Excel xuất toàn bộ dữ liệu đang lọc.
               </p>
             </div>
             <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-1">
-              <button type="button" onClick={() => setActiveTab('nhan-su')} className={`rounded px-3 py-1.5 text-sm font-bold ${activeTab === 'nhan-su' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}>Nhân sự</button>
-              <button type="button" onClick={() => setActiveTab('xe')} className={`rounded px-3 py-1.5 text-sm font-bold ${activeTab === 'xe' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}>Phương tiện</button>
+              <button type="button" onClick={() => setActiveReportTab('nhan-su')} className={`rounded px-3 py-1.5 text-sm font-bold ${activeTab === 'nhan-su' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}>Nhân sự</button>
+              <button type="button" onClick={() => setActiveReportTab('xe')} className={`rounded px-3 py-1.5 text-sm font-bold ${activeTab === 'xe' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}>Phương tiện</button>
             </div>
           </div>
           <div className="p-4">
-            <DataTable type={activeTab} rows={activeTab === 'nhan-su' ? filteredNhanSu : filteredXe} />
+            <DataTable
+              type={activeTab}
+              rows={activeRows}
+              page={tablePage}
+              pageSize={tablePageSize}
+              onPageChange={setTablePage}
+              onPageSizeChange={setTablePageSize}
+            />
           </div>
         </section>
       </div>
