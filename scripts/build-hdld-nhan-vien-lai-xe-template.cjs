@@ -84,27 +84,11 @@ if (index < 146) {
   throw new Error(`File mẫu chỉ có ${index} text node, thấp hơn số node cần thay.`);
 }
 
-function buildSignatureNameParagraph(tag) {
-  return [
-    '<w:p>',
-    '<w:pPr>',
-    '<w:spacing w:before="1200" w:after="0" w:line="259" w:lineRule="auto"/>',
-    '<w:contextualSpacing w:val="0"/>',
-    '<w:jc w:val="center"/>',
-    '<w:rPr><w:b/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>',
-    '</w:pPr>',
-    '<w:r><w:rPr><w:b/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>',
-    `<w:t>${tag}</w:t>`,
-    '</w:r>',
-    '</w:p>'
-  ].join('');
-}
-
-function normalizeSignatureCell(cell, tag) {
+function normalizeSignatureLabelOnlyCell(cell) {
   const cellProperties = cell.match(/<w:tcPr>[\s\S]*?<\/w:tcPr>/)?.[0] || '';
   const paragraphs = [...cell.matchAll(/<w:p[\s\S]*?<\/w:p>/g)].map((match) => match[0]);
   if (paragraphs.length < 2) return cell;
-  return `<w:tc>${cellProperties}${paragraphs[0]}${paragraphs[1]}${buildSignatureNameParagraph(tag)}</w:tc>`;
+  return `<w:tc>${cellProperties}${paragraphs[0]}${paragraphs[1]}</w:tc>`;
 }
 
 function normalizeSignatureTable(xml) {
@@ -116,8 +100,8 @@ function normalizeSignatureTable(xml) {
   if (cells.length < 2) return xml;
 
   const nextTable = table
-    .replace(cells[0], normalizeSignatureCell(cells[0], '{ho_ten_nguoi_ky}'))
-    .replace(cells[1], normalizeSignatureCell(cells[1], '{ho_ten_nhan_su}'));
+    .replace(cells[0], normalizeSignatureLabelOnlyCell(cells[0]))
+    .replace(cells[1], normalizeSignatureLabelOnlyCell(cells[1]));
   return xml.replace(table, nextTable);
 }
 

@@ -14,7 +14,7 @@ import {
   getHdldNhanVienLaiXeIdFromSearch
 } from '../features/hdldNhanVienLaiXe';
 
-const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=sign-name-20260621';
+const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=no-signature-names-20260622';
 
 function normalizeDocxZipEntryNames(zip, PizZip) {
   const normalizedZip = new PizZip();
@@ -384,8 +384,8 @@ const HdldNhanVienLaiXePage = () => {
                       <td><div className="hdld-sign-space" /></td>
                     </tr>
                     <tr>
-                      <td className="hdld-bold">{payload.hoTenNguoiKy}</td>
-                      <td className="hdld-bold">{payload.hoTenNhanSu}</td>
+                      <td className="hdld-bold" />
+                      <td className="hdld-bold" />
                     </tr>
                   </tbody>
                 </table>

@@ -459,7 +459,7 @@
             <table class="sign-table">
               <tr><td><div class="sign-title">Người sử dụng lao động</div><div class="sign-note">(Ký, ghi rõ họ tên)</div></td><td><div class="sign-title">Người lao động</div><div class="sign-note">(Ký, ghi rõ họ tên)</div></td></tr>
               <tr><td><div class="sign-space"></div></td><td><div class="sign-space"></div></td></tr>
-              <tr><td class="bold">${payload.hoTenNguoiKy || ''}</td><td class="bold">${payload.hoTenNhanSu || ''}</td></tr>
+              <tr><td class="bold"></td><td class="bold"></td></tr>
             </table>
           </div>
         `;
@@ -469,7 +469,7 @@
         if (!currentPayload) return;
         exportButton.disabled = true;
         try {
-          const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=sign-name-20260621');
+          const response = await fetch('/hdld_nhan_vien_lai_xe_template.docx?v=no-signature-names-20260622');
           if (!response.ok) throw new Error('Không thể tải template Word.');
           const content = await response.arrayBuffer();
           const sourceZip = new PizZip(content);
