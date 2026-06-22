@@ -14,7 +14,7 @@ import {
   getHdldNhanVienLaiXeIdFromSearch
 } from '../features/hdldNhanVienLaiXe';
 
-const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=no-signature-names-20260622';
+const TEMPLATE_URL = '/hdld_nhan_vien_lai_xe_template.docx?v=preview-match-word-20260622';
 
 function normalizeDocxZipEntryNames(zip, PizZip) {
   const normalizedZip = new PizZip();
@@ -53,6 +53,7 @@ const previewStyles = `
   .hdld-line { margin: 3px 0; }
   .hdld-section { margin-top: 8px; }
   .hdld-indent { padding-left: 24px; }
+  .hdld-subtitle { margin-top: 4px; font-weight: 700; }
   .hdld-sign-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 24px; }
   .hdld-sign-table td { text-align: center; vertical-align: top; }
   .hdld-sign-title { font-weight: 700; text-transform: uppercase; }
@@ -320,51 +321,126 @@ const HdldNhanVienLaiXePage = () => {
               <div className="hdld-page">
                 <div className="hdld-center hdld-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
                 <div className="hdld-center hdld-bold">Độc lập - Tự do - Hạnh phúc</div>
+                <div className="hdld-center">-----o0o-----</div>
 
                 <div className="hdld-title">HỢP ĐỒNG LAO ĐỘNG</div>
                 <div className="hdld-center">Số: {payload.soHopDong || '...'}</div>
 
+                <div className="hdld-section">
+                  <div className="hdld-line">Căn cứ:</div>
+                  <div className="hdld-line">- Bộ luật Lao động số 45/2019/QH14 ngày 20/11/2019;</div>
+                  <div className="hdld-line">- Căn cứ Nội quy lao động của Công ty có hiệu lực từ ngày 31/05/2026;</div>
+                  <div className="hdld-line">- Căn cứ nhu cầu và năng lực của hai bên;</div>
+                </div>
+
                 <div className="hdld-row">
-                  Hôm nay, ngày {payload.ngayKy.day || '...'} tháng {payload.ngayKy.month || '...'} năm {payload.ngayKy.year || '...'} tại {payload.tenDonVi || '................................'}, chúng tôi gồm:
+                  Hôm nay, ngày {payload.ngayKy.day || '...'} tháng {payload.ngayKy.month || '...'} năm {payload.ngayKy.year || '...'}, tại {payload.tenDonVi || '................................'}, chúng tôi gồm:
                 </div>
 
                 <div className="hdld-section">
                   <div className="hdld-line"><strong>BÊN A:</strong> {payload.tenDonViUpper || ''}</div>
-                  <div className="hdld-line">Địa chỉ: {payload.diaChiDonVi}</div>
-                  <div className="hdld-line">Mã số thuế: {payload.maSoThueDonVi}</div>
-                  <div className="hdld-line">Đại diện: {payload.hoTenNguoiKy} - Chức danh: {payload.chucVuNguoiKy}</div>
+                  <div className="hdld-line">- Địa chỉ: {payload.diaChiDonVi}</div>
+                  <div className="hdld-line">- MST: {payload.maSoThueDonVi}</div>
+                  <div className="hdld-line">- Đại diện: Ông/Bà {payload.hoTenNguoiKy} &nbsp;&nbsp;&nbsp;&nbsp; Chức danh: {payload.chucVuNguoiKy}</div>
+                  <div className="hdld-line">("Người sử dụng lao động" hoặc "NSDLĐ")</div>
+                  <div className="hdld-line hdld-bold">VÀ</div>
                 </div>
 
                 <div className="hdld-section">
-                  <div className="hdld-line"><strong>BÊN B:</strong> {payload.hoTenNhanSu}</div>
-                  <div className="hdld-line">Ngày sinh: {payload.ngaySinh}</div>
-                  <div className="hdld-line">Địa chỉ thường trú: {payload.diaChiNhanSu}</div>
-                  <div className="hdld-line">Số CCCD: {payload.soCccd}; ngày cấp: {payload.ngayCapCccd}; nơi cấp: {payload.noiCapCccd}</div>
-                  <div className="hdld-line">GPLX số: {payload.soGplx}; hạng bằng: {payload.hangGplx}</div>
+                  <div className="hdld-line"><strong>BÊN B:</strong> Ông/Bà {payload.hoTenNhanSu}</div>
+                  <div className="hdld-line">- Ngày sinh: {payload.ngaySinh}</div>
+                  <div className="hdld-line">- Địa chỉ: {payload.diaChiNhanSu}</div>
+                  <div className="hdld-line">- CCCD: {payload.soCccd} &nbsp;&nbsp; Ngày cấp: {payload.ngayCapCccd} &nbsp;&nbsp; Nơi cấp: {payload.noiCapCccd}</div>
+                  <div className="hdld-line">- Số GPLX: {payload.soGplx} &nbsp;&nbsp; Hạng bằng: {payload.hangGplx}</div>
+                  <div className="hdld-line">("Người lao động" hoặc "NLĐ")</div>
                 </div>
 
                 <div className="hdld-section">
-                  <div className="hdld-line"><strong>Điều 1. Công việc và địa điểm làm việc</strong></div>
-                  <div className="hdld-line hdld-indent">Chức danh: {payload.chucDanh}; bộ phận: {payload.boPhan || '................................'}.</div>
-                  <div className="hdld-line hdld-indent">Người lao động thực hiện công việc lái xe taxi và các công việc liên quan theo sự phân công của Công ty.</div>
+                  <div className="hdld-line">Sau khi thỏa thuận, hai Bên thống nhất ký Hợp đồng lao động (HĐLĐ) với các điều khoản sau:</div>
+                  <div className="hdld-line"><strong>Điều 1. Công việc, địa điểm và thời gian làm việc</strong></div>
+                  <div className="hdld-line">1.1. Chức danh: {payload.chucDanh}</div>
+                  <div className="hdld-line">1.2. Mô tả công việc:</div>
+                  <div className="hdld-line hdld-indent">- Thực hiện vận chuyển hành khách theo sự điều hành của Công ty thông qua các ứng dụng, tổng đài điều phối.</div>
+                  <div className="hdld-line hdld-indent">- Quản lý, sử dụng phương tiện được giao đúng mục đích; bảo quản tài sản, trang thiết bị, giấy tờ xe.</div>
+                  <div className="hdld-line hdld-indent">- Thực hiện các nghĩa vụ liên quan đến an toàn giao thông, an toàn lao động, phòng chống cháy nổ theo quy định và tuân theo nội quy, quy chế của Công ty.</div>
+                  <div className="hdld-line hdld-indent">- Thực hiện các công việc khác có liên quan theo sự phân công hợp lý của Công ty.</div>
+                  <div className="hdld-line">1.3. Địa điểm làm việc:</div>
+                  <div className="hdld-line hdld-indent">- Người lao động hoạt động trực, chờ, đón khách trong phạm vi địa bàn Công ty khai thác thị trường, ký kết hợp đồng cung cấp dịch vụ, hợp đồng điểm đỗ,... và trả khách theo nhu cầu của khách hàng.</div>
+                  <div className="hdld-line hdld-indent">- Người lao động chấp nhận việc điều động, phân công địa điểm hoạt động, khu vực đón trả khách theo yêu cầu sản xuất kinh doanh của Công ty.</div>
+                  <div className="hdld-line">1.4. Thời gian làm việc</div>
+                  <div className="hdld-line hdld-indent">- Thời gian làm việc: 48 giờ/tuần.</div>
+                  <div className="hdld-line hdld-indent">- Thời gian làm việc, nghỉ ngơi giữa ca được bố trí linh hoạt, phù hợp đặc thù vận tải và không làm thay đổi tổng thời giờ làm việc theo quy định pháp luật.</div>
+                  <div className="hdld-line hdld-indent">- Người sử dụng lao động được sử dụng người lao động làm thêm giờ khi được sự đồng ý của người lao động và đảm bảo số giờ làm thêm theo đúng quy định của Pháp luật.</div>
+                  <div className="hdld-line hdld-indent">- Người lao động có trách nhiệm tuân thủ quy định về thời gian lái xe liên tục, thời gian tối đa làm việc trong ngày và thời gian nghỉ giữa ca theo quy định của pháp luật về giao thông đường bộ và quy định nội bộ của Công ty.</div>
                 </div>
 
                 <div className="hdld-section">
                   <div className="hdld-line"><strong>Điều 2. Thời hạn hợp đồng</strong></div>
-                  <div className="hdld-line hdld-indent">Loại hợp đồng lao động: {payload.loaiHopDong}.</div>
-                  <div className="hdld-line hdld-indent">Thời hạn hợp đồng lao động: {payload.thoiHanHopDongText}.</div>
+                  <div className="hdld-line hdld-indent">- Loại hợp đồng lao động: {payload.loaiHopDong}.</div>
+                  <div className="hdld-line hdld-indent">- Thời hạn hợp đồng lao động: {payload.thoiHanHopDongText}</div>
+                  <div className="hdld-line hdld-indent">- Khi hợp đồng hết hạn, hợp đồng sẽ tự động gia hạn với thời hạn và điều kiện tương tự, trừ trường hợp một trong hai bên có thông báo chấm dứt bằng văn bản trước thời điểm hết hạn.</div>
                 </div>
 
                 <div className="hdld-section">
-                  <div className="hdld-line"><strong>Điều 3. Tiền lương và chế độ</strong></div>
-                  <div className="hdld-line hdld-indent">Mức lương chính: {payload.mucLuongText || '................................'} VNĐ/tháng.</div>
-                  <div className="hdld-line hdld-indent">Bằng chữ: {payload.mucLuongBangChu || '................................'}.</div>
-                  <div className="hdld-line hdld-indent">Các khoản phụ cấp, thưởng và chế độ khác thực hiện theo quy chế của Công ty và quy định pháp luật hiện hành.</div>
+                  <div className="hdld-line"><strong>Điều 3: Quyền và nghĩa vụ của người lao động</strong></div>
+                  <div className="hdld-line hdld-subtitle">3.1. Quyền lợi của người lao động</div>
+                  <div className="hdld-line">a) Tiền lương và phụ cấp:</div>
+                  <div className="hdld-line hdld-indent">- Mức lương chính: {payload.mucLuongText || '................................'}VNĐ/tháng.</div>
+                  <div className="hdld-line hdld-indent">- Mức lương chính được điều chỉnh theo quy định của Nhà nước về mức lương tối thiểu vùng và theo thang bảng lương do Công ty xây dựng.</div>
+                  <div className="hdld-line hdld-indent">- Lương hiệu quả công việc: Theo quy chế lương, thưởng, phụ cấp, trợ cấp Công ty ban hành từng thời điểm và thông báo cho người lao động.</div>
+                  <div className="hdld-line hdld-indent">- Hình thức trả lương: 02 lần/tháng bằng tiền mặt hoặc chuyển khoản.</div>
+                  <div className="hdld-line hdld-indent">- Người lao động được tạm ứng lương theo quy định.</div>
+                  <div className="hdld-line">b) Các quyền lợi khác:</div>
+                  <div className="hdld-line hdld-indent">- Khen thưởng: Người lao động được khuyến khích bằng vật chất hoặc tinh thần khi có thành tích trong công tác hoặc theo quy định của công ty.</div>
+                  <div className="hdld-line hdld-indent">- Chế độ nâng lương: Theo quy định của Nhà nước và Quy chế, nội quy của Công ty.</div>
+                  <div className="hdld-line hdld-indent">- Chế độ nghỉ: Theo quy định chung của Nhà nước.</div>
+                  <div className="hdld-line hdld-indent">+ Nghỉ hàng tuần: được bố trí linh hoạt 01 ngày nghỉ/tuần theo kế hoạch sản xuất, kinh doanh của Công ty.</div>
+                  <div className="hdld-line hdld-indent">- Nghỉ lễ, Tết: Thực hiện theo quy định của pháp luật. Trường hợp làm việc vào ngày lễ, Tết thì được bố trí nghỉ bù và/hoặc thanh toán tiền lương theo quy định của pháp luật.</div>
+                  <div className="hdld-line hdld-indent">- Chế độ Bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm thất nghiệp: Theo quy định của Nhà nước.</div>
+                  <div className="hdld-line hdld-indent">- Dụng cụ, công cụ làm việc và đồng phục: Công ty cấp phát, lắp đặt và trang bị cùng phương tiện được bàn giao.</div>
+                  <div className="hdld-line hdld-indent">- Chế độ đào tạo, bồi dưỡng, nâng cao trình độ, kỹ năng nghề nghiệp cho người lao động: được xem xét hỗ trợ kinh phí đào tạo, bồi dưỡng tùy theo yêu cầu công việc, năng lực, trình độ của người lao động và nhu cầu sử dụng lao động của Công ty.</div>
+                  <div className="hdld-line hdld-subtitle">3.2. Nghĩa vụ của người lao động</div>
+                  <div className="hdld-line hdld-indent">- Thực hiện đúng công việc theo Hợp đồng lao động, chấp hành sự điều hành, phân công công việc của Công ty.</div>
+                  <div className="hdld-line hdld-indent">- Chấp hành Nội quy lao động, quy chế quản lý lái xe, quy chế tài chính và các quy định nội bộ khác của Công ty.</div>
+                  <div className="hdld-line hdld-indent">- Tuân thủ quy định của pháp luật về giao thông đường bộ, đảm bảo an toàn cho hành khách và phương tiện trong quá trình vận hành.</div>
+                  <div className="hdld-line hdld-indent">- Sử dụng phương tiện được giao đúng mục đích; quản lý, bảo quản tài sản, trang thiết bị, giấy tờ xe và các tài sản khác của Công ty.</div>
+                  <div className="hdld-line hdld-indent">- Hoàn toàn chịu trách nhiệm trước pháp luật nếu vi phạm luật giao thông, vận chuyển hàng cấm và các hành vi không được Pháp luật cho phép khác.</div>
+                  <div className="hdld-line hdld-indent">- Không được tự ý giao xe, cho mượn, cho thuê hoặc để người khác điều khiển phương tiện khi chưa được Công ty chấp thuận.</div>
+                  <div className="hdld-line hdld-indent">- Thực hiện đầy đủ các nghĩa vụ tài chính phát sinh trong quá trình làm việc theo quy định của Công ty và các thỏa thuận đã ký kết.</div>
+                  <div className="hdld-line hdld-indent">- Báo cáo kịp thời cho Công ty khi xảy ra tai nạn, sự cố, vi phạm giao thông hoặc các vấn đề phát sinh liên quan đến phương tiện và hoạt động vận tải.</div>
+                  <div className="hdld-line hdld-indent">- Hợp tác với Công ty trong việc xử lý các vi phạm, khiếu nại của khách hàng và các vấn đề phát sinh trong quá trình cung cấp dịch vụ.</div>
+                  <div className="hdld-line hdld-indent">- Bồi thường thiệt hại theo quy định của pháp luật và quy chế của Công ty trong trường hợp gây mất mát, hư hỏng tài sản hoặc gây thiệt hại do lỗi của mình.</div>
+                  <div className="hdld-line hdld-indent">- Bảo mật thông tin kinh doanh, dữ liệu khách hàng, thông tin điều hành và các thông tin nội bộ khác của Công ty.</div>
+                  <div className="hdld-line hdld-indent">- Thực hiện các công việc khác có liên quan theo sự phân công hợp lý của Công ty.</div>
                 </div>
 
                 <div className="hdld-section">
-                  <div className="hdld-line"><strong>Điều 4. Cam kết chung</strong></div>
-                  <div className="hdld-line hdld-indent">Hai bên cam kết thực hiện đúng các điều khoản trong hợp đồng này và các quy định pháp luật lao động hiện hành.</div>
+                  <div className="hdld-line"><strong>Điều 4: Quyền và nghĩa vụ của người sử dụng lao động</strong></div>
+                  <div className="hdld-line hdld-subtitle">4.1. Quyền hạn của người sử dụng lao động</div>
+                  <div className="hdld-line hdld-indent">- Tổ chức, điều hành sản xuất kinh doanh; phân công, điều động, bố trí ca làm việc, khu vực hoạt động của người lao động phù hợp với nhu cầu kinh doanh.</div>
+                  <div className="hdld-line hdld-indent">- Tạm thời điều chuyển người lao động làm công việc khác theo quy định của pháp luật khi cần thiết.</div>
+                  <div className="hdld-line hdld-indent">- Ban hành nội quy, quy chế và yêu cầu người lao động chấp hành.</div>
+                  <div className="hdld-line hdld-indent">- Kiểm tra, giám sát việc thực hiện công việc, việc sử dụng phương tiện, tài sản được giao.</div>
+                  <div className="hdld-line hdld-indent">- Áp dụng các hình thức kỷ luật lao động theo quy định của pháp luật.</div>
+                  <div className="hdld-line hdld-indent">- Yêu cầu người lao động bồi thường thiệt hại khi gây mất mát, hư hỏng tài sản hoặc phát sinh thiệt hại do lỗi của người lao động theo quy định của pháp luật và quy chế của Công ty.</div>
+                  <div className="hdld-line hdld-indent">- Đơn phương chấm dứt hợp đồng lao động, tạm hoãn hợp đồng lao động theo quy định của pháp luật.</div>
+                  <div className="hdld-line hdld-subtitle">4.2. Nghĩa vụ của người sử dụng lao động</div>
+                  <div className="hdld-line hdld-indent">- Bảo đảm việc làm và thực hiện đầy đủ các điều khoản đã cam kết trong Hợp đồng lao động.</div>
+                  <div className="hdld-line hdld-indent">- Thanh toán đầy đủ, đúng thời hạn tiền lương và các chế độ khác cho người lao động theo thỏa thuận trong Hợp đồng lao động và quy định của pháp luật.</div>
+                  <div className="hdld-line hdld-indent">- Xây dựng, ban hành và công khai Nội quy lao động, quy chế quản lý lái xe, quy chế tài chính và các quy định nội bộ khác.</div>
+                  <div className="hdld-line hdld-indent">- Tôn trọng danh dự, nhân phẩm của người lao động; không được áp dụng hình thức xử lý trái pháp luật.</div>
+                </div>
+
+                <div className="hdld-section">
+                  <div className="hdld-line"><strong>Điều 5: Những thỏa thuận khác</strong></div>
+                  <div className="hdld-line hdld-indent">- Trong quá trình thực hiện hợp đồng nếu một bên có nhu cầu thay đổi nội dung trong Hợp đồng phải báo cho bên kia trước ít nhất 03 ngày và ký kết bản Phụ lục Hợp đồng theo quy định của pháp luật. Trong thời gian tiến hành thỏa thuận hai bên vẫn tuân theo Hợp đồng lao động đã ký kết.</div>
+                  <div className="hdld-line hdld-indent">- Người lao động đọc kỹ, hiểu rõ và cam kết thực hiệm các điều khoản và quy định ghi tại Hợp đồng lao động.</div>
+                </div>
+
+                <div className="hdld-section">
+                  <div className="hdld-line"><strong>Điều 6: Điều khoản thi hành</strong></div>
+                  <div className="hdld-line hdld-indent">- Những vấn đề về lao động không ghi trong Hợp đồng này thì áp dụng theo quy định của thỏa ước tập thể, nội quy lao động và pháp luật lao động.</div>
+                  <div className="hdld-line hdld-indent">- Hợp đồng này được lập thành 02 (hai) bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản. Khi hai bên ký kết phụ lục hợp đồng thì nội dung của phụ lục hợp đồng cũng có giá trị như các nội dung của bản hợp đồng này.</div>
                 </div>
 
                 <table className="hdld-sign-table" aria-hidden="true">
@@ -372,11 +448,11 @@ const HdldNhanVienLaiXePage = () => {
                     <tr>
                       <td>
                         <div className="hdld-sign-title">Người sử dụng lao động</div>
-                        <div className="hdld-sign-note">(Ký, ghi rõ họ tên)</div>
+                        <div className="hdld-sign-note">(Ký và đóng dấu)</div>
                       </td>
                       <td>
                         <div className="hdld-sign-title">Người lao động</div>
-                        <div className="hdld-sign-note">(Ký, ghi rõ họ tên)</div>
+                        <div className="hdld-sign-note">(Ký và ghi rõ họ tên)</div>
                       </td>
                     </tr>
                     <tr>
@@ -388,8 +464,7 @@ const HdldNhanVienLaiXePage = () => {
                       <td className="hdld-bold" />
                     </tr>
                   </tbody>
-                </table>
-              </div>
+                </table>              </div>
             </div>
           </div>
         </>
