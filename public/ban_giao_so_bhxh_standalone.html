@@ -1,308 +1,499 @@
 <!doctype html>
 <html lang="vi">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bàn giao sổ BHXH</title>
-    <script src="/runtime-config.js"></script>
-    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <style>
-      :root { --brand: #6d28d9; --ink: #172033; --muted: #667085; --line: #e4e7ec; --bg: #f6f7f9; }
-      @page { size: A4; margin: 1.5cm; }
-      * { box-sizing: border-box; }
-      body { margin: 0; background: var(--bg); color: var(--ink); font-family: Arial, sans-serif; }
-      .shell { width: 100%; margin: 0 auto; padding: 12px; }
-      .toolbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.96); padding: 14px; box-shadow: 0 10px 28px rgba(16,24,40,.06); backdrop-filter: blur(10px); }
-      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-      .brand img { width: 42px; height: 42px; border-radius: 10px; object-fit: contain; }
-      h1 { margin: 0; font-size: 18px; }
-      .status { margin-top: 4px; color: var(--muted); font-size: 13px; }
-      .actions { display: flex; flex-wrap: wrap; gap: 10px; }
-      button { min-height: 40px; border: 0; border-radius: 10px; background: var(--brand); color: #fff; cursor: pointer; font-weight: 700; padding: 0 14px; }
-      button.secondary { border: 1px solid var(--line); background: #fff; color: var(--ink); }
-      button:disabled { cursor: not-allowed; opacity: .55; }
-      .message { margin-top: 16px; border: 1px dashed var(--line); border-radius: 12px; background: #fff; padding: 24px; color: var(--muted); text-align: center; }
-      .preview { margin-top: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #eef2f7; padding: 0; }
-      .page { width: 21cm; min-height: 29.7cm; margin: 0 auto; background: #fff; padding: 2cm 2.2cm 2cm 2.6cm; color: #000; font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.45; box-shadow: none; }
-      .center { text-align: center; }
-      .bold { font-weight: 700; }
-      .title { margin: 12px 0 0; text-align: center; font-size: 18pt; font-weight: 700; text-transform: uppercase; }
-      .subtitle { text-align: center; font-size: 16pt; font-weight: 700; text-transform: uppercase; }
-      .row { margin: 6px 0; text-align: justify; }
-      .line { margin: 5px 0; }
-      .section { margin-top: 10px; }
-      .sign-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 30px; }
-      .sign-table td { text-align: center; vertical-align: top; }
-      .sign-title { font-weight: 700; text-transform: uppercase; }
-      .sign-note { margin-top: 4px; font-style: italic; }
-      .sign-space { height: 96px; }
-      @media print {
-        html, body { width: auto !important; height: auto !important; overflow: visible !important; background: #fff !important; }
-        .toolbar, .message { display: none !important; }
-        .shell, .preview { margin: 0 !important; padding: 0 !important; border: 0 !important; background: #fff !important; overflow: visible !important; }
-        .page { width: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bàn giao sổ BHXH</title>
+  <script src="/runtime-config.js"></script>
+  <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    :root {
+      --brand: #6d28d9;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #e4e7ec;
+      --bg: #f6f7f9;
+    }
+
+    @page {
+      size: A4;
+      margin: 1.5cm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, sans-serif;
+    }
+
+    .shell {
+      width: 100%;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .96);
+      padding: 14px;
+      box-shadow: 0 10px 28px rgba(16, 24, 40, .06);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      object-fit: contain;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .status {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--brand);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      padding: 0 14px;
+    }
+
+    button.secondary {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+
+    .message {
+      margin-top: 16px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .preview {
+      margin-top: 16px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #eef2f7;
+      padding: 0;
+    }
+
+    .page {
+      width: 21cm;
+      min-height: 29.7cm;
+      margin: 0 auto;
+      background: #fff;
+      padding: 2cm 2.2cm 2cm 2.6cm;
+      color: #000;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 14pt;
+      line-height: 1.45;
+      box-shadow: none;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .bold {
+      font-weight: 700;
+    }
+
+    .title {
+      margin: 12px 0 0;
+      text-align: center;
+      font-size: 18pt;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 16pt;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .row {
+      margin: 6px 0;
+      text-align: justify;
+    }
+
+    .line {
+      margin: 5px 0;
+    }
+
+    .section {
+      margin-top: 10px;
+    }
+
+    .sign-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 30px;
+    }
+
+    .sign-table td {
+      text-align: center;
+      vertical-align: top;
+    }
+
+    .sign-title {
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .sign-note {
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .sign-space {
+      height: 96px;
+    }
+
+    @media print {
+
+      html,
+      body {
+        width: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
       }
-    </style>
-    <link rel="stylesheet" href="/document-preview-responsive.css" />
-  </head>
-  <body>
-    <div class="shell">
-      <div class="toolbar">
-        <div class="brand">
-          <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
-          <div>
-            <h1>Bàn giao sổ BHXH</h1>
-            <div class="status" id="statusText">Đang kiểm tra tham số ID_BanGiaoSo.</div>
-          </div>
-        </div>
-        <div class="actions">
-          <button class="secondary" type="button" onclick="window.print()" id="printButton" disabled>In tài liệu</button>
-          <button type="button" onclick="exportWord()" id="exportButton" disabled>Xuất Word</button>
+
+      .toolbar,
+      .message {
+        display: none !important;
+      }
+
+      .shell,
+      .preview {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: #fff !important;
+        overflow: visible !important;
+      }
+
+      .page {
+        width: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/document-preview-responsive.css" />
+</head>
+
+<body>
+  <div class="shell">
+    <div class="toolbar">
+      <div class="brand">
+        <img src="/logo-taxi-123.png" alt="TAXI 123_HN" />
+        <div>
+          <h1>Bàn giao sổ BHXH</h1>
+          <div class="status" id="statusText">Đang kiểm tra tham số ID_BanGiaoSo.</div>
         </div>
       </div>
-      <div id="message" class="message">Đang tải dữ liệu...</div>
-      <div id="preview" class="preview" hidden></div>
+      <div class="actions">
+        <button class="secondary" type="button" onclick="window.print()" id="printButton" disabled>In tài liệu</button>
+        <button type="button" onclick="exportWord()" id="exportButton" disabled>Xuất Word</button>
+      </div>
     </div>
+    <div id="message" class="message">Đang tải dữ liệu...</div>
+    <div id="preview" class="preview" hidden></div>
+  </div>
 
-    <script>
-      const idBanGiaoSo = new URLSearchParams(window.location.search).get('ID_BanGiaoSo') || '';
-      const statusText = document.getElementById('statusText');
-      const message = document.getElementById('message');
-      const preview = document.getElementById('preview');
-      const printButton = document.getElementById('printButton');
-      const exportButton = document.getElementById('exportButton');
-      let currentPayload = null;
+  <script>
+    const idBanGiaoSo = new URLSearchParams(window.location.search).get('ID_BanGiaoSo') || '';
+    const statusText = document.getElementById('statusText');
+    const message = document.getElementById('message');
+    const preview = document.getElementById('preview');
+    const printButton = document.getElementById('printButton');
+    const exportButton = document.getElementById('exportButton');
+    let currentPayload = null;
 
-      function cleanValue(value) {
-        if (value === null || value === undefined) return '';
-        return String(value).trim();
+    function cleanValue(value) {
+      if (value === null || value === undefined) return '';
+      return String(value).trim();
+    }
+
+    function parseDateValue(value) {
+      if (!value) return null;
+      if (value instanceof Date) {
+        const dateValue = new Date(value.getTime());
+        return Number.isNaN(dateValue.getTime()) ? null : dateValue;
       }
 
-      function parseDateValue(value) {
-        if (!value) return null;
-        if (value instanceof Date) {
-          const dateValue = new Date(value.getTime());
-          return Number.isNaN(dateValue.getTime()) ? null : dateValue;
+      const text = String(value).trim();
+      if (!text) return null;
+
+      const isoDateMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+      if (isoDateMatch) {
+        const [, year, month, day] = isoDateMatch;
+        const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+        if (
+          dateValue.getFullYear() === Number(year) &&
+          dateValue.getMonth() === Number(month) - 1 &&
+          dateValue.getDate() === Number(day)
+        ) {
+          return dateValue;
         }
+      }
 
-        const text = String(value).trim();
-        if (!text) return null;
-
-        const isoDateMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
-        if (isoDateMatch) {
-          const [, year, month, day] = isoDateMatch;
-          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
-          if (
-            dateValue.getFullYear() === Number(year) &&
-            dateValue.getMonth() === Number(month) - 1 &&
-            dateValue.getDate() === Number(day)
-          ) {
-            return dateValue;
-          }
+      const vietnameseDateMatch = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:\s+.*)?$/);
+      if (vietnameseDateMatch) {
+        const [, day, month, year] = vietnameseDateMatch;
+        const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
+        if (
+          dateValue.getFullYear() === Number(year) &&
+          dateValue.getMonth() === Number(month) - 1 &&
+          dateValue.getDate() === Number(day)
+        ) {
+          return dateValue;
         }
+      }
 
-        const vietnameseDateMatch = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:\s+.*)?$/);
-        if (vietnameseDateMatch) {
-          const [, day, month, year] = vietnameseDateMatch;
-          const dateValue = new Date(Number(year), Number(month) - 1, Number(day));
-          if (
-            dateValue.getFullYear() === Number(year) &&
-            dateValue.getMonth() === Number(month) - 1 &&
-            dateValue.getDate() === Number(day)
-          ) {
-            return dateValue;
-          }
+      const parsed = new Date(text);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function formatAdministrativeDate(value) {
+      const date = parseDateValue(value);
+      if (!date) return { day: '', month: '', year: '' };
+      const day = String(date.getDate()).padStart(2, '0');
+      const monthValue = date.getMonth() + 1;
+      const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
+      return { day, month, year: String(date.getFullYear()) };
+    }
+
+    function formatAdministrativeDateString(value) {
+      const date = formatAdministrativeDate(value);
+      if (!date.day || !date.month || !date.year) return '';
+      return `${date.day}/${date.month}/${date.year}`;
+    }
+
+    function numberToWords(value) {
+      const digits = String(value ?? '').replace(/[^\d]/g, '');
+      if (!digits) return '';
+      const ones = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+      const number = Number(digits);
+      if (!Number.isFinite(number)) return '';
+      if (number < 10) return ones[number];
+      return digits;
+    }
+
+    async function fetchBundle(includeRelated = true) {
+      const params = new URLSearchParams({ ID_BanGiaoSo: idBanGiaoSo });
+      if (!includeRelated) params.set('includeRelated', '0');
+      const response = await fetch(`/api/ban-giao-so-bhxh?${params.toString()}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' }
+      });
+      const contentType = response.headers.get('content-type') || '';
+      const text = await response.text();
+      if (!contentType.includes('application/json')) {
+        throw new Error('Route /api/ban-giao-so-bhxh chưa trả JSON hợp lệ trong môi trường hiện tại.');
+      }
+      const data = text ? JSON.parse(text) : {};
+      if (!response.ok) throw new Error(data.error || `Không tải được dữ liệu bàn giao sổ BHXH (${response.status}).`);
+      return data;
+    }
+
+    async function fetchRow() {
+      const bundle = await fetchBundle(false);
+      return bundle.row || null;
+    }
+
+    async function fetchRelated() {
+      const bundle = await fetchBundle(true);
+      const related = bundle.related || {};
+      return {
+        bhxhById: new Map((related.NHANSU_BHXH || []).map((row) => [cleanValue(row.ID_BHXH), row]).filter(([id]) => id)),
+        nhanSuById: new Map((related.NHANSU || []).map((row) => [cleanValue(row.ID_NhanSu), row]).filter(([id]) => id)),
+        donViById: new Map((related.DONVI || []).map((row) => [cleanValue(row.ID_DonVi), row]).filter(([id]) => id)),
+        chucDanhById: new Map((related.DM_CHUCDANH || []).map((row) => [cleanValue(row.ID_ChucDanh), row]).filter(([id]) => id))
+      };
+    }
+
+    function getNhanSuDisplayName(nhanSu) {
+      if (!nhanSu) return '';
+      return cleanValue(nhanSu.HoTen) || cleanValue(nhanSu.Display) || cleanValue(nhanSu.ID_NhanSu);
+    }
+
+    function getDonViDisplayName(donVi) {
+      if (!donVi) return '';
+      return cleanValue(donVi.TenDonVi) || cleanValue(donVi.Display) || cleanValue(donVi.ID_DonVi);
+    }
+
+    function normalizeLookupText(value) {
+      return cleanValue(value).toLowerCase();
+    }
+
+    function findDonVi(donViById, value) {
+      const ref = cleanValue(value);
+      if (!ref) return null;
+      const direct = donViById.get(ref);
+      if (direct) return direct;
+      const normalizedRef = normalizeLookupText(ref);
+      for (const donVi of donViById.values()) {
+        const candidates = [donVi.ID_DonVi, donVi.MaDonVi, donVi.TenDonVi, donVi.TenVietTat]
+          .map(normalizeLookupText)
+          .filter(Boolean);
+        if (
+          candidates.some((candidate) => candidate === normalizedRef) ||
+          candidates.some((candidate) => normalizedRef.includes(candidate) || candidate.includes(normalizedRef))
+        ) {
+          return donVi;
         }
-
-        const parsed = new Date(text);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
       }
+      return null;
+    }
 
-      function formatAdministrativeDate(value) {
-        const date = parseDateValue(value);
-        if (!date) return { day: '', month: '', year: '' };
-        const day = String(date.getDate()).padStart(2, '0');
-        const monthValue = date.getMonth() + 1;
-        const month = monthValue <= 2 ? String(monthValue).padStart(2, '0') : String(monthValue);
-        return { day, month, year: String(date.getFullYear()) };
-      }
+    function getChucDanhDisplayName(chucDanh) {
+      if (!chucDanh) return '';
+      return cleanValue(chucDanh.TenChucDanh) || cleanValue(chucDanh.Display) || cleanValue(chucDanh.ID_ChucDanh);
+    }
 
-      function formatAdministrativeDateString(value) {
-        const date = formatAdministrativeDate(value);
-        if (!date.day || !date.month || !date.year) return '';
-        return `${date.day}/${date.month}/${date.year}`;
-      }
+    function buildPayload(row, related = {}) {
+      const bhxhById = related.bhxhById || new Map();
+      const nhanSuById = related.nhanSuById || new Map();
+      const donViById = related.donViById || new Map();
+      const chucDanhById = related.chucDanhById || new Map();
+      const bhxh = bhxhById.get(cleanValue(row.Ref_BHXH));
+      const laoDong = nhanSuById.get(cleanValue(bhxh?.Ref_NhanSu));
+      const chucDanh = chucDanhById.get(cleanValue(laoDong?.Ref_ChucDanh));
+      const nguoiGiao = nhanSuById.get(cleanValue(row.NguoiGiao));
+      const nguoiNhan = nhanSuById.get(cleanValue(row.NguoiNhan));
+      const donViGiao = findDonVi(donViById, row.DonViGiao);
+      const donViDongBhxh = findDonVi(donViById, bhxh?.Ref_DonViDongBHXH);
+      const ngayGiaoNhan = formatAdministrativeDate(row.NgayGiaoNhan);
+      const tenDonViGiao = getDonViDisplayName(donViGiao) || cleanValue(row.DonViGiao) || getDonViDisplayName(donViDongBhxh);
+      const soTrangSoToRoi = cleanValue(row.SoTrangSoToRoi);
+      return {
+        idBanGiaoSo: cleanValue(row.ID_BanGiaoSo),
+        ngayGiaoNhan,
+        ngayGiaoNhanText: formatAdministrativeDateString(row.NgayGiaoNhan),
+        tenDonViGiao,
+        tenDonViGiaoUpper: tenDonViGiao.toUpperCase(),
+        maSoThueDonVi: cleanValue(donViGiao?.MaSoThue) || cleanValue(donViGiao?.MaDonVi),
+        diaChiDonVi: cleanValue(donViGiao?.DiaChi),
+        hoTenNguoiGiao: getNhanSuDisplayName(nguoiGiao) || cleanValue(row.NguoiGiao),
+        hoTenNguoiNhan: getNhanSuDisplayName(nguoiNhan) || cleanValue(row.NguoiNhan),
+        hoTenNguoiLaoDong: getNhanSuDisplayName(laoDong) || cleanValue(bhxh?.Ref_NhanSu),
+        chucVuNguoiLaoDong: getChucDanhDisplayName(chucDanh) || cleanValue(laoDong?.LoaiNhanSu),
+        diaChiNguoiLaoDong: cleanValue(laoDong?.Dia_Chi_Day_Du) || cleanValue(laoDong?.Address),
+        soCccd: cleanValue(laoDong?.CCCD),
+        ngayCapCccd: formatAdministrativeDateString(laoDong?.NgayCapCCCD),
+        noiCapCccd: cleanValue(laoDong?.NoiCapCCCD),
+        soSoBhxh: cleanValue(bhxh?.SoSoBHXH) || cleanValue(bhxh?.MaSoBHXH) || cleanValue(row.Ref_BHXH),
+        soBiaSo: cleanValue(row.SoBiaSo),
+        soTrangSoToRoi,
+        soTrangSoToRoiText: numberToWords(soTrangSoToRoi),
+        hienTrangSo: cleanValue(row.HienTrangSo),
+        loaiGiaoDich: cleanValue(row.LoaiGiaoDich),
+        trangThai: cleanValue(row.TrangThai),
+        ghiChu: cleanValue(row.GhiChu)
+      };
+    }
 
-      function numberToWords(value) {
-        const digits = String(value ?? '').replace(/[^\d]/g, '');
-        if (!digits) return '';
-        const ones = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
-        const number = Number(digits);
-        if (!Number.isFinite(number)) return '';
-        if (number < 10) return ones[number];
-        return digits;
-      }
+    function buildTemplateData(payload) {
+      return {
+        ngay_giao_nhan: payload.ngayGiaoNhan.day,
+        thang_giao_nhan: payload.ngayGiaoNhan.month,
+        nam_giao_nhan: payload.ngayGiaoNhan.year,
+        ten_don_vi_giao: payload.tenDonViGiao,
+        ten_don_vi_giao_upper: payload.tenDonViGiaoUpper,
+        ma_so_thue_don_vi: payload.maSoThueDonVi,
+        dia_chi_don_vi: payload.diaChiDonVi,
+        ho_ten_nguoi_giao: payload.hoTenNguoiGiao,
+        ho_ten_nguoi_nhan: payload.hoTenNguoiNhan,
+        ho_ten_nguoi_lao_dong: payload.hoTenNguoiLaoDong,
+        chuc_vu_nguoi_lao_dong: payload.chucVuNguoiLaoDong,
+        dia_chi_nguoi_lao_dong: payload.diaChiNguoiLaoDong,
+        so_cccd: payload.soCccd,
+        ngay_cap_cccd: payload.ngayCapCccd,
+        noi_cap_cccd: payload.noiCapCccd,
+        so_so_bhxh: payload.soSoBhxh,
+        so_bia_so: payload.soBiaSo,
+        so_trang_so_to_roi: payload.soTrangSoToRoi,
+        so_trang_so_to_roi_text: payload.soTrangSoToRoiText,
+        hien_trang_so: payload.hienTrangSo,
+        loai_giao_dich: payload.loaiGiaoDich,
+        trang_thai: payload.trangThai,
+        ghi_chu: payload.ghiChu
+      };
+    }
 
-      async function fetchBundle(includeRelated = true) {
-        const params = new URLSearchParams({ ID_BanGiaoSo: idBanGiaoSo });
-        if (!includeRelated) params.set('includeRelated', '0');
-        const response = await fetch(`/api/ban-giao-so-bhxh?${params.toString()}`, {
-          method: 'GET',
-          headers: { Accept: 'application/json' }
-        });
-        const contentType = response.headers.get('content-type') || '';
-        const text = await response.text();
-        if (!contentType.includes('application/json')) {
-          throw new Error('Route /api/ban-giao-so-bhxh chưa trả JSON hợp lệ trong môi trường hiện tại.');
-        }
-        const data = text ? JSON.parse(text) : {};
-        if (!response.ok) throw new Error(data.error || `Không tải được dữ liệu bàn giao sổ BHXH (${response.status}).`);
-        return data;
-      }
+    function normalizeDocxZipEntryNames(zip) {
+      const normalizedZip = new PizZip();
+      Object.entries(zip.files).forEach(([entryName, file]) => {
+        if (file.dir) return;
+        normalizedZip.file(entryName.replace(/\\/g, '/'), file.asUint8Array());
+      });
+      return normalizedZip;
+    }
 
-      async function fetchRow() {
-        const bundle = await fetchBundle(false);
-        return bundle.row || null;
-      }
-
-      async function fetchRelated() {
-        const bundle = await fetchBundle(true);
-        const related = bundle.related || {};
-        return {
-          bhxhById: new Map((related.NHANSU_BHXH || []).map((row) => [cleanValue(row.ID_BHXH), row]).filter(([id]) => id)),
-          nhanSuById: new Map((related.NHANSU || []).map((row) => [cleanValue(row.ID_NhanSu), row]).filter(([id]) => id)),
-          donViById: new Map((related.DONVI || []).map((row) => [cleanValue(row.ID_DonVi), row]).filter(([id]) => id)),
-          chucDanhById: new Map((related.DM_CHUCDANH || []).map((row) => [cleanValue(row.ID_ChucDanh), row]).filter(([id]) => id))
-        };
-      }
-
-      function getNhanSuDisplayName(nhanSu) {
-        if (!nhanSu) return '';
-        return cleanValue(nhanSu.HoTen) || cleanValue(nhanSu.Display) || cleanValue(nhanSu.ID_NhanSu);
-      }
-
-      function getDonViDisplayName(donVi) {
-        if (!donVi) return '';
-        return cleanValue(donVi.TenDonVi) || cleanValue(donVi.Display) || cleanValue(donVi.ID_DonVi);
-      }
-
-      function normalizeLookupText(value) {
-        return cleanValue(value).toLowerCase();
-      }
-
-      function findDonVi(donViById, value) {
-        const ref = cleanValue(value);
-        if (!ref) return null;
-        const direct = donViById.get(ref);
-        if (direct) return direct;
-        const normalizedRef = normalizeLookupText(ref);
-        for (const donVi of donViById.values()) {
-          const candidates = [donVi.ID_DonVi, donVi.MaDonVi, donVi.TenDonVi, donVi.TenVietTat]
-            .map(normalizeLookupText)
-            .filter(Boolean);
-          if (
-            candidates.some((candidate) => candidate === normalizedRef) ||
-            candidates.some((candidate) => normalizedRef.includes(candidate) || candidate.includes(normalizedRef))
-          ) {
-            return donVi;
-          }
-        }
-        return null;
-      }
-
-      function getChucDanhDisplayName(chucDanh) {
-        if (!chucDanh) return '';
-        return cleanValue(chucDanh.TenChucDanh) || cleanValue(chucDanh.Display) || cleanValue(chucDanh.ID_ChucDanh);
-      }
-
-      function buildPayload(row, related = {}) {
-        const bhxhById = related.bhxhById || new Map();
-        const nhanSuById = related.nhanSuById || new Map();
-        const donViById = related.donViById || new Map();
-        const chucDanhById = related.chucDanhById || new Map();
-        const bhxh = bhxhById.get(cleanValue(row.Ref_BHXH));
-        const laoDong = nhanSuById.get(cleanValue(bhxh?.Ref_NhanSu));
-        const chucDanh = chucDanhById.get(cleanValue(laoDong?.Ref_ChucDanh));
-        const nguoiGiao = nhanSuById.get(cleanValue(row.NguoiGiao));
-        const nguoiNhan = nhanSuById.get(cleanValue(row.NguoiNhan));
-        const donViGiao = findDonVi(donViById, row.DonViGiao);
-        const donViDongBhxh = findDonVi(donViById, bhxh?.Ref_DonViDongBHXH);
-        const ngayGiaoNhan = formatAdministrativeDate(row.NgayGiaoNhan);
-        const tenDonViGiao = getDonViDisplayName(donViGiao) || cleanValue(row.DonViGiao) || getDonViDisplayName(donViDongBhxh);
-        const soTrangSoToRoi = cleanValue(row.SoTrangSoToRoi);
-        return {
-          idBanGiaoSo: cleanValue(row.ID_BanGiaoSo),
-          ngayGiaoNhan,
-          ngayGiaoNhanText: formatAdministrativeDateString(row.NgayGiaoNhan),
-          tenDonViGiao,
-          tenDonViGiaoUpper: tenDonViGiao.toUpperCase(),
-          maSoThueDonVi: cleanValue(donViGiao?.MaSoThue) || cleanValue(donViGiao?.MaDonVi),
-          diaChiDonVi: cleanValue(donViGiao?.DiaChi),
-          hoTenNguoiGiao: getNhanSuDisplayName(nguoiGiao) || cleanValue(row.NguoiGiao),
-          hoTenNguoiNhan: getNhanSuDisplayName(nguoiNhan) || cleanValue(row.NguoiNhan),
-          hoTenNguoiLaoDong: getNhanSuDisplayName(laoDong) || cleanValue(bhxh?.Ref_NhanSu),
-          chucVuNguoiLaoDong: getChucDanhDisplayName(chucDanh) || cleanValue(laoDong?.LoaiNhanSu),
-          diaChiNguoiLaoDong: cleanValue(laoDong?.Dia_Chi_Day_Du) || cleanValue(laoDong?.Address),
-          soCccd: cleanValue(laoDong?.CCCD),
-          ngayCapCccd: formatAdministrativeDateString(laoDong?.NgayCapCCCD),
-          noiCapCccd: cleanValue(laoDong?.NoiCapCCCD),
-          soSoBhxh: cleanValue(bhxh?.SoSoBHXH) || cleanValue(bhxh?.MaSoBHXH) || cleanValue(row.Ref_BHXH),
-          soBiaSo: cleanValue(row.SoBiaSo),
-          soTrangSoToRoi,
-          soTrangSoToRoiText: numberToWords(soTrangSoToRoi),
-          hienTrangSo: cleanValue(row.HienTrangSo),
-          loaiGiaoDich: cleanValue(row.LoaiGiaoDich),
-          trangThai: cleanValue(row.TrangThai),
-          ghiChu: cleanValue(row.GhiChu)
-        };
-      }
-
-      function buildTemplateData(payload) {
-        return {
-          ngay_giao_nhan: payload.ngayGiaoNhan.day,
-          thang_giao_nhan: payload.ngayGiaoNhan.month,
-          nam_giao_nhan: payload.ngayGiaoNhan.year,
-          ten_don_vi_giao: payload.tenDonViGiao,
-          ten_don_vi_giao_upper: payload.tenDonViGiaoUpper,
-          ma_so_thue_don_vi: payload.maSoThueDonVi,
-          dia_chi_don_vi: payload.diaChiDonVi,
-          ho_ten_nguoi_giao: payload.hoTenNguoiGiao,
-          ho_ten_nguoi_nhan: payload.hoTenNguoiNhan,
-          ho_ten_nguoi_lao_dong: payload.hoTenNguoiLaoDong,
-          chuc_vu_nguoi_lao_dong: payload.chucVuNguoiLaoDong,
-          dia_chi_nguoi_lao_dong: payload.diaChiNguoiLaoDong,
-          so_cccd: payload.soCccd,
-          ngay_cap_cccd: payload.ngayCapCccd,
-          noi_cap_cccd: payload.noiCapCccd,
-          so_so_bhxh: payload.soSoBhxh,
-          so_bia_so: payload.soBiaSo,
-          so_trang_so_to_roi: payload.soTrangSoToRoi,
-          so_trang_so_to_roi_text: payload.soTrangSoToRoiText,
-          hien_trang_so: payload.hienTrangSo,
-          loai_giao_dich: payload.loaiGiaoDich,
-          trang_thai: payload.trangThai,
-          ghi_chu: payload.ghiChu
-        };
-      }
-
-      function normalizeDocxZipEntryNames(zip) {
-        const normalizedZip = new PizZip();
-        Object.entries(zip.files).forEach(([entryName, file]) => {
-          if (file.dir) return;
-          normalizedZip.file(entryName.replace(/\\/g, '/'), file.asUint8Array());
-        });
-        return normalizedZip;
-      }
-
-      function render(payload) {
-        currentPayload = payload;
-        preview.hidden = false;
-        message.hidden = true;
-        printButton.disabled = false;
-        exportButton.disabled = false;
-        preview.innerHTML = `
+    function render(payload) {
+      currentPayload = payload;
+      preview.hidden = false;
+      message.hidden = true;
+      printButton.disabled = false;
+      exportButton.disabled = false;
+      preview.innerHTML = `
           <div class="page">
             <div class="center bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
             <div class="center bold">Độc lập - Tự do - Hạnh phúc</div>
@@ -340,59 +531,60 @@
             </table>
           </div>
         `;
-      }
+    }
 
-      async function exportWord() {
-        if (!currentPayload) return;
-        exportButton.disabled = true;
+    async function exportWord() {
+      if (!currentPayload) return;
+      exportButton.disabled = true;
+      try {
+        const response = await fetch('/ban_giao_so_bhxh_template.docx?v=utf8-20260529');
+        if (!response.ok) throw new Error('Không thể tải template Word.');
+        const content = await response.arrayBuffer();
+        const sourceZip = new PizZip(content);
+        const zip = normalizeDocxZipEntryNames(sourceZip);
+        const Docxtemplater = window.docxtemplater?.Docxtemplater || window.docxtemplater;
+        const doc = new Docxtemplater(zip, {
+          paragraphLoop: true,
+          linebreaks: true,
+          nullGetter: () => ''
+        });
+        doc.render(buildTemplateData(currentPayload));
+        const blob = doc.getZip().generate({
+          type: 'blob',
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+        window.saveAs(blob, `Ban_giao_so_BHXH_${currentPayload.idBanGiaoSo || 'new'}.docx`);
+      } catch (error) {
+        alert(`Xuất Word thất bại: ${error.message}`);
+      } finally {
+        exportButton.disabled = false;
+      }
+    }
+
+    async function init() {
+      try {
+        if (!idBanGiaoSo) throw new Error('Thiếu tham số ID_BanGiaoSo trên URL.');
+        statusText.textContent = 'Đang tải biên bản bàn giao sổ BHXH từ Google Sheets...';
+        const row = await fetchRow();
+        if (!row) throw new Error(`Không tìm thấy biên bản bàn giao sổ BHXH với ID_BanGiaoSo = ${idBanGiaoSo}.`);
+        render(buildPayload(row));
+        statusText.textContent = `Đã tải biên bản ${idBanGiaoSo}. Đang tải thêm thông tin liên kết...`;
         try {
-          const response = await fetch('/ban_giao_so_bhxh_template.docx?v=utf8-20260529');
-          if (!response.ok) throw new Error('Không thể tải template Word.');
-          const content = await response.arrayBuffer();
-          const sourceZip = new PizZip(content);
-          const zip = normalizeDocxZipEntryNames(sourceZip);
-          const Docxtemplater = window.docxtemplater?.Docxtemplater || window.docxtemplater;
-          const doc = new Docxtemplater(zip, {
-            paragraphLoop: true,
-            linebreaks: true,
-            nullGetter: () => ''
-          });
-          doc.render(buildTemplateData(currentPayload));
-          const blob = doc.getZip().generate({
-            type: 'blob',
-            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-          });
-          window.saveAs(blob, `Ban_giao_so_BHXH_${currentPayload.idBanGiaoSo || 'new'}.docx`);
-        } catch (error) {
-          alert(`Xuất Word thất bại: ${error.message}`);
-        } finally {
-          exportButton.disabled = false;
+          const related = await fetchRelated(row);
+          render(buildPayload(row, related));
+          statusText.textContent = `Đã tải biên bản ${idBanGiaoSo}.`;
+        } catch (relatedError) {
+          statusText.textContent = `Đã tải biên bản ${idBanGiaoSo}, nhưng chưa tải được dữ liệu liên kết.`;
         }
+      } catch (error) {
+        statusText.textContent = 'Không tải được biên bản bàn giao sổ BHXH.';
+        message.hidden = false;
+        message.textContent = error.message || 'Không tải được biên bản bàn giao sổ BHXH.';
       }
+    }
 
-      async function init() {
-        try {
-          if (!idBanGiaoSo) throw new Error('Thiếu tham số ID_BanGiaoSo trên URL.');
-          statusText.textContent = 'Đang tải biên bản bàn giao sổ BHXH từ Google Sheets...';
-          const row = await fetchRow();
-          if (!row) throw new Error(`Không tìm thấy biên bản bàn giao sổ BHXH với ID_BanGiaoSo = ${idBanGiaoSo}.`);
-          render(buildPayload(row));
-          statusText.textContent = `Đã tải biên bản ${idBanGiaoSo}. Đang tải thêm thông tin liên kết...`;
-          try {
-            const related = await fetchRelated(row);
-            render(buildPayload(row, related));
-            statusText.textContent = `Đã tải biên bản ${idBanGiaoSo}.`;
-          } catch (relatedError) {
-            statusText.textContent = `Đã tải biên bản ${idBanGiaoSo}, nhưng chưa tải được dữ liệu liên kết.`;
-          }
-        } catch (error) {
-          statusText.textContent = 'Không tải được biên bản bàn giao sổ BHXH.';
-          message.hidden = false;
-          message.textContent = error.message || 'Không tải được biên bản bàn giao sổ BHXH.';
-        }
-      }
+    init();
+  </script>
+</body>
 
-      init();
-    </script>
-  </body>
 </html>
