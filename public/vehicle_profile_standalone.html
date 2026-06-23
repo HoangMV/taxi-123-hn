@@ -31,7 +31,8 @@
     }
 
     button,
-    input {
+    input,
+    select {
       font: inherit;
     }
 
@@ -92,7 +93,8 @@
       letter-spacing: .02em;
     }
 
-    input {
+    input,
+    select {
       height: 40px;
       min-width: 120px;
       border: 1px solid var(--border);
@@ -102,7 +104,8 @@
       outline: none;
     }
 
-    input:focus {
+    input:focus,
+    select:focus {
       border-color: #2563eb;
       box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
     }
@@ -1132,7 +1135,8 @@
         flex-wrap: wrap;
       }
 
-      .actions input {
+      .actions input,
+      .actions select {
         width: 100%;
       }
 
@@ -1207,6 +1211,7 @@
         </div>
         <div class="actions">
           <input id="idInput" placeholder="Nhập ID_Xe hoặc biển số xe">
+          <select id="yearSelect"></select>
           <button class="primary" type="button" id="loadButton">Tải hồ sơ</button>
           <button class="green" type="button" id="pdfButton" disabled>Tải PDF</button>
         </div>
@@ -1220,10 +1225,11 @@
     const HTML2CANVAS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
     const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
     const QRCODE_URL = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js';
-    const state = { bundle: null, loadingPdf: false, pdfLibPromise: null, qrLibPromise: null };
+    const state = { bundle: null, loadingPdf: false, pdfLibPromise: null, qrLibPromise: null, requestSeq: 0 };
     const app = document.getElementById('app');
     const message = document.getElementById('message');
     const idInput = document.getElementById('idInput');
+    const yearSelect = document.getElementById('yearSelect');
     const loadButton = document.getElementById('loadButton');
     const pdfButton = document.getElementById('pdfButton');
     const pdfOverlay = document.getElementById('pdfOverlay');
@@ -1268,14 +1274,17 @@
       app.innerHTML = '<div class="loading"><div class="skeleton sk-hero"></div><div class="skeleton sk-card"></div><div class="skeleton sk-card"></div></div>';
     }
 
-    async function fetchProfile() {
+    async function fetchProfile(options = {}) {
       const idXe = clean(idInput.value);
+      const explicitYear = options.useYearFromSelect === false ? '' : clean(yearSelect.value);
       if (!idXe) { showMessage('Vui lòng nhập ID_Xe để tải hồ sơ phương tiện.', 'error'); return; }
+      const requestId = ++state.requestSeq;
       showMessage('');
       renderLoading();
       setBusy(true);
       try {
         const params = new URLSearchParams({ ID_Xe: idXe });
+        if (explicitYear) params.set('nam', explicitYear);
         const response = await fetch(`/api/vehicle-profile?${params.toString()}`, { headers: { Accept: 'application/json' } });
         const text = await response.text();
         let data = {};
@@ -1283,17 +1292,23 @@
           throw new Error('API trả về HTML thay vì JSON. Khi chạy local, hãy chạy thêm npm run proxy cùng với npm start, rồi tải lại trang.');
         }
         if (!response.ok) throw new Error(data.error || `Không tải được hồ sơ phương tiện (${response.status}).`);
+        if (requestId !== state.requestSeq) return;
         state.bundle = data;
         renderProfile(data.profile);
         const resolvedId = clean(data.profile?.vehicle?.idXe) || idXe;
+        const resolvedYear = Number(data.profile?.meta?.year) || Number(explicitYear) || new Date().getFullYear();
+        const availableYears = Array.isArray(data.profile?.meta?.availableYears) ? data.profile.meta.availableYears : [];
+        const years = new Set([resolvedYear, ...availableYears]);
+        fillYearSelect(Array.from(years).sort((a, b) => b - a), resolvedYear);
         idInput.value = resolvedId;
-        window.history.replaceState(null, '', `/vehicle_profile_standalone.html?ID_Xe=${encodeURIComponent(resolvedId)}`);
+        window.history.replaceState(null, '', `/vehicle_profile_standalone.html?ID_Xe=${encodeURIComponent(resolvedId)}&nam=${encodeURIComponent(resolvedYear)}`);
       } catch (error) {
+        if (requestId !== state.requestSeq) return;
         state.bundle = null;
         app.innerHTML = '';
         showMessage(error.message || 'Không tải được hồ sơ phương tiện.', 'error');
       } finally {
-        setBusy(false);
+        if (requestId === state.requestSeq) setBusy(false);
       }
     }
 
@@ -1599,8 +1614,29 @@
     loadButton.addEventListener('click', fetchProfile);
     pdfButton.addEventListener('click', downloadPdf);
 
+    function fillYearSelect(years, selectedYear) {
+      yearSelect.innerHTML = '';
+      years.forEach((year) => {
+        const option = document.createElement('option');
+        option.value = String(year);
+        option.textContent = `Năm ${year}`;
+        yearSelect.appendChild(option);
+      });
+      yearSelect.value = String(selectedYear);
+    }
+
+    function initYearSelect() {
+      const currentYear = new Date().getFullYear();
+      const requestedYear = Number(getParam(['nam', 'year', 'Nam', 'Year']));
+      const years = new Set([currentYear, currentYear - 1, currentYear - 2, currentYear - 3]);
+      if (requestedYear) years.add(requestedYear);
+      fillYearSelect(Array.from(years).sort((a, b) => b - a), requestedYear || currentYear);
+    }
+
+    initYearSelect();
     idInput.value = getParam(['ID_Xe', 'idXe', 'idxe', 'IDXe']);
-    if (idInput.value) fetchProfile();
+    const hasExplicitYear = Boolean(getParam(['nam', 'year', 'Nam', 'Year']));
+    if (idInput.value) fetchProfile({ useYearFromSelect: hasExplicitYear });
   </script>
 </body>
 

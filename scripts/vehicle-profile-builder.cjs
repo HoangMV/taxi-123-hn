@@ -692,7 +692,7 @@ function buildWarnings(legalRows, summary, driver, technical) {
   return warnings;
 }
 
-function buildVehicleProfileData(model, xe, nam, missingSources = []) {
+function buildVehicleProfileData(model, xe, nam, missingSources = [], availableYears = []) {
   const idXe = cleanValue(xe.ID_Xe);
   const bienSo = cleanValue(xe.BienSo);
   const summary = model.index.BC_XE_BY_ID.get(idXe) || model.index.BC_XE_BY_BIENSO.get(normalizeKey(bienSo)) || {};
@@ -767,6 +767,7 @@ function buildVehicleProfileData(model, xe, nam, missingSources = []) {
       appName: 'QLVT_TAXI123_HN',
       brand: 'TAXI 123',
       year: Number(nam),
+      availableYears,
       printDate: formatDateTime(new Date()),
       companyName: company.tenCongTy,
       diaChiCongTy: company.diaChi,
@@ -812,12 +813,19 @@ function buildVehicleProfileData(model, xe, nam, missingSources = []) {
 }
 
 async function buildVehicleProfileBundle({ id, query = {}, env = process.env } = {}) {
-  const nam = Number(query.nam || query.year || new Date().getFullYear());
   const { tables, missingSources } = await readVehicleProfileTables(VEHICLE_PROFILE_TABLES, env);
   const model = buildModel(tables);
   const row = model.index.XE.get(cleanValue(id)) || model.index.XE_BY_BIENSO.get(normalizeKey(id));
   if (!row) return null;
-  const profile = buildVehicleProfileData(model, row, nam, missingSources);
+  const idXe = cleanValue(row.ID_Xe);
+  const yearsWithData = Array.from(new Set(
+    (model.byXe.XE_SO_KM_THANG.get(idXe) || [])
+      .map((kmRow) => Number(kmRow.Nam))
+      .filter((year) => Number.isInteger(year) && year > 0)
+  )).sort((a, b) => b - a);
+  const requestedYear = Number(query.nam || query.year);
+  const nam = requestedYear || yearsWithData[0] || new Date().getFullYear();
+  const profile = buildVehicleProfileData(model, row, nam, missingSources, yearsWithData);
 
   return {
     row,
