@@ -4,6 +4,7 @@ const {
   findRowsByIds,
   readGoogleSheetTables
 } = require('./google-sheets-service.cjs');
+const { buildVehicleProfileBundle } = require('./vehicle-profile-builder.cjs');
 
 function buildMap(rows, keyName) {
   return new Map(
@@ -589,6 +590,15 @@ const featureConfigs = {
       const { tables, missingSources } = await readDashboardTables(DASHBOARD_TABLES, env);
       return buildDashboardReport(tables, missingSources);
     }
+  },
+
+  'vehicle-profile': {
+    idKeys: ['ID_Xe', 'idXe', 'idxe', 'IDXe'],
+    missingIdMessage: 'Thiếu tham số ID_Xe.',
+    notFoundPrefix: 'Không tìm thấy xe với ID_Xe',
+    failedMessage: 'Không tải được hồ sơ phương tiện từ Google Sheets.',
+    mainKey: 'ID_Xe',
+    build: ({ id, query, env }) => buildVehicleProfileBundle({ id, query, env })
   },
 
   'ban-giao-xe': {

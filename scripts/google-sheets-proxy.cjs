@@ -12,6 +12,7 @@ const port = Number(process.env.PORT || 8787);
 const apiRoutes = new Map(
   [
     'dashboard-qlvt',
+    'vehicle-profile',
     'ban-giao-xe',
     'ban-giao-so-bhxh',
     'de-nghi-dao-tao-lai-xe',

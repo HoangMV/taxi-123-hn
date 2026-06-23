@@ -1,4 +1,4 @@
-import { BookMarked, Car, FileText, Gauge, GraduationCap, Landmark, HandCoins, IdCard, LayoutDashboard, ScrollText, ShieldCheck } from 'lucide-react';
+import { BookMarked, Car, FileText, Gauge, GraduationCap, Landmark, HandCoins, LayoutDashboard, LayoutGrid, ScrollText, ShieldCheck } from 'lucide-react';
 import config from './config';
 
 export const menuSections = [
@@ -16,19 +16,7 @@ export const menuSections = [
         id: 'dashboard',
         text: 'Dashboard điều hành',
         path: config.ROUTES.DASHBOARD,
-        icon: LayoutDashboard
-      },
-      {
-        id: 'thong-ke-phu-hieu',
-        text: 'Thống kê phù hiệu',
-        path: config.ROUTES.THONG_KE_PHU_HIEU_REACT,
-        icon: IdCard
-      },
-      {
-        id: 'thong-bao-ngung-phu-hieu',
-        text: 'Thông báo ngừng phù hiệu',
-        path: config.ROUTES.THONG_BAO_NGUNG_PHU_HIEU_REACT,
-        icon: IdCard
+        icon: LayoutGrid
       },
       {
         id: 'de-nghi-cap-phu-hieu-xe',

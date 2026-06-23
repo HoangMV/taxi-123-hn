@@ -366,6 +366,15 @@
         document.getElementById('kpis').innerHTML = cards.map(([label, value, hint, icon, tone, bars]) => `<div class="panel kpi"><div class="kpi-top"><div><div class="kpi-label">${label}</div><div class="kpi-value">${number(value)}</div><div class="kpi-hint">${hint}</div></div><div class="kpi-icon ${tone}">${iconSvg(icon)}</div></div><div class="spark">${bars.map((height) => `<span style="height:${height}%"></span>`).join('')}</div></div>`).join('');
       }
 
+      function renderVehicleProfileCell(row, key) {
+        if (state.tab === 'xe' && key === 'bienSo' && clean(row.idXe)) {
+          const href = `/vehicle_profile_standalone.html?ID_Xe=${encodeURIComponent(row.idXe)}`;
+          const label = escapeHtml(row[key] || row.idXe);
+          return `<td><a href="${href}" target="_blank" rel="noreferrer" style="font-weight:800;color:#1d4ed8;text-decoration:underline;text-underline-offset:2px;">${label}</a></td>`;
+        }
+        return `<td>${escapeHtml(row[key])}</td>`;
+      }
+
       function renderTable(rows, columns) {
         const shownColumns = columns;
         const totalPages = Math.max(1, Math.ceil(rows.length / state.pageSize));
@@ -374,7 +383,7 @@
         const end = Math.min(start + state.pageSize, rows.length);
         const pageRows = rows.slice(start, end);
         const head = `<thead><tr>${shownColumns.map(([, label]) => `<th>${label}</th>`).join('')}</tr></thead>`;
-        const body = pageRows.map((row) => `<tr>${shownColumns.map(([key]) => key === 'canhBao' ? `<td><div class="warning-cell"><span class="badge ${row.warningLevel || 'xam'}">${warningText(row.warningLevel)}</span><span>${escapeHtml(row[key])}</span></div></td>` : `<td>${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${shownColumns.length}" style="text-align:center;color:var(--muted);padding:28px;">Không có dữ liệu phù hợp bộ lọc.</td></tr>`;
+        const body = pageRows.map((row) => `<tr>${shownColumns.map(([key]) => key === 'canhBao' ? `<td><div class="warning-cell"><span class="badge ${row.warningLevel || 'xam'}">${warningText(row.warningLevel)}</span><span>${escapeHtml(row[key])}</span></div></td>` : renderVehicleProfileCell(row, key)).join('')}</tr>`).join('') || `<tr><td colspan="${shownColumns.length}" style="text-align:center;color:var(--muted);padding:28px;">Không có dữ liệu phù hợp bộ lọc.</td></tr>`;
         document.getElementById('reportTable').innerHTML = head + `<tbody>${body}</tbody>`;
         document.getElementById('pagination').innerHTML = `
           <div>${rows.length ? `Hiển thị ${number(start + 1)}-${number(end)} / ${number(rows.length)} dòng` : 'Không có dòng để hiển thị'}</div>

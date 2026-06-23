@@ -1,0 +1,2767 @@
+/****************************************************
+ * HỒ SƠ ĐIỆN TỬ XE - QLVT_TAXI123_HN
+ * Phiên bản tối ưu: 2026-06-21
+ *
+ * Mục đích:
+ * - Tạo PDF hồ sơ điện tử cho từng xe.
+ * - Lấy dữ liệu từ toàn bộ hệ thống bảng hiện có.
+ * - Gán link PDF ngược lại vào chính dòng xe tại bảng XE.
+ * - AppSheet mở trực tiếp PDF từ XE[FilePDFHoSoXe].
+ *
+ * Bảng/sheet sử dụng:
+ * - XE
+ * - BC_XE_TONGHOP
+ * - DONVI
+ * - DM_DOIXE_MOI
+ * - DM_COQUAN_CAP
+ * - XE_PHUHIEU
+ * - XE_DANGKIEM
+ * - XE_BAOHIEM
+ * - DM_CTY_BAOHIEM
+ * - XE_TAXIMET
+ * - DM_CQKD_TAXIMET
+ * - XE_THECHAP_NGANHANG
+ * - DM_NGANHANG
+ * - XE_LICHSU_NGUNG_HOATDONG
+ * - XE_SO_KM_THANG
+ * - XE_BAODUONG_SUACHUA
+ * - DM_NOIDUNG_BD_SC
+ * - DM_DONVI_SUACHUA
+ * - LAIXE_PHANCONG_XE
+ * - NHANSU
+ * - LAIXE_GPLX
+ * - NHANSU_SUCKHOE
+ * - NHANSU_HOPDONG_LAODONG
+ * - LAIXE_DAOTAO
+ * - NHANSU_BHXH
+ *
+ * Điều kiện chạy:
+ * - Apps Script gắn với file Google Sheet dữ liệu QLVT_TAXI123_HN.
+ * - Bảng XE có khóa ID_Xe.
+ * - Các bảng con liên kết về xe bằng Ref_Xe.
+ *
+ * Kết quả:
+ * - Tạo file PDF hồ sơ điện tử xe.
+ * - Lưu vào Drive theo cấu trúc: QLVT_TAXI123_HN/HoSoXe/ID_BIENSO/HoSoDienTuXe/
+ * - Ghi link PDF vào XE[FilePDFHoSoXe].
+ *
+ * Chống trùng/khóa/log:
+ * - Không tạo bảng log riêng.
+ * - Nếu tạo lại cùng xe + cùng năm, file cũ cùng tên sẽ được đưa vào thùng rác.
+ * - Trạng thái tạo PDF ghi trực tiếp vào bảng XE.
+ *
+ * Cột tự bổ sung vào bảng XE:
+ * - FilePDFHoSoXe
+ * - IdFilePDFHoSoXe
+ * - NamPDFHoSoXe
+ * - NgayTaoPDFHoSoXe
+ * - TrangThaiTaoPDFHoSoXe
+ * - GhiChuPDFHoSoXe
+ *
+ * Lưu ý bảo trì:
+ * - Thông tin công ty cập nhật tại CONFIG_CONGTY_HOSO_XE.
+ * - Nếu đổi tên sheet hoặc tên cột, cập nhật tại CONFIG_HOSO_XE.
+ * - Không nên tạo PDF cho 1.000+ xe trong một lần chạy.
+ * - Nên chạy theo lô 20-50 xe/lần hoặc đặt trigger.
+ ****************************************************/
+
+const CONFIG_HOSO_XE = {
+  // Nếu script không gắn trực tiếp vào Google Sheet, điền Spreadsheet ID vào đây.
+  // Nếu script đang bound với Google Sheet thì để rỗng.
+  SPREADSHEET_ID: '',
+
+  TIMEZONE: 'Asia/Ho_Chi_Minh',
+
+  ROOT_FOLDER_PATH: 'QLVT_TAXI123_HN/HoSoXe',
+  PROFILE_SUBFOLDER: 'HoSoDienTuXe',
+
+  // Nội bộ nên để false. Nếu cần ai có link cũng xem được, đổi true.
+  MAKE_FILE_ANYONE_WITH_LINK: true,
+
+  DEFAULT_BATCH_SIZE: 30,
+
+  SHEETS: {
+    XE: 'XE',
+    BC_XE_TONGHOP: 'BC_XE_TONGHOP',
+    DONVI: 'DONVI',
+    DM_DOIXE: 'DM_DOIXE_MOI',
+    DM_COQUAN_CAP: 'DM_COQUAN_CAP',
+
+    XE_PHUHIEU: 'XE_PHUHIEU',
+    XE_DANGKIEM: 'XE_DANGKIEM',
+
+    XE_BAOHIEM: 'XE_BAOHIEM',
+    DM_CTY_BAOHIEM: 'DM_CTY_BAOHIEM',
+
+    XE_TAXIMET: 'XE_TAXIMET',
+    DM_CQKD_TAXIMET: 'DM_CQKD_TAXIMET',
+
+    XE_THECHAP: 'XE_THECHAP_NGANHANG',
+    DM_NGANHANG: 'DM_NGANHANG',
+    XE_LICHSU_NGUNG_HOATDONG: 'XE_LICHSU_NGUNG_HOATDONG',
+
+    XE_SO_KM_THANG: 'XE_SO_KM_THANG',
+    XE_BAODUONG_SUACHUA: 'XE_BAODUONG_SUACHUA',
+    DM_NOIDUNG_BD_SC: 'DM_NOIDUNG_BD_SC',
+    DM_DONVI_SUACHUA: 'DM_DONVI_SUACHUA',
+
+    LAIXE_PHANCONG_XE: 'LAIXE_PHANCONG_XE',
+    NHANSU: 'NHANSU',
+    LAIXE_GPLX: 'LAIXE_GPLX',
+    NHANSU_SUCKHOE: 'NHANSU_SUCKHOE',
+    NHANSU_HOPDONG: 'NHANSU_HOPDONG_LAODONG',
+    LAIXE_DAOTAO: 'LAIXE_DAOTAO',
+    NHANSU_BHXH: 'NHANSU_BHXH'
+  },
+
+  XE_PDF_COLUMNS: [
+    'FilePDFHoSoXe',
+    'IdFilePDFHoSoXe',
+    'LinkTaiPDFHoSoXe',
+    'NamPDFHoSoXe',
+    'NgayTaoPDFHoSoXe',
+    'TrangThaiTaoPDFHoSoXe',
+    'GhiChuPDFHoSoXe'
+  ]
+};
+
+/****************************************************
+ * THÔNG TIN CÔNG TY HIỂN THỊ TRÊN HỒ SƠ XE
+ *
+ * Mục đích:
+ * - Truyền thông tin doanh nghiệp sang VehicleProfile.html.
+ * - Hiển thị ở phần đầu trang 1: Địa chỉ, ĐKKD/MST, điện thoại.
+ *
+ * Cách dùng:
+ * - Thay các giá trị bên dưới bằng thông tin thật của đơn vị.
+ * - Không đặt block này trong hàm loadModel_().
+ ****************************************************/
+const CONFIG_CONGTY_HOSO_XE = {
+  /*
+   * DEFAULT_DONVI_ID:
+   * - Để rỗng: ưu tiên lấy theo xe.Ref_DonViQuanLyHienTai / xe.Ref_DonViChuQuan.
+   * - Nếu muốn luôn mặc định một đơn vị, nhập ID_DonVi tại đây.
+   *   Ví dụ: '7f815b6f' hoặc 'fe500039'
+   */
+  DEFAULT_DONVI_ID: '',
+
+  /*
+   * FALLBACK:
+   * - Chỉ dùng khi không tìm được DONVI tương ứng.
+   * - Không nên để chữ "Nhập..." vì sẽ bị in ra PDF.
+   */
+  TEN_CONG_TY: 'CÔNG TY CỔ PHẦN VẬN TẢI HOÀNG MINH DŨNG',
+  DIA_CHI: '',
+  SO_DANG_KY_KINH_DOANH: '',
+  SO_DIEN_THOAI: ''
+};
+
+/****************************************************
+ * CẤU HÌNH QR HỒ SƠ XE
+ *
+ * Mục đích:
+ * - Tạo mã QR hiển thị trực tiếp trên file PDF hồ sơ xe.
+ * - QR ưu tiên mở WebApp nếu đã cấu hình WEB_APP_URL.
+ * - Nếu chưa deploy WebApp, QR vẫn hiển thị và chứa thông tin định danh xe.
+ *
+ * Cách dùng:
+ * - Sau khi deploy WebApp, dán URL dạng:
+ *   https://script.google.com/macros/s/AKfycb.../exec
+ ****************************************************/
+const CONFIG_QR_HOSO_XE = {
+  /*
+   * BẮT BUỘC ĐỂ QR KHÔNG BỊ BẮT ĐĂNG NHẬP:
+   * - Deploy Web app chính thức.
+   * - Execute as: Me.
+   * - Who has access: Anyone.
+   * - Dán link /exec vào đây.
+   *
+   * Ví dụ:
+   * WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxxxxxxxx/exec',
+   *
+   * TUYỆT ĐỐI KHÔNG dùng link /dev.
+   */
+  WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxvKBm6ZKB8O4iltUDhswW2q4ydKf82R9-KBoyk4IbfwJtR593QLknaYzrsRYBYb-ykTQ/exec',
+
+  QR_SIZE: 320,
+  QR_MARGIN: 1
+};
+
+
+
+
+/**
+ * Chạy 1 lần để tự thêm các cột PDF vào bảng XE nếu chưa có.
+ */
+function setupCotHoSoDienTuXe() {
+  const ss = getSpreadsheet_();
+  const sh = mustGetSheet_(ss, CONFIG_HOSO_XE.SHEETS.XE);
+  ensureColumns_(sh, CONFIG_HOSO_XE.XE_PDF_COLUMNS);
+  SpreadsheetApp.getUi().alert('Đã kiểm tra/bổ sung cột hồ sơ điện tử xe trong bảng XE.');
+}
+
+
+/**
+ * Test nhanh với xe mẫu LEZ22SYE - biển số 30E77588.
+ */
+function test_TaoHoSoXe_LEZ22SYE() {
+  return taoPDFHoSoXeTheoID('LEZ22SYE', new Date().getFullYear());
+}
+
+
+/**
+ * Tạo PDF hồ sơ điện tử cho 1 xe theo ID_Xe.
+ *
+ * @param {string} idXe
+ * @param {number=} nam
+ * @return {Object}
+ */
+function taoPDFHoSoXeTheoID(idXe, nam) {
+  if (!idXe) throw new Error('Thiếu ID_Xe');
+
+  nam = Number(nam || new Date().getFullYear());
+
+  const ss = getSpreadsheet_();
+  const xeSheet = mustGetSheet_(ss, CONFIG_HOSO_XE.SHEETS.XE);
+  ensureColumns_(xeSheet, CONFIG_HOSO_XE.XE_PDF_COLUMNS);
+
+  const model = loadModel_();
+  const xe = model.index.XE[String(idXe).trim()];
+
+  if (!xe) {
+    throw new Error('Không tìm thấy xe có ID_Xe = ' + idXe);
+  }
+
+  try {
+    const result = createVehicleProfilePdf_(model, xe, nam);
+
+    updateXePdfFields_(xe._rowNumber, {
+      FilePDFHoSoXe: result.publicViewUrl || result.url,
+      IdFilePDFHoSoXe: result.fileId,
+      LinkTaiPDFHoSoXe: result.downloadUrl,
+      NamPDFHoSoXe: nam,
+      NgayTaoPDFHoSoXe: new Date(),
+      TrangThaiTaoPDFHoSoXe: 'Đã tạo',
+      GhiChuPDFHoSoXe: 'Tạo thành công: ' + result.fileName
+    });
+
+    return result;
+
+  } catch (err) {
+    updateXePdfFields_(xe._rowNumber, {
+      TrangThaiTaoPDFHoSoXe: 'Lỗi',
+      GhiChuPDFHoSoXe: errorMessage_(err)
+    });
+
+    throw err;
+  }
+}
+
+
+/**
+ * Tạo PDF theo lô.
+ * Mặc định tạo 30 xe đang hoạt động/chưa có PDF.
+ */
+function taoPDFHoSoXeTheoLo() {
+  return taoPDFHoSoXeTheoLoTuyChon(CONFIG_HOSO_XE.DEFAULT_BATCH_SIZE, new Date().getFullYear(), false);
+}
+
+
+/**
+ * Tạo PDF theo lô tùy chọn.
+ *
+ * @param {number=} batchSize số xe/lần chạy
+ * @param {number=} nam năm hồ sơ
+ * @param {boolean=} recreate true = tạo lại cả xe đã có PDF
+ */
+function taoPDFHoSoXeTheoLoTuyChon(batchSize, nam, recreate) {
+  batchSize = Number(batchSize || CONFIG_HOSO_XE.DEFAULT_BATCH_SIZE);
+  nam = Number(nam || new Date().getFullYear());
+  recreate = Boolean(recreate);
+
+  const ss = getSpreadsheet_();
+  const xeSheet = mustGetSheet_(ss, CONFIG_HOSO_XE.SHEETS.XE);
+  ensureColumns_(xeSheet, CONFIG_HOSO_XE.XE_PDF_COLUMNS);
+
+  const model = loadModel_();
+
+  const xeList = model.tables.XE.rows.filter(r => {
+    if (!r.ID_Xe) return false;
+
+    const trangThai = normalizeText_(r.TrangThaiXe);
+    const isDangQuanLy =
+      !trangThai ||
+      trangThai.includes('dang') ||
+      trangThai.includes('hoat dong') ||
+      trangThai.includes('dang hoat dong');
+
+    const daCoPdf = String(r.FilePDFHoSoXe || '').trim() !== '';
+
+    return isDangQuanLy && (recreate || !daCoPdf);
+  });
+
+  let ok = 0;
+  let fail = 0;
+  const errors = [];
+
+  for (let i = 0; i < xeList.length && ok < batchSize; i++) {
+    const xe = xeList[i];
+
+    try {
+      const result = createVehicleProfilePdf_(model, xe, nam);
+
+      updateXePdfFields_(xe._rowNumber, {
+        FilePDFHoSoXe: result.publicViewUrl || result.url,
+        IdFilePDFHoSoXe: result.fileId,
+        LinkTaiPDFHoSoXe: result.downloadUrl,
+        NamPDFHoSoXe: nam,
+        NgayTaoPDFHoSoXe: new Date(),
+        TrangThaiTaoPDFHoSoXe: 'Đã tạo',
+        GhiChuPDFHoSoXe: 'Tạo thành công: ' + result.fileName
+      });
+
+      ok++;
+
+    } catch (err) {
+      fail++;
+      const msg = (xe.BienSo || xe.ID_Xe) + ': ' + errorMessage_(err);
+      errors.push(msg);
+
+      updateXePdfFields_(xe._rowNumber, {
+        TrangThaiTaoPDFHoSoXe: 'Lỗi',
+        GhiChuPDFHoSoXe: errorMessage_(err)
+      });
+    }
+  }
+
+  const message =
+    'Hoàn thành lô tạo hồ sơ xe.\n' +
+    'Thành công: ' + ok + '\n' +
+    'Lỗi: ' + fail + '\n' +
+    'Năm hồ sơ: ' + nam + '\n\n' +
+    errors.slice(0, 10).join('\n');
+
+  try {
+    SpreadsheetApp.getUi().alert(message);
+  } catch (e) {
+    Logger.log(message);
+  }
+
+  return { ok, fail, errors };
+}
+
+
+/**
+ * WebApp endpoint để gọi từ AppSheet.
+ *
+ * Ví dụ:
+ * /exec?action=create&idxe=LEZ22SYE&nam=2026
+ */
+function doGet(e) {
+  const p = e && e.parameter ? e.parameter : {};
+  const action = String(p.action || p.type || 'view_vehicle_profile').toLowerCase();
+  const idXe = p.idxe || p.idXe || p.ID_Xe || p.IDXe;
+  const nam = Number(p.nam || new Date().getFullYear());
+
+  if (action === 'create') {
+    const result = taoPDFHoSoXeTheoID(idXe, nam);
+
+    return HtmlService.createHtmlOutput(
+      '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<style>body{font-family:Arial;padding:24px;line-height:1.5;color:#111827}' +
+      'a{display:inline-block;margin:6px 8px 6px 0;padding:10px 14px;background:#facc15;color:#111;text-decoration:none;font-weight:bold;border:1px solid #111;border-radius:6px}</style>' +
+      '</head><body>' +
+      '<h2>Đã tạo hồ sơ điện tử xe</h2>' +
+      '<p><b>File:</b> ' + escapeHtml_(result.fileName) + '</p>' +
+      '<p>' +
+      '<a href="' + result.publicViewUrl + '" target="_blank">Xem hồ sơ PDF</a>' +
+      '<a href="' + result.downloadUrl + '" target="_blank">Tải PDF</a>' +
+      '</p>' +
+      '<p>Quay lại AppSheet và đồng bộ dữ liệu để thấy link PDF mới trong hồ sơ xe.</p>' +
+      '</body></html>'
+    );
+  }
+
+  if (
+    action === 'view_vehicle_profile' ||
+    action === 'open_vehicle_profile' ||
+    action === 'open' ||
+    action === 'view'
+  ) {
+    return serveVehicleProfileHtmlForQr_(idXe, nam);
+  }
+
+  if (action === 'download_vehicle_profile' || action === 'download') {
+    return serveVehiclePdfDownloadPage_(idXe, nam);
+  }
+
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>' +
+    '<body style="font-family:Arial;padding:18px">' +
+    'Action không hợp lệ: ' + escapeHtml_(action) +
+    '</body></html>'
+  );
+}
+
+
+/**
+ * Tạo PDF và trả thông tin file.
+ */
+function createVehicleProfilePdf_(model, xe, nam) {
+  const data = buildVehicleProfileData_(model, xe, nam);
+
+  const template = HtmlService.createTemplateFromFile('VehicleProfile');
+  template.data = data;
+
+  const html = template.evaluate().getContent();
+
+  const bienSo = cleanFileName_(xe.BienSo || xe.ID_Xe);
+  const idXe = cleanFileName_(xe.ID_Xe);
+  const fileName = 'HOSO_DIENTU_XE_' + bienSo + '_' + nam + '.pdf';
+
+  const folderName = idXe + '_' + bienSo;
+  const folderPath =
+    CONFIG_HOSO_XE.ROOT_FOLDER_PATH + '/' +
+    folderName + '/' +
+    CONFIG_HOSO_XE.PROFILE_SUBFOLDER;
+
+  const folder = getOrCreateFolderByPath_(folderPath);
+
+  trashFilesByName_(folder, fileName);
+
+  const htmlBlob = Utilities.newBlob(
+    html,
+    'text/html',
+    fileName.replace('.pdf', '.html')
+  );
+
+  const pdfBlob = htmlBlob.getAs(MimeType.PDF).setName(fileName);
+  const file = folder.createFile(pdfBlob);
+
+  // Bắt buộc public để người quét QR xem/tải không cần đăng nhập Google.
+  makeDriveFilePublic_(file);
+
+  const fileId = file.getId();
+
+  return {
+    fileId: fileId,
+    fileName: fileName,
+    url: buildDriveViewUrl_(fileId),
+    publicViewUrl: buildDriveViewUrl_(fileId),
+    downloadUrl: buildDriveDownloadUrl_(fileId)
+  };
+}
+
+
+
+
+/**
+ * Kiểm tra giá trị có phải placeholder không.
+ * Các chuỗi bắt đầu bằng "Nhập ..." sẽ không được đưa vào PDF.
+ */
+function isPlaceholderText_(value) {
+  const s = String(value || '').trim();
+  if (!s) return true;
+
+  const t = normalizeText_(s);
+  return (
+    t === '-' ||
+    t === '—' ||
+    t.indexOf('nhap ') === 0 ||
+    t.indexOf('nhap dia chi') >= 0 ||
+    t.indexOf('nhap so') >= 0 ||
+    t.indexOf('chua co') >= 0 ||
+    t.indexOf('chua nhap') >= 0
+  );
+}
+
+
+/**
+ * Lấy text đầu tiên hợp lệ, bỏ qua chuỗi placeholder.
+ */
+function firstRealText_() {
+  for (let i = 0; i < arguments.length; i++) {
+    const s = String(arguments[i] || '').trim();
+    if (s && !isPlaceholderText_(s)) return s;
+  }
+  return '';
+}
+
+
+/**
+ * Lấy bản ghi DONVI theo nhiều khả năng:
+ * - Ref trực tiếp là ID_DonVi.
+ * - Ref là MaDonVi.
+ * - Ref là MaSoThue.
+ */
+function findDonViRow_(model, ref) {
+  const key = String(ref || '').trim();
+  if (!key) return null;
+
+  if (model.index && model.index.DONVI && model.index.DONVI[key]) {
+    return model.index.DONVI[key];
+  }
+
+  const rows = model.tables && model.tables.DONVI ? model.tables.DONVI.rows : [];
+  const keyNorm = normalizeText_(key);
+
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (
+      normalizeText_(r.ID_DonVi) === keyNorm ||
+      normalizeText_(r.MaDonVi) === keyNorm ||
+      normalizeText_(r.MaSoThue) === keyNorm ||
+      normalizeText_(r.TenDonVi) === keyNorm ||
+      normalizeText_(r.TenVietTat) === keyNorm
+    ) {
+      return r;
+    }
+  }
+
+  return null;
+}
+
+
+/**
+ * Chọn đơn vị hiển thị trên hồ sơ xe.
+ *
+ * Thứ tự ưu tiên:
+ * 1. CONFIG_CONGTY_HOSO_XE.DEFAULT_DONVI_ID nếu có cấu hình.
+ * 2. XE[Ref_DonViQuanLyHienTai].
+ * 3. XE[Ref_DonViChuQuan].
+ * 4. Dòng DONVI đầu tiên có trạng thái hoạt động/hợp lệ.
+ * 5. Dòng DONVI đầu tiên trong bảng.
+ */
+function pickCompanyDonViRow_(model, xe) {
+  const rows = model.tables && model.tables.DONVI ? model.tables.DONVI.rows : [];
+
+  // 1. YÊU CẦU CHỐT: lấy theo đơn vị chủ quản của xe.
+  const byChuQuan = findDonViRow_(model, xe.Ref_DonViChuQuan);
+  if (byChuQuan) return byChuQuan;
+
+  // 2. Nếu xe chưa có Ref_DonViChuQuan thì dùng đơn vị mặc định trong cấu hình.
+  const configured = findDonViRow_(model, CONFIG_CONGTY_HOSO_XE.DEFAULT_DONVI_ID);
+  if (configured) return configured;
+
+  // 3. Ref_DonViQuanLyHienTai chỉ dùng dự phòng, không phải nguồn chính để in đầu hồ sơ.
+  const byQuanLy = findDonViRow_(model, xe.Ref_DonViQuanLyHienTai);
+  if (byQuanLy) return byQuanLy;
+
+  // 4. Dự phòng: lấy dòng DONVI đang hoạt động/hợp lệ đầu tiên.
+  for (let i = 0; i < rows.length; i++) {
+    const st = normalizeText_(rows[i].TrangThai);
+    if (
+      !st ||
+      st.includes('dang') ||
+      st.includes('hoat dong') ||
+      st.includes('hieu luc') ||
+      st.includes('jfg5cz14')
+    ) {
+      return rows[i];
+    }
+  }
+
+  // 5. Dự phòng cuối.
+  return rows.length ? rows[0] : null;
+}
+
+
+/**
+ * Lấy thông tin công ty để truyền sang VehicleProfile.html.
+ *
+ * Kết quả trả về hỗ trợ các trường:
+ * - data.company.tenCongTy
+ * - data.company.diaChi
+ * - data.company.soDangKyKinhDoanh
+ * - data.company.soDienThoai
+ * - data.meta.diaChiCongTy
+ * - data.meta.soDangKyKinhDoanh
+ * - data.meta.soDienThoai
+ */
+function getCompanyProfile_(model, xe) {
+  model = model || {};
+  xe = xe || {};
+
+  const donVi = pickCompanyDonViRow_(model, xe) || {};
+
+  const tenCongTy = firstRealText_(
+    donVi.TenDonVi,
+    donVi.TenVietTat,
+    CONFIG_CONGTY_HOSO_XE.TEN_CONG_TY
+  );
+
+  const diaChi = firstRealText_(
+    donVi.DiaChi,
+    donVi.DiaChiTruSo,
+    donVi.DiaChiCongTy,
+    CONFIG_CONGTY_HOSO_XE.DIA_CHI
+  );
+
+  const soDangKyKinhDoanh = firstRealText_(
+    donVi.MaSoThue,
+    donVi.SoDangKyKinhDoanh,
+    donVi.MaDonVi,
+    CONFIG_CONGTY_HOSO_XE.SO_DANG_KY_KINH_DOANH
+  );
+
+  const soDienThoai = firstRealText_(
+    donVi.SoDienThoai,
+    donVi.DienThoai,
+    donVi.Phone,
+    CONFIG_CONGTY_HOSO_XE.SO_DIEN_THOAI
+  );
+
+  return {
+    idDonVi: String(donVi.ID_DonVi || '').trim(),
+    maDonVi: String(donVi.MaDonVi || '').trim(),
+    tenCongTy: tenCongTy,
+    diaChi: diaChi,
+    soDangKyKinhDoanh: soDangKyKinhDoanh,
+    maSoThue: soDangKyKinhDoanh,
+    soDienThoai: soDienThoai,
+    email: String(donVi.Email || '').trim(),
+    nguoiDaiDien: String(donVi.NguoiDaiDien || '').trim(),
+    chucVuNguoiDaiDien: String(donVi.ChucVuNguoiDaiDien || '').trim()
+  };
+}
+
+
+
+
+
+
+/****************************************************
+ * XEM HỒ SƠ XE DẠNG HTML KHI QUÉT QR
+ *
+ * Vì Zalo không ổn định với PDF/data URI/iframe PDF, QR sẽ mở
+ * hồ sơ dạng HTML trực tiếp. Người dùng xem được ngay, không cần
+ * ứng dụng đọc PDF.
+ ****************************************************/
+function serveVehicleProfileHtmlForQr_(idXe, nam) {
+  idXe = String(idXe || '').trim();
+  nam = Number(nam || new Date().getFullYear());
+
+  if (!idXe) {
+    return htmlMessage_('Thiếu mã xe IDXe.', 'Vui lòng kiểm tra lại QR hoặc đường dẫn mở hồ sơ.');
+  }
+
+  let model, xe;
+  try {
+    model = loadModel_();
+    xe = model.index.XE[idXe];
+  } catch (err) {
+    return htmlMessage_('Không đọc được dữ liệu hệ thống.', errorMessage_(err));
+  }
+
+  if (!xe) {
+    return htmlMessage_('Không tìm thấy xe: ' + idXe, 'Vui lòng kiểm tra lại mã xe trong QR.');
+  }
+
+  /*
+   * Tạo lại nội dung HTML hồ sơ từ template.
+   * Đây là bản xem trực tiếp, không phải file PDF.
+   */
+  const data = buildVehicleProfileData_(model, xe, nam);
+  const template = HtmlService.createTemplateFromFile('VehicleProfile');
+  template.data = data;
+
+  let profileHtml = template.evaluate().getContent();
+
+  /*
+   * Bỏ CSS @page/khổ in nếu có thể gây khó xem trên điện thoại.
+   * Đồng thời thêm thanh công cụ tải PDF.
+   */
+  const toolbar = buildQrMobileToolbar_(idXe, xe.BienSo, nam);
+  profileHtml = profileHtml.replace(
+    /<body([^>]*)>/i,
+    '<body$1>' + toolbar
+  );
+
+  profileHtml = profileHtml.replace(
+    '</style>',
+    buildQrMobileCss_() + '\n</style>'
+  );
+
+  return HtmlService
+    .createHtmlOutput(profileHtml)
+    .setTitle('Hồ sơ xe ' + (xe.BienSo || idXe))
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+
+/**
+ * Thanh công cụ trên điện thoại khi mở từ QR/Zalo.
+ */
+function buildQrMobileToolbar_(idXe, bienSo, nam) {
+  const webAppUrl = getVehicleProfileWebAppUrl_();
+  const downloadUrl = webAppUrl
+    ? webAppUrl +
+      '?action=download_vehicle_profile' +
+      '&idxe=' + encodeURIComponent(idXe) +
+      '&nam=' + encodeURIComponent(nam)
+    : '';
+
+  const openUrl = webAppUrl
+    ? webAppUrl +
+      '?action=view_vehicle_profile' +
+      '&idxe=' + encodeURIComponent(idXe) +
+      '&nam=' + encodeURIComponent(nam)
+    : '';
+
+  return (
+    '<div class="qr-mobile-toolbar">' +
+      '<div class="qr-mobile-title">Hồ sơ xe ' + escapeHtml_(bienSo || idXe) + '</div>' +
+      '<div class="qr-mobile-sub">Mã xe: <b>' + escapeHtml_(idXe) + '</b> &nbsp; | &nbsp; Năm: <b>' + escapeHtml_(nam) + '</b></div>' +
+      '<div class="qr-mobile-actions">' +
+        '<a class="qr-btn qr-primary" href="' + downloadUrl + '" target="_blank">Tải PDF</a>' +
+        '<a class="qr-btn qr-secondary" href="' + openUrl + '" target="_blank">Mở bằng trình duyệt</a>' +
+      '</div>' +
+      '<div class="qr-mobile-note">Nếu mở trong Zalo không tải được PDF, bấm “Mở bằng trình duyệt”, sau đó bấm “Tải PDF”.</div>' +
+    '</div>'
+  );
+}
+
+
+/**
+ * CSS tối ưu khi xem hồ sơ qua QR trên điện thoại.
+ */
+function buildQrMobileCss_() {
+  return (
+    '\\n/* QR MOBILE VIEWER */\\n' +
+    '.qr-mobile-toolbar{position:sticky;top:0;z-index:99999;background:#ffffff;border-bottom:2px solid #2f6690;padding:10px 12px;box-shadow:0 2px 8px rgba(16,24,40,.12);font-family:Arial,sans-serif}\\n' +
+    '.qr-mobile-title{font-size:16px;font-weight:900;color:#1f4e79;line-height:1.2;margin-bottom:3px}\\n' +
+    '.qr-mobile-sub{font-size:12px;color:#344054;font-weight:700;line-height:1.3;margin-bottom:7px}\\n' +
+    '.qr-mobile-actions{white-space:nowrap}\\n' +
+    '.qr-btn{display:inline-block;margin:2px 6px 2px 0;padding:8px 12px;border-radius:8px;text-decoration:none;font-weight:900;font-size:13px;border:1.6px solid #2f6690}\\n' +
+    '.qr-primary{background:#f4b400;color:#111827}\\n' +
+    '.qr-secondary{background:#eaf3fb;color:#1f4e79}\\n' +
+    '.qr-mobile-note{font-size:11px;color:#667085;line-height:1.3;margin-top:5px}\\n' +
+    '@media screen and (max-width: 760px){body{background:#f3f4f6!important}.sheet,.cover2026,.page{width:1180px!important;max-width:none!important;margin:10px auto!important;transform-origin:top left}.qr-mobile-toolbar + .cover2026,.qr-mobile-toolbar + .sheet{margin-top:10px!important}}\\n'
+  );
+}
+
+
+/****************************************************
+ * TRANG TẢI PDF TƯƠNG THÍCH ZALO
+ *
+ * Không nhúng iframe PDF nữa.
+ * Chỉ tạo trang có nút tải bằng Blob JavaScript.
+ ****************************************************/
+function serveVehiclePdfDownloadPage_(idXe, nam) {
+  idXe = String(idXe || '').trim();
+  nam = Number(nam || new Date().getFullYear());
+
+  if (!idXe) {
+    return htmlMessage_('Thiếu mã xe IDXe.', 'Không thể tải PDF.');
+  }
+
+  const fileInfo = findVehiclePdfFileInfo_(idXe);
+
+  if (!fileInfo.fileId) {
+    return htmlMessage_(
+      'Xe này chưa có file PDF.',
+      'Vui lòng tạo hồ sơ PDF trước, sau đó bấm tải lại.'
+    );
+  }
+
+  let file, blob, fileName, base64;
+  try {
+    file = DriveApp.getFileById(fileInfo.fileId);
+    blob = file.getBlob();
+    fileName = file.getName() || ('HoSoXe_' + idXe + '.pdf');
+    base64 = Utilities.base64Encode(blob.getBytes());
+  } catch (err) {
+    return htmlMessage_('Không đọc được file PDF.', errorMessage_(err));
+  }
+
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html>' +
+    '<html>' +
+    '<head>' +
+      '<meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<title>Tải PDF hồ sơ xe</title>' +
+      '<style>' +
+        'body{font-family:Arial,sans-serif;margin:0;padding:18px;background:#f3f4f6;color:#111827;line-height:1.5}' +
+        '.box{max-width:520px;margin:0 auto;background:#fff;border:1px solid #d0d5dd;border-radius:14px;padding:18px}' +
+        'h2{font-size:20px;color:#1f4e79;margin:0 0 8px}.muted{color:#667085;font-size:13px}' +
+        '.btn{display:block;width:100%;box-sizing:border-box;text-align:center;margin:10px 0;padding:13px 14px;border-radius:10px;text-decoration:none;font-weight:900;border:1.8px solid #2f6690}' +
+        '.primary{background:#f4b400;color:#111827}.secondary{background:#eaf3fb;color:#1f4e79}' +
+        '.small{font-size:12px;color:#667085;margin-top:12px}' +
+      '</style>' +
+    '</head>' +
+    '<body>' +
+      '<div class="box">' +
+        '<h2>Tải hồ sơ PDF</h2>' +
+        '<p class="muted">Mã xe: <b>' + escapeHtml_(idXe) + '</b></p>' +
+        '<a id="downloadBtn" class="btn primary" href="#">Tải PDF về máy</a>' +
+        '<a class="btn secondary" href="javascript:history.back()">Quay lại hồ sơ</a>' +
+        '<div class="small">Nếu đang mở trong Zalo và không tải được, bấm dấu ba chấm của Zalo rồi chọn mở bằng Safari/Chrome.</div>' +
+      '</div>' +
+      '<script>' +
+        'var b64="' + base64 + '";' +
+        'var fileName="' + jsString_(fileName) + '";' +
+        'function b64ToBlob(b64,mime){var byteChars=atob(b64);var byteNumbers=new Array(byteChars.length);for(var i=0;i<byteChars.length;i++){byteNumbers[i]=byteChars.charCodeAt(i);}var byteArray=new Uint8Array(byteNumbers);return new Blob([byteArray],{type:mime});}' +
+        'document.getElementById("downloadBtn").onclick=function(e){e.preventDefault();var blob=b64ToBlob(b64,"application/pdf");var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download=fileName;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(url);a.remove();},1000);};' +
+      '</script>' +
+    '</body>' +
+    '</html>'
+  )
+  .setTitle('Tải PDF hồ sơ xe');
+}
+
+
+/**
+ * Tìm file PDF hồ sơ xe mới nhất theo bảng XE.
+ */
+function findVehiclePdfFileInfo_(idXe) {
+  idXe = String(idXe || '').trim();
+
+  const ss = getSpreadsheet_();
+  const sh = mustGetSheet_(ss, CONFIG_HOSO_XE.SHEETS.XE);
+  ensureColumns_(sh, CONFIG_HOSO_XE.XE_PDF_COLUMNS);
+
+  const values = sh.getDataRange().getDisplayValues();
+  const headers = values[0].map(String);
+
+  const colIdXe = headers.indexOf('ID_Xe');
+  const colFileId = headers.indexOf('IdFilePDFHoSoXe');
+  const colLinkPdf = headers.indexOf('FilePDFHoSoXe');
+
+  if (colIdXe < 0) return { fileId: '' };
+
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][colIdXe]).trim() === idXe) {
+      let fileId = colFileId >= 0 ? String(values[i][colFileId] || '').trim() : '';
+      if (!fileId && colLinkPdf >= 0) fileId = extractDriveFileId_(values[i][colLinkPdf]);
+      return { fileId: fileId };
+    }
+  }
+
+  return { fileId: '' };
+}
+
+
+/**
+ * Escape chuỗi đưa vào JavaScript string.
+ */
+function jsString_(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '');
+}
+
+
+/****************************************************
+ * MỞ HỒ SƠ XE CÔNG KHAI TỪ QR
+ *
+ * Điều kiện để người quét QR không phải đăng nhập:
+ * 1. WebApp deploy dạng /exec.
+ * 2. Execute as: Me.
+ * 3. Who has access: Anyone.
+ * 4. File PDF được setSharing ANYONE_WITH_LINK.
+ ****************************************************/
+function openVehicleProfilePublic_(idXe, options) {
+  options = options || {};
+  idXe = String(idXe || '').trim();
+
+  if (!idXe) {
+    return htmlMessage_('Thiếu mã xe IDXe.', 'Vui lòng kiểm tra lại QR hoặc đường dẫn mở hồ sơ.');
+  }
+
+  const ss = getSpreadsheet_();
+  const sh = mustGetSheet_(ss, CONFIG_HOSO_XE.SHEETS.XE);
+  ensureColumns_(sh, CONFIG_HOSO_XE.XE_PDF_COLUMNS);
+
+  const values = sh.getDataRange().getDisplayValues();
+  const headers = values[0].map(String);
+
+  const colIdXe = headers.indexOf('ID_Xe');
+  const colBienSo = headers.indexOf('BienSo');
+  const colFileId = headers.indexOf('IdFilePDFHoSoXe');
+  const colLinkPdf = headers.indexOf('FilePDFHoSoXe');
+
+  if (colIdXe < 0) {
+    return htmlMessage_('Thiếu cột ID_Xe trong bảng XE.', 'Không thể xác định xe từ QR.');
+  }
+
+  let row = null;
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][colIdXe]).trim() === idXe) {
+      row = values[i];
+      break;
+    }
+  }
+
+  if (!row) {
+    return htmlMessage_('Không tìm thấy xe: ' + escapeHtml_(idXe), 'Vui lòng kiểm tra lại mã xe trong QR.');
+  }
+
+  let fileId = '';
+
+  if (colFileId >= 0) {
+    fileId = String(row[colFileId] || '').trim();
+  }
+
+  if (!fileId && colLinkPdf >= 0) {
+    fileId = extractDriveFileId_(row[colLinkPdf]);
+  }
+
+  if (!fileId) {
+    return htmlMessage_(
+      'Xe này chưa có hồ sơ PDF.',
+      'Vui lòng tạo hồ sơ PDF trước, sau đó quét lại QR.'
+    );
+  }
+
+  /*
+   * Không redirect sang Drive nữa.
+   * WebApp đọc file bằng quyền chủ sở hữu rồi nhúng PDF vào HTML.
+   * Cách này tránh lỗi "Bạn cần có quyền truy cập" của Google Drive.
+   */
+  return serveVehiclePdfByWebApp_(fileId, {
+    idXe: idXe,
+    bienSo: colBienSo >= 0 ? row[colBienSo] : '',
+    forceDownload: Boolean(options.download)
+  });
+}
+
+
+/**
+ * Đặt quyền công khai cho file Drive để ai có link cũng xem/tải được.
+ */
+
+/****************************************************
+ * PHỤC VỤ PDF TRỰC TIẾP QUA WEBAPP
+ *
+ * Mục đích:
+ * - Không chuyển người dùng sang drive.google.com.
+ * - Tránh lỗi Google Drive yêu cầu đăng nhập/quyền truy cập.
+ * - WebApp chạy Execute as: Me nên đọc được file PDF trong Drive.
+ *
+ * Lưu ý:
+ * - WebApp phải deploy dạng /exec, quyền "Bất kỳ ai".
+ * - Phù hợp với file hồ sơ PDF dung lượng vừa phải.
+ ****************************************************/
+function serveVehiclePdfByWebApp_(fileId, info) {
+  info = info || {};
+  fileId = String(fileId || '').trim();
+
+  if (!fileId) {
+    return htmlMessage_('Thiếu File ID hồ sơ PDF.', 'Không thể mở hồ sơ xe.');
+  }
+
+  let file;
+  let blob;
+  let fileName;
+
+  try {
+    file = DriveApp.getFileById(fileId);
+    blob = file.getBlob();
+    fileName = file.getName() || ('HoSoXe_' + (info.idXe || '') + '.pdf');
+  } catch (err) {
+    return htmlMessage_(
+      'Không đọc được file PDF bằng WebApp.',
+      errorMessage_(err)
+    );
+  }
+
+  const bytes = blob.getBytes();
+  const base64 = Utilities.base64Encode(bytes);
+  const dataUri = 'data:application/pdf;base64,' + base64;
+
+  const idXe = String(info.idXe || '').trim();
+  const bienSo = String(info.bienSo || '').trim();
+  const title = 'Hồ sơ xe ' + (bienSo || idXe || '');
+
+  /*
+   * Không dùng redirect Drive.
+   * Trang này vừa xem được, vừa có nút tải bằng data URI.
+   */
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html>' +
+    '<html>' +
+    '<head>' +
+    '<meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>' + escapeHtml_(title) + '</title>' +
+    '<style>' +
+      'html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;background:#f3f4f6;color:#111827}' +
+      '.bar{position:sticky;top:0;z-index:10;background:#ffffff;border-bottom:1px solid #d0d5dd;padding:10px 12px}' +
+      '.title{font-size:16px;font-weight:800;color:#1f4e79;margin:0 0 6px}' +
+      '.meta{font-size:12px;color:#475467;margin-bottom:8px}' +
+      '.btn{display:inline-block;margin:4px 6px 4px 0;padding:9px 12px;border-radius:8px;text-decoration:none;font-weight:800;border:1px solid #2f6690}' +
+      '.primary{background:#f4b400;color:#111827}' +
+      '.secondary{background:#eaf3fb;color:#1f4e79}' +
+      '.viewer{height:calc(100vh - 106px);background:#ffffff}' +
+      'iframe,object,embed{width:100%;height:100%;border:0;background:#ffffff}' +
+      '.note{font-size:12px;color:#667085;margin-top:4px;line-height:1.35}' +
+    '</style>' +
+    '</head>' +
+    '<body>' +
+      '<div class="bar">' +
+        '<div class="title">' + escapeHtml_(title) + '</div>' +
+        '<div class="meta">Mã xe: <b>' + escapeHtml_(idXe) + '</b>' +
+          (bienSo ? ' &nbsp; | &nbsp; Biển số: <b>' + escapeHtml_(bienSo) + '</b>' : '') +
+        '</div>' +
+        '<a class="btn primary" download="' + escapeHtml_(fileName) + '" href="' + dataUri + '">Tải PDF</a>' +
+        '<a class="btn secondary" target="_blank" href="' + dataUri + '">Mở toàn màn hình</a>' +
+        '<div class="note">Nếu điện thoại không hiển thị khung xem PDF, bấm “Tải PDF” hoặc “Mở toàn màn hình”.</div>' +
+      '</div>' +
+      '<div class="viewer">' +
+        '<iframe src="' + dataUri + '"></iframe>' +
+      '</div>' +
+    '</body>' +
+    '</html>'
+  )
+  .setTitle(title)
+  .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+
+function makeDriveFilePublic_(file) {
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return file;
+}
+
+
+/**
+ * Link xem PDF công khai.
+ */
+function buildDriveViewUrl_(fileId) {
+  fileId = String(fileId || '').trim();
+  return 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/view?usp=sharing';
+}
+
+
+/**
+ * Link tải PDF trực tiếp.
+ */
+function buildDriveDownloadUrl_(fileId) {
+  fileId = String(fileId || '').trim();
+  return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId);
+}
+
+
+/**
+ * Tách Google Drive File ID từ các dạng link phổ biến.
+ */
+function extractDriveFileId_(url) {
+  url = String(url || '').trim();
+  if (!url) return '';
+
+  let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (m && m[1]) return m[1];
+
+  m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m && m[1]) return m[1];
+
+  return '';
+}
+
+
+/**
+ * Trang thông báo HTML đơn giản.
+ */
+function htmlMessage_(title, message) {
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<style>body{font-family:Arial,sans-serif;padding:18px;line-height:1.5;color:#111827}.box{max-width:520px;margin:0 auto;border:1px solid #d0d5dd;border-radius:12px;padding:16px;background:#fff}.muted{color:#667085}</style>' +
+    '</head><body><div class="box">' +
+    '<h3>' + escapeHtml_(title) + '</h3>' +
+    '<p class="muted">' + escapeHtml_(message) + '</p>' +
+    '</div></body></html>'
+  );
+}
+
+
+/**
+ * Lấy URL WebApp.
+ * Nếu chưa deploy WebApp hoặc chưa cấu hình, trả rỗng.
+ */
+
+
+
+/**
+ * Tạo nội dung đưa vào QR.
+ *
+ * Ưu tiên:
+ * - Có WebApp URL: QR mở hồ sơ xe theo IDXe.
+ * - Chưa có WebApp URL: QR vẫn hiển thị, chứa thông tin định danh xe.
+ */
+
+
+
+/**
+ * Tạo URL ảnh QR từ QuickChart.
+ */
+
+
+
+/**
+ * Chuyển ảnh QR thành data URI để nhúng trực tiếp vào PDF.
+ *
+ * Lưu ý:
+ * - PDF tạo từ HTML thường hiển thị data URI ổn định hơn link ảnh ngoài.
+ * - Nếu fetch lỗi, vẫn trả imageUrl làm dự phòng.
+ */
+
+
+
+/**
+ * Tạo object QR truyền sang VehicleProfile.html.
+ */
+
+
+
+
+/**
+ * Lấy URL WebApp.
+ * Nếu chưa deploy WebApp hoặc chưa cấu hình, trả rỗng.
+ */
+function getVehicleProfileWebAppUrl_() {
+  const configured = String(CONFIG_QR_HOSO_XE.WEB_APP_URL || '').trim();
+  if (configured) return configured;
+
+  try {
+    const serviceUrl = ScriptApp.getService().getUrl();
+    return serviceUrl || '';
+  } catch (err) {
+    return '';
+  }
+}
+
+
+/**
+ * Tạo nội dung đưa vào QR.
+ *
+ * Ưu tiên:
+ * - Có WebApp URL: QR mở hồ sơ xe theo IDXe.
+ * - Chưa có WebApp URL: QR vẫn hiển thị, chứa thông tin định danh xe.
+ */
+function buildVehicleQrText_(xe, nam) {
+  xe = xe || {};
+
+  const idXe = String(xe.ID_Xe || '').trim();
+  const bienSo = String(xe.BienSo || '').trim();
+  const year = Number(nam || new Date().getFullYear());
+
+  const webAppUrl = getVehicleProfileWebAppUrl_();
+
+  /*
+   * QR mở trang HTML xem hồ sơ xe.
+   * Không mở trực tiếp PDF vì Zalo thường báo không tìm thấy ứng dụng đọc PDF.
+   */
+  if (webAppUrl && idXe && !/\/dev(\?|$)/i.test(webAppUrl)) {
+    return (
+      webAppUrl +
+      '?action=view_vehicle_profile' +
+      '&idxe=' + encodeURIComponent(idXe) +
+      '&nam=' + encodeURIComponent(year)
+    );
+  }
+
+  return [
+    'CHUA_CAU_HINH_WEBAPP_EXEC',
+    'Vui long deploy WebApp /exec va dien CONFIG_QR_HOSO_XE.WEB_APP_URL',
+    'IDXe=' + idXe,
+    'BienSo=' + bienSo,
+    'Nam=' + year
+  ].join('|');
+}
+
+
+/**
+ * Danh sách URL ảnh QR dự phòng.
+ * Lưu ý: đều yêu cầu ảnh PNG để nhúng PDF ổn định.
+ */
+function buildVehicleQrImageUrls_(qrText) {
+  qrText = String(qrText || '').trim();
+  if (!qrText) return [];
+
+  const size = Number(CONFIG_QR_HOSO_XE.QR_SIZE || 320);
+  const margin = Number(CONFIG_QR_HOSO_XE.QR_MARGIN || 1);
+
+  return [
+    {
+      provider: 'quickchart_png',
+      url:
+        'https://quickchart.io/qr' +
+        '?format=png' +
+        '&size=' + encodeURIComponent(size) +
+        '&margin=' + encodeURIComponent(margin) +
+        '&text=' + encodeURIComponent(qrText)
+    },
+    {
+      provider: 'qrserver_png',
+      url:
+        'https://api.qrserver.com/v1/create-qr-code/' +
+        '?size=' + encodeURIComponent(size + 'x' + size) +
+        '&margin=' + encodeURIComponent(margin) +
+        '&format=png' +
+        '&data=' + encodeURIComponent(qrText)
+    },
+    {
+      provider: 'google_chart_png',
+      url:
+        'https://chart.googleapis.com/chart' +
+        '?cht=qr' +
+        '&chs=' + encodeURIComponent(size + 'x' + size) +
+        '&chld=M|' + encodeURIComponent(margin) +
+        '&chl=' + encodeURIComponent(qrText)
+    }
+  ];
+}
+
+
+/**
+ * Tải ảnh QR và chuyển thành data URI base64.
+ *
+ * Đây là điểm xử lý dứt điểm:
+ * - PDF tạo từ HTML không ổn định với ảnh ngoài.
+ * - Do đó phải tải ảnh bằng UrlFetchApp rồi nhúng base64 vào HTML.
+ */
+function fetchQrPngDataUri_(url) {
+  url = String(url || '').trim();
+  if (!url) return '';
+
+  const res = UrlFetchApp.fetch(url, {
+    muteHttpExceptions: true,
+    followRedirects: true,
+    validateHttpsCertificates: true,
+    headers: {
+      'User-Agent': 'Mozilla/5.0 AppsScript QR Generator'
+    }
+  });
+
+  const code = res.getResponseCode();
+  if (code < 200 || code >= 300) {
+    throw new Error('HTTP ' + code + ' khi tải QR');
+  }
+
+  const bytes = res.getContent();
+  if (!bytes || bytes.length < 300) {
+    throw new Error('Ảnh QR trả về rỗng hoặc quá nhỏ');
+  }
+
+  const blob = res.getBlob();
+  let contentType = String(blob.getContentType() || '').toLowerCase();
+
+  /*
+   * Một số dịch vụ trả về content-type thiếu/chưa chuẩn.
+   * Với PDF, dùng image/png là ổn định nhất.
+   */
+  if (!contentType || contentType.indexOf('image/') !== 0) {
+    contentType = 'image/png';
+  }
+
+  const base64 = Utilities.base64Encode(bytes);
+  return 'data:' + contentType + ';base64,' + base64;
+}
+
+
+/**
+ * Tạo object QR truyền sang VehicleProfile.html.
+ */
+
+
+/**
+ * Tạo URL QR dạng SVG.
+ * Giải pháp này dùng để nhúng trực tiếp SVG vào HTML, không dùng thẻ <img>.
+ */
+function buildVehicleQrSvgUrl_(qrText) {
+  qrText = String(qrText || '').trim();
+  if (!qrText) return '';
+
+  const size = Number(CONFIG_QR_HOSO_XE.QR_SIZE || 320);
+  const margin = Number(CONFIG_QR_HOSO_XE.QR_MARGIN || 1);
+
+  return (
+    'https://quickchart.io/qr' +
+    '?format=svg' +
+    '&size=' + encodeURIComponent(size) +
+    '&margin=' + encodeURIComponent(margin) +
+    '&text=' + encodeURIComponent(qrText)
+  );
+}
+
+
+/**
+ * Làm sạch SVG QR trước khi nhúng vào HTML.
+ */
+function sanitizeQrSvg_(svgText) {
+  let svg = String(svgText || '').trim();
+  if (!svg) return '';
+
+  // Bỏ XML header/doctype nếu có.
+  svg = svg
+    .replace(/<\?xml[\s\S]*?\?>/gi, '')
+    .replace(/<!DOCTYPE[\s\S]*?>/gi, '')
+    .trim();
+
+  const start = svg.indexOf('<svg');
+  const end = svg.lastIndexOf('</svg>');
+
+  if (start < 0 || end < 0) return '';
+
+  svg = svg.substring(start, end + 6);
+
+  // Chặn nội dung không cần thiết.
+  svg = svg
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
+    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '');
+
+  // Ép kích thước hiển thị ổn định trong PDF.
+  svg = svg.replace(
+    /<svg\b([^>]*)>/i,
+    '<svg$1 width="86" height="86" style="width:86px;height:86px;display:block;background:#fff;" preserveAspectRatio="xMidYMid meet">'
+  );
+
+  return svg;
+}
+
+
+/**
+ * Tải QR SVG từ QuickChart và trả về markup SVG nội tuyến.
+ */
+function buildQrInlineSvg_(qrText) {
+  const url = buildVehicleQrSvgUrl_(qrText);
+  if (!url) return '';
+
+  try {
+    const res = UrlFetchApp.fetch(url, {
+      muteHttpExceptions: true,
+      followRedirects: true,
+      validateHttpsCertificates: true,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 AppsScript QR SVG Generator'
+      }
+    });
+
+    const code = res.getResponseCode();
+    if (code < 200 || code >= 300) {
+      throw new Error('HTTP ' + code + ' khi tải QR SVG');
+    }
+
+    const svg = sanitizeQrSvg_(res.getContentText());
+    if (!svg || svg.indexOf('<svg') < 0) {
+      throw new Error('QR SVG rỗng hoặc không hợp lệ');
+    }
+
+    return svg;
+  } catch (err) {
+    Logger.log('Không tạo được QR inline SVG: ' + errorMessage_(err));
+    return '';
+  }
+}
+
+
+function buildVehicleQrProfile_(xe, nam) {
+  const qrText = buildVehicleQrText_(xe, nam);
+
+  // Giải pháp chính: inline SVG, không dùng ảnh.
+  const svgMarkup = buildQrInlineSvg_(qrText);
+
+  // Vẫn giữ PNG data URI làm dự phòng nếu cần xem debug.
+  let imageDataUri = '';
+  let imageUrl = '';
+  let provider = svgMarkup ? 'quickchart_svg_inline' : '';
+  let lastError = '';
+
+  if (!svgMarkup) {
+    const candidates = buildVehicleQrImageUrls_(qrText);
+
+    for (let i = 0; i < candidates.length; i++) {
+      try {
+        imageDataUri = fetchQrPngDataUri_(candidates[i].url);
+        imageUrl = candidates[i].url;
+        provider = candidates[i].provider;
+
+        if (imageDataUri && imageDataUri.indexOf('data:image/') === 0) break;
+      } catch (err) {
+        lastError = candidates[i].provider + ': ' + errorMessage_(err);
+        Logger.log('Lỗi tạo QR PNG dự phòng: ' + lastError);
+      }
+    }
+  }
+
+  return {
+    text: qrText,
+    openUrl: qrText,
+    svgMarkup: svgMarkup,
+    imageUrl: imageUrl,
+    imageDataUri: imageDataUri,
+    provider: provider,
+    error: svgMarkup || imageDataUri ? '' : (lastError || 'Không tạo được QR')
+  };
+}
+
+
+/**
+ * Test riêng QR để kiểm tra trước khi tạo PDF.
+ * Chạy hàm này trong Apps Script, xem Logs.
+ */
+function test_QR_HoSoXe_LEZ22SYE() {
+  const model = loadModel_();
+  const xe = model.index.XE['LEZ22SYE'];
+  if (!xe) throw new Error('Không tìm thấy xe LEZ22SYE');
+
+  const qr = buildVehicleQrProfile_(xe, new Date().getFullYear());
+
+  Logger.log('QR provider: ' + qr.provider);
+  Logger.log('QR error: ' + qr.error);
+  Logger.log('QR text: ' + qr.text);
+  Logger.log('QR svgMarkup length: ' + String(qr.svgMarkup || '').length);
+  Logger.log('QR imageDataUri length: ' + String(qr.imageDataUri || '').length);
+  Logger.log('QR imageDataUri head: ' + String(qr.imageDataUri || '').substring(0, 80));
+
+  return qr;
+}
+
+
+
+/**
+ * Gom toàn bộ dữ liệu liên quan đến 1 xe.
+ */
+function buildVehicleProfileData_(model, xe, nam) {
+  const idXe = String(xe.ID_Xe || '').trim();
+  const bienSo = xe.BienSo || '';
+
+  const summary =
+    model.index.BC_XE_BY_ID[idXe] ||
+    model.index.BC_XE_BY_BIENSO[normalizeKey_(bienSo)] ||
+    {};
+
+  const donViChuQuan = displayDonVi_(model, xe.Ref_DonViChuQuan);
+  const donViQuanLy = displayDonVi_(model, xe.Ref_DonViQuanLyHienTai);
+  const doiXe = displayDoiXe_(model, xe.Ref_DoiXe);
+
+  const phuHieu = pickLatest_(
+    model.byXe.XE_PHUHIEU[idXe],
+    ['NgayHetHan', 'NgayCap'],
+    'TrangThai'
+  );
+
+  const dangKiem = pickLatest_(
+    model.byXe.XE_DANGKIEM[idXe],
+    ['NgayHetHan', 'NgayCap'],
+    'TrangThai'
+  );
+
+  const taximet = pickLatest_(
+    model.byXe.XE_TAXIMET[idXe],
+    ['NgayHetHanKiemDinh', 'NgayKiemDinh'],
+    'TrangThai'
+  );
+
+  const baoHiemRows = model.byXe.XE_BAOHIEM[idXe] || [];
+
+  const bhTNDS = pickLatest_(
+    baoHiemRows.filter(r => normalizeText_(r.LoaiBaoHiem).includes('tnds')),
+    ['NgayHetHan', 'NgayCap'],
+    'TrangThaiBaoHiem'
+  );
+
+  const bhThanVo = pickLatest_(
+    baoHiemRows.filter(r => {
+      const t = normalizeText_(r.LoaiBaoHiem);
+      return t.includes('than vo') || t.includes('vat chat') || t.includes('bhtv');
+    }),
+    ['NgayHetHan', 'NgayCap'],
+    'TrangThaiBaoHiem'
+  );
+
+  const theChap = pickLatest_(
+    model.byXe.XE_THECHAP[idXe],
+    ['NgayHetHan', 'NgayTheChap'],
+    'TrangThaiTheChap'
+  );
+
+  const phanCong = pickLatest_(
+    (model.byXe.LAIXE_PHANCONG_XE[idXe] || []).filter(r => {
+      const t = normalizeText_(r.TrangThai);
+      return t.includes('dang hieu luc') || t.includes('hieu luc') || !t;
+    }),
+    ['NgayBatDau', 'NgayTao'],
+    'TrangThai'
+  );
+
+  const nhanSu = phanCong && phanCong.Ref_NhanSu
+    ? model.index.NHANSU[phanCong.Ref_NhanSu] || {}
+    : {};
+
+  const gplx = pickLatest_(
+    model.byNhanSu.LAIXE_GPLX[nhanSu.ID_NhanSu],
+    ['NgayHetHan', 'NgayCap'],
+    'TrangThai'
+  );
+
+  const sucKhoe = pickLatest_(
+    model.byNhanSu.NHANSU_SUCKHOE[nhanSu.ID_NhanSu],
+    ['NgayHetHan', 'NgayKham'],
+    'TrangThai'
+  );
+
+  const hopDong = pickLatest_(
+    model.byNhanSu.NHANSU_HOPDONG[nhanSu.ID_NhanSu],
+    ['NgayKetThuc', 'NgayBatDau', 'NgayKy'],
+    'TrangThai'
+  );
+
+  const daoTao = pickLatest_(
+    model.byNhanSu.LAIXE_DAOTAO[nhanSu.ID_NhanSu],
+    ['NgayHetHan', 'NgayCapChungChi'],
+    'TrangThai'
+  );
+
+  const bhxh = pickLatest_(
+    model.byNhanSu.NHANSU_BHXH[nhanSu.ID_NhanSu],
+    ['NgayKetThucThamGia', 'NgayBatDauThamGia'],
+    'TrangThaiBHXH'
+  );
+
+  const donViBHTNDS =
+    displayCongTyBaoHiem_(model, bhTNDS.Ref_CongTyBaoHiem) ||
+    summary['Công ty BNTNDS'] ||
+    bhTNDS.NguonMuaBaoHiem ||
+    '';
+
+  const donViBHThanVo =
+    displayCongTyBaoHiem_(model, bhThanVo.Ref_CongTyBaoHiem) ||
+    summary['Công ty BHTV'] ||
+    bhThanVo.NguonMuaBaoHiem ||
+    '';
+
+  const nganHangTheChap =
+    displayNganHang_(model, theChap.Ref_NganHang) ||
+    summary['Ngân hàng thế chấp'] ||
+    '';
+
+  const donViTaximet =
+    displayDonViKiemDinhTaximet_(model, taximet.Ref_DonViKiemDinh) ||
+    taximet.DonViKiemDinh ||
+    '';
+
+  const legalRows = [
+    {
+      loai: 'Đăng kiểm',
+      so: dangKiem.SoDangKiem || '',
+      donVi: dangKiem.DonViDangKiem || '',
+      ngayCap: fmtDate_(dangKiem.NgayCap),
+      ngayHetHan: fmtDate_(dangKiem.NgayHetHan || summary['Hạn đăng kiểm']),
+      trangThai: dangKiem.TrangThai || statusByDate_(dangKiem.NgayHetHan || summary['Hạn đăng kiểm']),
+      file: dangKiem.FileScan || ''
+    },
+    {
+      loai: 'Phù hiệu',
+      so: phuHieu.SoPhuHieu || summary['Số phù hiệu'] || '',
+      donVi: displayCoQuanCap_(model, phuHieu.Ref_CoQuanCap) || phuHieu.CoQuanCap || phuHieu.Ref_CoQuanCap || '',
+      ngayCap: fmtDate_(phuHieu.NgayCap),
+      ngayHetHan: fmtDate_(phuHieu.NgayHetHan || summary['Hạn phù hiệu']),
+      trangThai: phuHieu.TrangThai || statusByDate_(phuHieu.NgayHetHan || summary['Hạn phù hiệu']),
+      file: phuHieu.FileScan || ''
+    },
+    {
+      loai: 'Bảo hiểm TNDS',
+      so: bhTNDS.SoHopDongBaoHiem || '',
+      donVi: donViBHTNDS,
+      ngayCap: fmtDate_(bhTNDS.NgayCap),
+      ngayHetHan: fmtDate_(bhTNDS.NgayHetHan || summary['Hạn bảo hiểm TNDS']),
+      trangThai: bhTNDS.TrangThaiBaoHiem || statusByDate_(bhTNDS.NgayHetHan || summary['Hạn bảo hiểm TNDS']),
+      file: bhTNDS.FileBaoHiem || ''
+    },
+    {
+      loai: 'Bảo hiểm thân vỏ',
+      so: bhThanVo.SoHopDongBaoHiem || '',
+      donVi: donViBHThanVo,
+      ngayCap: fmtDate_(bhThanVo.NgayCap),
+      ngayHetHan: fmtDate_(bhThanVo.NgayHetHan || summary['Hạn bảo hiểm thân vỏ']),
+      trangThai: bhThanVo.TrangThaiBaoHiem || statusByDate_(bhThanVo.NgayHetHan || summary['Hạn bảo hiểm thân vỏ']),
+      file: bhThanVo.FileBaoHiem || ''
+    },
+    {
+      loai: 'Taximet',
+      so: taximet.SoThietBi || '',
+      donVi: donViTaximet,
+      ngayCap: fmtDate_(taximet.NgayKiemDinh),
+      ngayHetHan: fmtDate_(taximet.NgayHetHanKiemDinh || summary['Hạn taximet']),
+      trangThai: taximet.TrangThai || statusByDate_(taximet.NgayHetHanKiemDinh || summary['Hạn taximet']),
+      file: taximet.FileScan || ''
+    },
+    {
+      loai: 'Thế chấp ngân hàng',
+      so: theChap.SoHopDongTheChap || '',
+      donVi: nganHangTheChap,
+      ngayCap: fmtDate_(theChap.NgayTheChap),
+      ngayHetHan: fmtDate_(theChap.NgayHetHan || summary['Hạn thế chấp']),
+      trangThai: [
+        theChap.TrangThaiTheChap || summary['Có thế chấp không'] || '',
+        theChap.TrangThaiKhoanVay || summary['Trạng thái khoản vay'] || ''
+      ].filter(Boolean).join(' - '),
+      file: theChap.FileHopDongTheChap || ''
+    }
+  ];
+
+  const driverInfo = {
+    hoTen: nhanSu.HoTen || summary['Lái xe đang lái'] || '',
+    cccd: nhanSu.CCCD || '',
+    soDienThoai: nhanSu.SoDienThoai || '',
+    ngaySinh: fmtDate_(nhanSu.NgaySinh),
+    ngayBatDau: fmtDate_(phanCong.NgayBatDau),
+    trangThaiPhanCong: phanCong.TrangThai || '',
+
+    soGPLX: gplx.SoGPLX || '',
+    hangGPLX: gplx.HangGPLX || '',
+    hanGPLX: fmtDate_(gplx.NgayHetHan),
+
+    hanSucKhoe: fmtDate_(sucKhoe.NgayHetHan),
+    hopDong: hopDong.SoHopDong || '',
+    trangThaiHopDong: hopDong.TrangThai || '',
+    daoTao: daoTao.NoiDungDaoTao || '',
+    hanDaoTao: fmtDate_(daoTao.NgayHetHan),
+    bhxh: bhxh.TrangThaiBHXH || ''
+  };
+
+  const technical = buildTechnicalData_(model, idXe, nam);
+  const histories = buildVehicleHistories_(model, idXe);
+  const warnings = buildWarnings_(legalRows, xe, summary, driverInfo, technical);
+  const companyInfo = getCompanyProfile_(model, xe);
+  const qrInfo = buildVehicleQrProfile_(xe, nam);
+
+  return {
+    meta: {
+      title: 'HỒ SƠ ĐIỆN TỬ PHƯƠNG TIỆN',
+      appName: 'QLVT_TAXI123_HN',
+      brand: 'TAXI 123',
+      year: nam,
+      printDate: fmtDateTime_(new Date()),
+
+      // Các trường này để VehicleProfile.html có thể lấy qua data.meta.*
+      companyName: companyInfo.tenCongTy,
+      diaChiCongTy: companyInfo.diaChi,
+      soDangKyKinhDoanh: companyInfo.soDangKyKinhDoanh,
+      maSoThue: companyInfo.maSoThue,
+      soDienThoai: companyInfo.soDienThoai
+    },
+
+    // Các trường này để VehicleProfile.html có thể lấy qua data.company.*
+    company: companyInfo,
+
+    // QR hiển thị trực tiếp trên file PDF hồ sơ xe
+    qr: qrInfo,
+
+    vehicle: {
+      idXe: idXe,
+      bienSo: bienSo,
+      maDam: xe.MaDam || summary['Mã đàm'] || '',
+      tenDangKyXe: xe.TenDangKyXe || summary['Tên đăng ký xe'] || '',
+      soKhung: xe.SoKhung || summary['Số khung'] || '',
+      soMay: xe.SoMay || summary['Số máy'] || '',
+      nhanHieu: xe.NhanHieu || summary['Nhãn hiệu'] || '',
+      loaiXe: xe.LoaiXe || summary['Loại xe'] || '',
+      soCho: xe.SoCho || summary['Số chỗ'] || '',
+      taiTrong: xe.TaiTrong || '',
+      nuocSX: xe.NuocSX || '',
+      namSanXuat: xe.NamSanXuat || summary['Năm sản xuất'] || '',
+      mauSon: xe.MauSon || summary['Màu sơn'] || '',
+      hinhThucSoHuu: xe.HinhThucSoHuu || '',
+      soGCNDangKyXe: xe.SoGCNDangKyXe || '',
+      ngayDangKyXeLanDau: fmtDate_(xe.NgayDangKyXeLanDau),
+      ngayDuaVaoHoatDong: fmtDate_(xe.NgayDuaVaoHoatDong),
+      donViChuQuan: donViChuQuan || summary['Đơn vị chủ quản'] || '',
+      donViQuanLy: donViQuanLy || summary['Đơn vị quản lý hiện tại'] || '',
+      doiXe: doiXe || summary['Đội xe'] || '',
+      trangThaiXe: xe.TrangThaiXe || summary['Trạng thái xe'] || '',
+      ghiChu: xe.GhiChu || ''
+    },
+
+    legalRows: legalRows,
+    driver: driverInfo,
+    monthRows: technical.monthRows,
+    bdscRows: technical.bdscRows,
+    technicalSummary: technical.summary,
+    histories: histories,
+    warnings: warnings
+  };
+}
+
+
+/**
+ * Tạo dữ liệu kỹ thuật gồm:
+ * - Bảng tháng 12 cột
+ * - Nhật ký BDSC chi tiết
+ * - Tổng km, số chuyến, số phiếu, chi phí
+ */
+function buildTechnicalData_(model, idXe, nam) {
+  const kmRows = (model.byXe.XE_SO_KM_THANG[idXe] || [])
+    .filter(r => Number(r.Nam) === Number(nam));
+
+  const byMonth = {};
+  kmRows.forEach(r => {
+    const m = Number(r.Thang);
+    if (m >= 1 && m <= 12) byMonth[m] = r;
+  });
+
+  const kmThangRaw = [];
+  const kmLuyKeRaw = [];
+  const chuyenThangRaw = [];
+  const chuyenLuyKeRaw = [];
+
+  for (let m = 1; m <= 12; m++) {
+    const r = byMonth[m];
+
+    kmThangRaw.push(r ? valueOrNull_(r.SoKmHoatDong) : null);
+    kmLuyKeRaw.push(r ? valueOrNull_(r.LuyKeKmXeChay) : null);
+    chuyenThangRaw.push(r ? valueOrNull_(r.SoChuyenTrongThang) : null);
+    chuyenLuyKeRaw.push(r ? valueOrNull_(r.LuyKeSoChuyen) : null);
+  }
+
+  const bdscSourceRows = (model.byXe.XE_BAODUONG_SUACHUA[idXe] || [])
+    .filter(r => yearOf_(r.NgayThucHien) === Number(nam))
+    .sort((a, b) => dateMs_(a.NgayThucHien) - dateMs_(b.NgayThucHien));
+
+  const counters = { BD: 0, SC: 0, CT: 0 };
+  const bdscAnnotated = bdscSourceRows.map(r => {
+    const type = bdscType_(r.LoaiPhieu);
+    counters[type] = (counters[type] || 0) + 1;
+
+    const code = type + String(counters[type]).padStart(2, '0');
+
+    return {
+      source: r,
+      type: type,
+      code: code,
+      month: monthOf_(r.NgayThucHien),
+      period: formatWorkPeriod_(r.NgayThucHien, r.NgayKetThuc),
+      place: displayDiaDiemSuaChua_(model, r.Ref_DonViSuaChua)
+    };
+  });
+
+  const baoDuong = new Array(12).fill('');
+  const suaChua = new Array(12).fill('');
+  const caiTao = new Array(12).fill('');
+
+  bdscAnnotated.forEach(item => {
+    const m = item.month;
+    if (m < 1 || m > 12) return;
+
+    if (item.type === 'BD') {
+      baoDuong[m - 1] = appendCell_(baoDuong[m - 1], item.code);
+    } else if (item.type === 'CT') {
+      caiTao[m - 1] = appendCell_(caiTao[m - 1], item.code);
+    } else {
+      suaChua[m - 1] = appendCell_(suaChua[m - 1], item.code);
+    }
+  });
+
+  const monthRows = [
+    {
+      tt: '1',
+      noiDung: 'Km xe chạy trong tháng',
+      values: kmThangRaw.map(v => formatNumberCell_(v)),
+      total: formatNumberCell_(sumNumbers_(kmThangRaw)),
+      thoiGian: '',
+      diaDiem: ''
+    },
+    {
+      tt: '',
+      noiDung: 'Km xe chạy lũy kế',
+      values: kmLuyKeRaw.map(v => formatNumberCell_(v)),
+      total: formatNumberCell_(lastNumber_(kmLuyKeRaw)),
+      thoiGian: '',
+      diaDiem: ''
+    },
+    {
+      tt: '2',
+      noiDung: 'Số chuyến trong tháng',
+      values: chuyenThangRaw.map(v => formatNumberCell_(v)),
+      total: formatNumberCell_(sumNumbers_(chuyenThangRaw)),
+      thoiGian: '',
+      diaDiem: ''
+    },
+    {
+      tt: '',
+      noiDung: 'Số chuyến xe lũy kế',
+      values: chuyenLuyKeRaw.map(v => formatNumberCell_(v)),
+      total: formatNumberCell_(lastNumber_(chuyenLuyKeRaw)),
+      thoiGian: '',
+      diaDiem: ''
+    },
+    {
+      tt: '3',
+      noiDung: 'Bảo dưỡng',
+      values: baoDuong,
+      total: countType_(bdscAnnotated, 'BD'),
+      thoiGian: collectPeriods_(bdscAnnotated, 'BD'),
+      diaDiem: collectPlacesFromAnnotated_(bdscAnnotated, 'BD')
+    },
+    {
+      tt: '4',
+      noiDung: 'Sửa chữa',
+      values: suaChua,
+      total: countType_(bdscAnnotated, 'SC'),
+      thoiGian: collectPeriods_(bdscAnnotated, 'SC'),
+      diaDiem: collectPlacesFromAnnotated_(bdscAnnotated, 'SC')
+    },
+    {
+      tt: '5',
+      noiDung: 'Cải tạo',
+      values: caiTao,
+      total: countType_(bdscAnnotated, 'CT'),
+      thoiGian: collectPeriods_(bdscAnnotated, 'CT'),
+      diaDiem: collectPlacesFromAnnotated_(bdscAnnotated, 'CT')
+    }
+  ];
+
+  const bdscRows = bdscAnnotated
+    .slice()
+    .sort((a, b) => dateMs_(b.source.NgayThucHien) - dateMs_(a.source.NgayThucHien))
+    .map(item => {
+      const r = item.source;
+
+      return {
+        ma: item.code,
+        thoiGian: item.period,
+        loai: r.LoaiPhieu || '',
+        noiDung: displayNoiDungBDSC_(model, r.Ref_NoiDungBaoDuong),
+        soKm: formatNumberCell_(r.SoKmTaiThoiDiem),
+        donVi: displayDonViSuaChua_(model, r.Ref_DonViSuaChua),
+        diaDiem: item.place,
+        chiPhi: formatMoney_(r.TongChiPhi),
+        chiPhiNumber: num_(r.TongChiPhi),
+        trangThai: r.TrangThaiPhieu || '',
+        ghiChu: r.GhiChu || ''
+      };
+    });
+
+  const totalCost = bdscRows.reduce((s, r) => s + num_(r.chiPhiNumber), 0);
+
+  const summary = {
+    totalKm: formatNumberCell_(sumNumbers_(kmThangRaw)),
+    totalTrips: formatNumberCell_(sumNumbers_(chuyenThangRaw)),
+    lastKm: formatNumberCell_(lastNumber_(kmLuyKeRaw)),
+    lastTrips: formatNumberCell_(lastNumber_(chuyenLuyKeRaw)),
+    totalBD: countType_(bdscAnnotated, 'BD'),
+    totalSC: countType_(bdscAnnotated, 'SC'),
+    totalCT: countType_(bdscAnnotated, 'CT'),
+    totalCost: formatMoney_(totalCost)
+  };
+
+  return { monthRows, bdscRows, summary };
+}
+
+
+
+/**
+ * Lịch sử pháp lý, thế chấp, ngừng hoạt động và lịch sử lái xe của 1 xe.
+ */
+function buildVehicleHistories_(model, idXe) {
+  const phuHieu = sortRowsByDatesDesc_(model.byXe.XE_PHUHIEU[idXe], ['NgayCap', 'NgayHetHan', 'NgayTao'])
+    .map(r => ({
+      loai: r.LoaiPhuHieu || '',
+      so: r.SoPhuHieu || '',
+      coQuanCap: displayCoQuanCap_(model, r.Ref_CoQuanCap) || r.Ref_CoQuanCap || '',
+      donViDuocCap: displayDonVi_(model, r.Ref_DonViDuocCap),
+      donViQuanLy: displayDonVi_(model, r.Ref_DonViQuanLyTaiThoiDiemCap),
+      ngayCap: fmtDate_(r.NgayCap),
+      ngayHetHan: fmtDate_(r.NgayHetHan),
+      ngayHetHieuLucThucTe: fmtDate_(r.NgayHetHieuLucThucTe),
+      trangThai: r.TrangThai || '',
+      lyDo: r.LyDoCap || r.LyDoHetHieuLuc || '',
+      ghiChu: r.GhiChu || ''
+    }));
+
+  const dangKiem = sortRowsByDatesDesc_(model.byXe.XE_DANGKIEM[idXe], ['NgayCap', 'NgayHetHan', 'NgayTao'])
+    .map(r => ({
+      so: r.SoDangKiem || '',
+      donVi: r.DonViDangKiem || '',
+      ngayCap: fmtDate_(r.NgayCap),
+      ngayHetHan: fmtDate_(r.NgayHetHan),
+      trangThai: r.TrangThai || '',
+      ghiChu: r.GhiChu || ''
+    }));
+
+  const baoHiem = sortRowsByDatesDesc_(model.byXe.XE_BAOHIEM[idXe], ['NgayCap', 'NgayHetHan', 'NgayTao'])
+    .map(r => ({
+      loai: r.LoaiBaoHiem || '',
+      so: r.SoHopDongBaoHiem || '',
+      congTy: displayCongTyBaoHiem_(model, r.Ref_CongTyBaoHiem),
+      nguon: r.NguonMuaBaoHiem || '',
+      ngayCap: fmtDate_(r.NgayCap),
+      ngayHetHan: fmtDate_(r.NgayHetHan),
+      giaTri: formatMoney_(r.GiaTriBaoHiem),
+      trangThai: r.TrangThaiBaoHiem || '',
+      ghiChu: r.GhiChu || ''
+    }));
+
+  const taximet = sortRowsByDatesDesc_(model.byXe.XE_TAXIMET[idXe], ['NgayKiemDinh', 'NgayHetHanKiemDinh', 'NgayLapDat', 'NgayTao'])
+    .map(r => ({
+      so: r.SoThietBi || '',
+      nhaSanXuat: r.NhaSanXuat || '',
+      ngayLapDat: fmtDate_(r.NgayLapDat),
+      ngayKiemDinh: fmtDate_(r.NgayKiemDinh),
+      ngayHetHan: fmtDate_(r.NgayHetHanKiemDinh),
+      donVi: displayDonViKiemDinhTaximet_(model, r.Ref_DonViKiemDinh),
+      trangThai: r.TrangThai || '',
+      ghiChu: r.GhiChu || ''
+    }));
+
+  const theChap = sortRowsByDatesDesc_(model.byXe.XE_THECHAP[idXe], ['NgayTheChap', 'NgayHetHan', 'NgayGiaiChap', 'NgayTao'])
+    .map(r => ({
+      nganHang: displayNganHang_(model, r.Ref_NganHang),
+      soHopDong: r.SoHopDongTheChap || '',
+      ngayTheChap: fmtDate_(r.NgayTheChap),
+      ngayHetHan: fmtDate_(r.NgayHetHan),
+      ngayGiaiChap: fmtDate_(r.NgayGiaiChap),
+      soTienVay: formatMoney_(r.SoTienVay),
+      giaTriTSDB: formatMoney_(r.GiaTriTaiSanDamBao),
+      hinhThucDamBao: r.HinhThucDamBao || '',
+      tinhTrangHoSoGoc: r.TinhTrangHoSoGoc || '',
+      trangThaiTheChap: r.TrangThaiTheChap || '',
+      trangThaiKhoanVay: r.TrangThaiKhoanVay || '',
+      ghiChu: r.GhiChu || ''
+    }));
+
+  const ngungHoatDong = sortRowsByDatesDesc_(model.byXe.XE_LICHSU_NGUNG_HOATDONG[idXe], ['NgayBatDauNgung', 'NgayKetThucNgung', 'NgayTao'])
+    .map(r => ({
+      tuNgay: fmtDate_(r.NgayBatDauNgung),
+      denNgay: fmtDate_(r.NgayKetThucNgung),
+      lyDo: r.LyDoNgung || '',
+      trangThaiTruoc: r.TrangThaiTruocNgung || '',
+      trangThaiSau: r.TrangThaiSauNgung || '',
+      thongBao: r.Ref_ThongBaoNgung || '',
+      ghiChu: r.GhiChu || ''
+    }));
+
+  const laiXe = sortRowsByDatesDesc_(model.byXe.LAIXE_PHANCONG_XE[idXe], ['NgayBatDau', 'NgayKetThuc', 'NgayTao'])
+    .map(r => {
+      const ns = model.index.NHANSU[r.Ref_NhanSu] || {};
+      return {
+        hoTen: ns.HoTen || r.Ref_NhanSu || '',
+        cccd: ns.CCCD || '',
+        soDienThoai: ns.SoDienThoai || '',
+        donViLamViec: displayDonVi_(model, r.Ref_DonViLamViecHienTai),
+        tuNgay: fmtDate_(r.NgayBatDau),
+        denNgay: fmtDate_(r.NgayKetThuc),
+        trangThai: r.TrangThai || '',
+        ghiChu: r.GhiChu || ''
+      };
+    });
+
+  return {
+    phuHieu,
+    dangKiem,
+    baoHiem,
+    taximet,
+    theChap,
+    ngungHoatDong,
+    laiXe
+  };
+}
+
+
+/**
+ * Cảnh báo quản trị.
+ */
+function buildWarnings_(legalRows, xe, summary, driver, technical) {
+  const warnings = [];
+
+  legalRows.forEach(r => {
+    const st = normalizeText_(r.trangThai);
+    const name = r.loai;
+
+    if (!r.ngayHetHan && name !== 'Thế chấp ngân hàng') {
+      warnings.push({
+        level: 'Đỏ',
+        content: 'Chưa có hoặc thiếu thông tin ' + name,
+        note: 'Cần rà soát hồ sơ pháp lý'
+      });
+      return;
+    }
+
+    if (st.includes('het han') || st.includes('da het')) {
+      warnings.push({
+        level: 'Đỏ',
+        content: name + ' đã hết hạn',
+        note: 'Cần xử lý ngay'
+      });
+    } else if (st.includes('sap het')) {
+      warnings.push({
+        level: 'Vàng',
+        content: name + ' sắp hết hạn',
+        note: 'Theo dõi gia hạn'
+      });
+    }
+  });
+
+  if (!driver.hoTen) {
+    warnings.push({
+      level: 'Vàng',
+      content: 'Xe chưa có lái xe đang phân công',
+      note: 'Cần kiểm tra bảng LAIXE_PHANCONG_XE'
+    });
+  }
+
+  const ghiChu = summary['Ghi chú cảnh báo'];
+  if (ghiChu) {
+    warnings.push({
+      level: warningLevelFromText_(ghiChu),
+      content: ghiChu,
+      note: 'Nguồn: BC_XE_TONGHOP'
+    });
+  }
+
+  const totalKm = num_(technical.summary.totalKm);
+  if (!totalKm) {
+    warnings.push({
+      level: 'Vàng',
+      content: 'Chưa có dữ liệu km hoạt động trong năm',
+      note: 'Kiểm tra bảng XE_SO_KM_THANG'
+    });
+  }
+
+  if (warnings.length === 0) {
+    warnings.push({
+      level: 'Xanh',
+      content: 'Hồ sơ xe chưa phát hiện cảnh báo lớn',
+      note: 'Tiếp tục theo dõi định kỳ'
+    });
+  }
+
+  return warnings;
+}
+
+
+/**
+ * Đọc toàn bộ dữ liệu cần thiết.
+ */
+function loadModel_() {
+  const ss = getSpreadsheet_();
+  const S = CONFIG_HOSO_XE.SHEETS;
+
+  const tables = {
+    XE: readSheet_(ss, S.XE),
+    BC_XE_TONGHOP: readSheet_(ss, S.BC_XE_TONGHOP),
+    DONVI: readSheet_(ss, S.DONVI),
+    DM_DOIXE: readSheet_(ss, S.DM_DOIXE),
+    DM_COQUAN_CAP: readSheet_(ss, S.DM_COQUAN_CAP),
+
+    XE_PHUHIEU: readSheet_(ss, S.XE_PHUHIEU),
+    XE_DANGKIEM: readSheet_(ss, S.XE_DANGKIEM),
+
+    XE_BAOHIEM: readSheet_(ss, S.XE_BAOHIEM),
+    DM_CTY_BAOHIEM: readSheet_(ss, S.DM_CTY_BAOHIEM),
+
+    XE_TAXIMET: readSheet_(ss, S.XE_TAXIMET),
+    DM_CQKD_TAXIMET: readSheet_(ss, S.DM_CQKD_TAXIMET),
+
+    XE_THECHAP: readSheet_(ss, S.XE_THECHAP),
+    DM_NGANHANG: readSheet_(ss, S.DM_NGANHANG),
+    XE_LICHSU_NGUNG_HOATDONG: readSheet_(ss, S.XE_LICHSU_NGUNG_HOATDONG),
+
+    XE_SO_KM_THANG: readSheet_(ss, S.XE_SO_KM_THANG),
+    XE_BAODUONG_SUACHUA: readSheet_(ss, S.XE_BAODUONG_SUACHUA),
+    DM_NOIDUNG_BD_SC: readSheet_(ss, S.DM_NOIDUNG_BD_SC),
+    DM_DONVI_SUACHUA: readSheet_(ss, S.DM_DONVI_SUACHUA),
+
+    LAIXE_PHANCONG_XE: readSheet_(ss, S.LAIXE_PHANCONG_XE),
+    NHANSU: readSheet_(ss, S.NHANSU),
+    LAIXE_GPLX: readSheet_(ss, S.LAIXE_GPLX),
+    NHANSU_SUCKHOE: readSheet_(ss, S.NHANSU_SUCKHOE),
+    NHANSU_HOPDONG: readSheet_(ss, S.NHANSU_HOPDONG),
+    LAIXE_DAOTAO: readSheet_(ss, S.LAIXE_DAOTAO),
+    NHANSU_BHXH: readSheet_(ss, S.NHANSU_BHXH)
+  };
+  const index = {
+    XE: indexBy_(tables.XE.rows, 'ID_Xe'),
+    BC_XE_BY_ID: indexBy_(tables.BC_XE_TONGHOP.rows, 'ID xe'),
+    BC_XE_BY_BIENSO: indexByNormalized_(tables.BC_XE_TONGHOP.rows, 'Biển số'),
+
+    DONVI: indexBy_(tables.DONVI.rows, 'ID_DonVi'),
+    DM_DOIXE: indexBy_(tables.DM_DOIXE.rows, 'ID_DoiXe'),
+    DM_COQUAN_CAP: indexBy_(tables.DM_COQUAN_CAP.rows, 'ID_CoQuanCap'),
+
+    DM_CTY_BAOHIEM: indexBy_(tables.DM_CTY_BAOHIEM.rows, 'ID_CongTyBaoHiem'),
+    DM_NGANHANG: indexBy_(tables.DM_NGANHANG.rows, 'ID_NganHang'),
+    DM_CQKD_TAXIMET: indexBy_(tables.DM_CQKD_TAXIMET.rows, 'ID_CQKD'),
+
+    NHANSU: indexBy_(tables.NHANSU.rows, 'ID_NhanSu'),
+
+    DM_NOIDUNG_BD_SC: indexBy_(tables.DM_NOIDUNG_BD_SC.rows, 'ID_NoiDung'),
+    DM_DONVI_SUACHUA: indexBy_(tables.DM_DONVI_SUACHUA.rows, 'ID_DonViSuaChua')
+  };
+
+  const byXe = {
+    XE_PHUHIEU: groupBy_(tables.XE_PHUHIEU.rows, 'Ref_Xe'),
+    XE_DANGKIEM: groupBy_(tables.XE_DANGKIEM.rows, 'Ref_Xe'),
+    XE_BAOHIEM: groupBy_(tables.XE_BAOHIEM.rows, 'Ref_Xe'),
+    XE_TAXIMET: groupBy_(tables.XE_TAXIMET.rows, 'Ref_Xe'),
+    XE_THECHAP: groupBy_(tables.XE_THECHAP.rows, 'Ref_Xe'),
+    XE_LICHSU_NGUNG_HOATDONG: groupBy_(tables.XE_LICHSU_NGUNG_HOATDONG.rows, 'Ref_Xe'),
+    XE_SO_KM_THANG: groupBy_(tables.XE_SO_KM_THANG.rows, 'Ref_Xe'),
+    XE_BAODUONG_SUACHUA: groupBy_(tables.XE_BAODUONG_SUACHUA.rows, 'Ref_Xe'),
+    LAIXE_PHANCONG_XE: groupBy_(tables.LAIXE_PHANCONG_XE.rows, 'Ref_Xe')
+  };
+
+  const byNhanSu = {
+    LAIXE_GPLX: groupBy_(tables.LAIXE_GPLX.rows, 'Ref_NhanSu'),
+    NHANSU_SUCKHOE: groupBy_(tables.NHANSU_SUCKHOE.rows, 'Ref_NhanSu'),
+    NHANSU_HOPDONG: groupBy_(tables.NHANSU_HOPDONG.rows, 'Ref_NhanSu'),
+    LAIXE_DAOTAO: groupBy_(tables.LAIXE_DAOTAO.rows, 'Ref_NhanSu'),
+    NHANSU_BHXH: groupBy_(tables.NHANSU_BHXH.rows, 'Ref_NhanSu')
+  };
+
+  return { tables, index, byXe, byNhanSu };
+}
+
+
+/**
+ * Đọc sheet thành object theo header.
+ */
+function readSheet_(ss, sheetName) {
+  const sh = ss.getSheetByName(sheetName);
+
+  if (!sh) {
+    return { sheet: null, headers: [], rows: [] };
+  }
+
+  const range = sh.getDataRange();
+  const values = range.getValues();
+
+  if (!values.length) {
+    return { sheet: sh, headers: [], rows: [] };
+  }
+
+  const headers = values[0].map(h => String(h || '').trim());
+  const rows = [];
+
+  for (let r = 1; r < values.length; r++) {
+    const obj = {
+      _rowNumber: r + 1,
+      _sheetName: sheetName
+    };
+
+    headers.forEach((h, c) => {
+      if (h) obj[h] = values[r][c];
+    });
+
+    rows.push(obj);
+  }
+
+  return { sheet: sh, headers, rows };
+}
+
+
+/**
+ * Ghi thông tin PDF vào chính dòng xe.
+ */
+function updateXePdfFields_(rowNumber, data) {
+  const ss = getSpreadsheet_();
+  const sh = mustGetSheet_(ss, CONFIG_HOSO_XE.SHEETS.XE);
+  const headerMap = ensureColumns_(sh, CONFIG_HOSO_XE.XE_PDF_COLUMNS);
+
+  Object.keys(data).forEach(k => {
+    const col = headerMap[k];
+    if (col) sh.getRange(rowNumber, col).setValue(data[k]);
+  });
+}
+
+
+/**
+ * Bảo đảm sheet có đủ cột cần thiết.
+ */
+function ensureColumns_(sh, columns) {
+  const lastCol = Math.max(sh.getLastColumn(), 1);
+  let headers = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(v => String(v || '').trim());
+
+  columns.forEach(colName => {
+    if (!headers.includes(colName)) {
+      sh.getRange(1, headers.length + 1).setValue(colName);
+      headers.push(colName);
+    }
+  });
+
+  const map = {};
+  headers.forEach((h, i) => {
+    if (h) map[h] = i + 1;
+  });
+
+  return map;
+}
+
+
+/**
+ * Lấy Spreadsheet.
+ */
+function getSpreadsheet_() {
+  if (CONFIG_HOSO_XE.SPREADSHEET_ID) {
+    return SpreadsheetApp.openById(CONFIG_HOSO_XE.SPREADSHEET_ID);
+  }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error('Không mở được Spreadsheet. Hãy gắn script vào Google Sheet hoặc điền CONFIG_HOSO_XE.SPREADSHEET_ID.');
+  }
+
+  return ss;
+}
+
+
+function mustGetSheet_(ss, sheetName) {
+  const sh = ss.getSheetByName(sheetName);
+  if (!sh) throw new Error('Không tìm thấy sheet: ' + sheetName);
+  return sh;
+}
+
+
+/**
+ * Tạo hoặc lấy folder theo đường dẫn.
+ */
+function getOrCreateFolderByPath_(path) {
+  const parts = String(path || '')
+    .split('/')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  let folder = DriveApp.getRootFolder();
+
+  parts.forEach(name => {
+    const found = folder.getFoldersByName(name);
+    folder = found.hasNext() ? found.next() : folder.createFolder(name);
+  });
+
+  return folder;
+}
+
+
+function trashFilesByName_(folder, fileName) {
+  const oldFiles = folder.getFilesByName(fileName);
+  while (oldFiles.hasNext()) {
+    oldFiles.next().setTrashed(true);
+  }
+}
+
+
+function sortRowsByDatesDesc_(rows, dateFields) {
+  return (rows || [])
+    .slice()
+    .sort((a, b) => {
+      const da = maxDateMs_(a, dateFields);
+      const db = maxDateMs_(b, dateFields);
+      if (da !== db) return db - da;
+      return Number(b._rowNumber || 0) - Number(a._rowNumber || 0);
+    });
+}
+
+
+/**
+ * Chọn bản ghi mới nhất/đang hiệu lực.
+ */
+function pickLatest_(rows, dateFields, statusField) {
+  rows = rows || [];
+  if (!rows.length) return {};
+
+  const arr = rows.slice();
+
+  arr.sort((a, b) => {
+    const sa = statusScore_(a[statusField]);
+    const sb = statusScore_(b[statusField]);
+    if (sa !== sb) return sb - sa;
+
+    const da = maxDateMs_(a, dateFields);
+    const db = maxDateMs_(b, dateFields);
+    if (da !== db) return db - da;
+
+    return Number(b._rowNumber || 0) - Number(a._rowNumber || 0);
+  });
+
+  return arr[0] || {};
+}
+
+
+function statusScore_(s) {
+  const t = normalizeText_(s);
+  if (!t) return 0;
+
+  if (
+    t.includes('dang hieu luc') ||
+    t.includes('con hieu luc') ||
+    t.includes('dang the chap') ||
+    t.includes('dang hoat dong') ||
+    t.includes('con du no') ||
+    t.includes('da nhap') ||
+    t.includes('hoan thanh')
+  ) {
+    return 3;
+  }
+
+  if (
+    t.includes('sap het') ||
+    t.includes('canh bao')
+  ) {
+    return 2;
+  }
+
+  if (
+    t.includes('het hieu luc') ||
+    t.includes('het han') ||
+    t.includes('huy') ||
+    t.includes('ngung') ||
+    t.includes('da tai tuc')
+  ) {
+    return -1;
+  }
+
+  return 1;
+}
+
+
+function statusByDate_(value) {
+  const d = asDate_(value);
+  if (!d) return '';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000);
+
+  if (diffDays < 0) return 'Đã hết hạn';
+  if (diffDays <= 30) return 'Sắp hết hạn';
+  return 'Còn hiệu lực';
+}
+
+
+function warningLevelFromText_(text) {
+  const t = normalizeText_(text);
+  if (t.includes('het han') || t.includes('thieu') || t.includes('qua han')) return 'Đỏ';
+  if (t.includes('sap') || t.includes('canh bao') || t.includes('chua')) return 'Vàng';
+  return 'Thông tin';
+}
+
+
+function indexBy_(rows, key) {
+  const out = {};
+  (rows || []).forEach(r => {
+    const v = String(r[key] || '').trim();
+    if (v) out[v] = r;
+  });
+  return out;
+}
+
+
+function indexByNormalized_(rows, key) {
+  const out = {};
+  (rows || []).forEach(r => {
+    const v = normalizeKey_(r[key]);
+    if (v) out[v] = r;
+  });
+  return out;
+}
+
+
+function groupBy_(rows, key) {
+  const out = {};
+  (rows || []).forEach(r => {
+    const v = String(r[key] || '').trim();
+    if (!v) return;
+    if (!out[v]) out[v] = [];
+    out[v].push(r);
+  });
+  return out;
+}
+
+
+function displayDonVi_(model, id) {
+  const key = String(id || '').trim();
+  if (!key) return '';
+
+  const r = model.index.DONVI[key];
+  if (!r) return key;
+
+  return r.TenDonVi || r.TenVietTat || r.MaDonVi || key;
+}
+
+
+function displayDoiXe_(model, id) {
+  const key = String(id || '').trim();
+  if (!key) return '';
+
+  const r = model.index.DM_DOIXE[key];
+  if (!r) return key;
+
+  return r.TenDoiXe || r.SoDoiXe || key;
+}
+
+
+function displayCoQuanCap_(model, id) {
+  const key = String(id || '').trim();
+  if (!key) return '';
+
+  const r = model.index.DM_COQUAN_CAP[key];
+  if (!r) return key;
+
+  return r.TenCoQuanCap || key;
+}
+
+
+function displayCongTyBaoHiem_(model, id) {
+  const key = String(id || '').trim();
+  if (!key) return '';
+
+  const r = model.index.DM_CTY_BAOHIEM[key];
+  if (!r) return key;
+
+  const tenVietTat = r.TenVietTat || r.MaBaoHiem || '';
+  const tenDayDu = r.TenCongTyBaoHiem || '';
+
+  if (tenVietTat && tenDayDu && normalizeText_(tenVietTat) !== normalizeText_(tenDayDu)) {
+    return tenVietTat + ' - ' + tenDayDu;
+  }
+
+  return tenDayDu || tenVietTat || key;
+}
+
+
+function displayNganHang_(model, id) {
+  const key = String(id || '').trim();
+  if (!key) return '';
+
+  const r = model.index.DM_NGANHANG[key];
+  if (!r) return key;
+
+  const tenVietTat = r.TenVietTat || r.MaNganHang || '';
+  const tenDayDu = r.TenNganHang || '';
+  const chiNhanh = r.ChiNhanh || '';
+
+  let name = '';
+
+  if (tenVietTat && tenDayDu && normalizeText_(tenVietTat) !== normalizeText_(tenDayDu)) {
+    name = tenVietTat + ' - ' + tenDayDu;
+  } else {
+    name = tenDayDu || tenVietTat || key;
+  }
+
+  if (chiNhanh) name += ' - ' + chiNhanh;
+
+  return name;
+}
+
+
+function displayDonViKiemDinhTaximet_(model, id) {
+  const key = String(id || '').trim();
+  if (!key) return '';
+
+  const r = model.index.DM_CQKD_TAXIMET[key];
+  if (!r) return key;
+
+  return r.TenDonVI || r.TenDonVi || key;
+}
+
+
+function displayNoiDungBDSC_(model, ids) {
+  if (!ids) return '';
+
+  return String(ids)
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(id => {
+      const r = model.index.DM_NOIDUNG_BD_SC[id];
+      return r ? (r.TenNoiDung || r.MaNoiDung || id) : id;
+    })
+    .join(', ');
+}
+
+
+function displayDonViSuaChua_(model, id) {
+  const key = String(id || '').trim();
+  if (!key) return '';
+
+  const r = model.index.DM_DONVI_SUACHUA[key];
+  if (!r) return key;
+
+  return r.TenDonVi || key;
+}
+
+
+function displayDiaDiemSuaChua_(model, id) {
+  const key = String(id || '').trim();
+  if (!key) return '';
+
+  const r = model.index.DM_DONVI_SUACHUA[key];
+  if (!r) return key;
+
+  const ten = r.TenDonVi || '';
+  const diaChi = r.DiaChi || '';
+
+  if (ten && diaChi) return ten + ' - ' + diaChi;
+  if (ten) return ten;
+  if (diaChi) return diaChi;
+
+  return key;
+}
+
+
+function bdscType_(loaiPhieu) {
+  const t = normalizeText_(loaiPhieu);
+
+  if (t.includes('bao duong')) return 'BD';
+  if (t.includes('cai tao')) return 'CT';
+  return 'SC';
+}
+
+
+function formatWorkPeriod_(startValue, endValue) {
+  const start = fmtDate_(startValue);
+  const end = fmtDate_(endValue);
+
+  if (start && end && start !== end) return start + ' - ' + end;
+  if (start && end && start === end) return start;
+  if (start) return start;
+  if (end) return end;
+
+  return '';
+}
+
+
+function collectPeriods_(items, type) {
+  return uniqueList_(
+    (items || [])
+      .filter(item => item.type === type)
+      .map(item => item.period)
+      .filter(Boolean)
+  ).join('; ');
+}
+
+
+function collectPlacesFromAnnotated_(items, type) {
+  return uniqueList_(
+    (items || [])
+      .filter(item => item.type === type)
+      .map(item => item.place)
+      .filter(Boolean)
+  ).join('; ');
+}
+
+
+function countType_(items, type) {
+  return (items || []).filter(item => item.type === type).length;
+}
+
+
+function appendCell_(oldValue, newValue) {
+  if (!oldValue) return newValue;
+  if (!newValue) return oldValue;
+  return oldValue + '; ' + newValue;
+}
+
+
+function uniqueList_(arr) {
+  const seen = {};
+  const out = [];
+
+  (arr || []).forEach(v => {
+    const s = String(v || '').trim();
+    if (!s) return;
+
+    const key = normalizeText_(s);
+    if (seen[key]) return;
+
+    seen[key] = true;
+    out.push(s);
+  });
+
+  return out;
+}
+
+
+function sumNumbers_(arr) {
+  return (arr || []).reduce((s, v) => {
+    if (v === null || v === undefined || v === '') return s;
+    return s + num_(v);
+  }, 0);
+}
+
+
+function lastNumber_(arr) {
+  for (let i = (arr || []).length - 1; i >= 0; i--) {
+    const v = arr[i];
+    if (v !== null && v !== undefined && v !== '') return num_(v);
+  }
+  return 0;
+}
+
+
+function valueOrNull_(v) {
+  if (v === null || v === undefined || v === '') return null;
+  return v;
+}
+
+
+function maxDateMs_(row, fields) {
+  let max = 0;
+  (fields || []).forEach(f => {
+    const ms = dateMs_(row[f]);
+    if (ms > max) max = ms;
+  });
+  return max;
+}
+
+
+function dateMs_(v) {
+  const d = asDate_(v);
+  return d ? d.getTime() : 0;
+}
+
+
+function yearOf_(v) {
+  const d = asDate_(v);
+  return d ? d.getFullYear() : null;
+}
+
+
+function monthOf_(v) {
+  const d = asDate_(v);
+  return d ? d.getMonth() + 1 : null;
+}
+
+
+function asDate_(v) {
+  if (!v) return null;
+
+  if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime())) {
+    return v;
+  }
+
+  if (typeof v === 'number') {
+    return new Date(Math.round((v - 25569) * 86400 * 1000));
+  }
+
+  const s = String(v).trim();
+  if (!s) return null;
+
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const n = Number(s);
+    if (n > 30000) return new Date(Math.round((n - 25569) * 86400 * 1000));
+  }
+
+  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m1) return new Date(Number(m1[3]), Number(m1[2]) - 1, Number(m1[1]));
+
+  const m2 = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m2) return new Date(Number(m2[1]), Number(m2[2]) - 1, Number(m2[3]));
+
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+
+function fmtDate_(v) {
+  const d = asDate_(v);
+  if (!d) return '';
+  return Utilities.formatDate(d, CONFIG_HOSO_XE.TIMEZONE, 'dd/MM/yyyy');
+}
+
+
+function fmtDateTime_(v) {
+  const d = asDate_(v) || new Date();
+  return Utilities.formatDate(d, CONFIG_HOSO_XE.TIMEZONE, 'dd/MM/yyyy HH:mm');
+}
+
+
+function num_(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  if (typeof v === 'number') return v;
+
+  const s = String(v).replace(/[^\d.-]/g, '');
+  const n = Number(s);
+  return isNaN(n) ? 0 : n;
+}
+
+
+function formatNumberCell_(v) {
+  if (v === null || v === undefined || v === '') return '';
+
+  const n = num_(v);
+  return n.toLocaleString('vi-VN');
+}
+
+
+function formatMoney_(v) {
+  if (v === null || v === undefined || v === '') return '';
+
+  const n = num_(v);
+  return n.toLocaleString('vi-VN') + ' đ';
+}
+
+
+function normalizeKey_(v) {
+  return String(v || '')
+    .replace(/\s+/g, '')
+    .replace(/[.\-_/]/g, '')
+    .toUpperCase();
+}
+
+
+function cleanFileName_(v) {
+  return String(v || '')
+    .trim()
+    .replace(/\s+/g, '_')
+    .replace(/[\\/:*?"<>|]/g, '')
+    .replace(/[.\-]/g, '')
+    .toUpperCase();
+}
+
+
+function normalizeText_(v) {
+  return String(v || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+
+function escapeHtml_(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+
+function errorMessage_(err) {
+  return String(err && err.message ? err.message : err);
+}
+
+
+/**
+ * Test mở link công khai từ QR cho xe mẫu.
+ */
+function test_OpenPublic_HoSoXe_LEZ22SYE() {
+  return openVehicleProfilePublic_('LEZ22SYE', { download: false }).getContent();
+}
+
+
+/**
+ * Test trang xem/tải PDF qua WebApp, không redirect Drive.
+ */
+function test_ServePDF_WebApp_LEZ22SYE() {
+  return openVehicleProfilePublic_('LEZ22SYE', { download: false }).getContent().substring(0, 500);
+}
+
+
+/**
+ * Test xem hồ sơ qua QR dạng HTML, không cần app PDF.
+ */
+function test_ViewHTML_QR_LEZ22SYE() {
+  return serveVehicleProfileHtmlForQr_('LEZ22SYE', new Date().getFullYear()).getContent().substring(0, 500);
+}

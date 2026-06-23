@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  ExternalLink,
   FileSpreadsheet,
   Gauge,
   Loader2,
@@ -366,6 +367,17 @@ function DataTable({ type, rows, page, pageSize, onPageChange, onPageSizeChange 
                         <WarningBadge level={row.warningLevel} />
                         <span className="line-clamp-2">{row[key] || ''}</span>
                       </div>
+                    ) : type === 'xe' && key === 'bienSo' && row.idXe ? (
+                      <a
+                        className="inline-flex max-w-full items-center gap-1 font-black text-blue-700 underline-offset-2 hover:underline"
+                        href={`/vehicle-profile?ID_Xe=${encodeURIComponent(row.idXe)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`Mở hồ sơ xe ${row.bienSo || row.idXe}`}
+                      >
+                        <span className="truncate">{row[key] || row.idXe}</span>
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                      </a>
                     ) : (
                       <span className="line-clamp-2">{row[key] || ''}</span>
                     )}

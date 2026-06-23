@@ -33,12 +33,12 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-stone-100 text-slate-900 antialiased;
     margin: 0;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     background-image:
-      radial-gradient(circle at top left, rgba(220, 38, 38, 0.10), transparent 25%),
-      radial-gradient(circle at bottom right, rgba(250, 204, 21, 0.12), transparent 20%);
+      radial-gradient(circle at top left, rgba(220, 38, 38, 0.08), transparent 25%),
+      radial-gradient(circle at bottom right, rgba(250, 204, 21, 0.10), transparent 20%);
   }
 
   textarea {

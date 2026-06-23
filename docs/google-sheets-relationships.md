@@ -156,6 +156,41 @@ Với dashboard QLVT, bộ lọc `Đơn vị` dùng `NHANSU.Ref_DonViDuocCapPH` 
 
 Dashboard QLVT không hiển thị trực tiếp mã Ref trong KPI, bảng chi tiết hoặc Excel. Nếu một bảng liên kết bị thiếu do Google quota, endpoint phải trả `missingSources` và để trống trường hiển thị liên quan kèm `Ghi chú cảnh báo`, không tự đoán tên từ mã Ref.
 
+## Hồ sơ lý lịch phương tiện
+
+Endpoint `/api/vehicle-profile` nhận `ID_Xe`, `idXe`, `idxe` hoặc `IDXe`, đọc hồ sơ chính từ `XE.ID_Xe` và dựng payload `profile` cho trang React `/vehicle-profile` cùng file standalone `vehicle_profile_standalone.html`.
+
+| Bảng nguồn | Cột lưu mã Ref | Bảng đích cần đọc | Khóa bảng đích | Cột nên hiển thị | Mức chắc chắn |
+| --- | --- | --- | --- | --- | --- |
+| `XE` | `ID_Xe` | `BC_XE_TONGHOP` | `ID xe`, dự phòng `Biển số` | Các cột tổng hợp như hạn pháp lý, km, chuyến, ghi chú cảnh báo | Đã xác minh qua schema |
+| `XE` | `Ref_DonViChuQuan` | `DONVI` | `ID_DonVi` | `TenDonVi`, dự phòng `TenVietTat`, `Display`; đây là nguồn chính của đơn vị xe | Đã xác minh qua schema |
+| `XE` | `Ref_DonViQuanLyHienTai` | `DONVI` | `ID_DonVi` | `TenDonVi`, dự phòng `TenVietTat`, `Display`; chỉ dùng dự phòng/hiển thị quản lý hiện tại | Đã xác minh qua schema |
+| `XE` | `Ref_DoiXe` | `DM_DOIXE_MOI`, dự phòng `DM_DOIXE` | `ID_DoiXe` | `TenDoiXe`, dự phòng `SoDoiXe`, `MaDoiXe`, `Display` | Đã xác minh qua schema |
+| `DM_DOIXE_MOI` | `Ref_NhanSuPhuTrach` | `NHANSU` | `ID_NhanSu` | `HoTen`, dự phòng `Display` | Cần kiểm tra thêm vì mẫu hiện trống |
+| `XE_PHUHIEU` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_PHUHIEU` | `Ref_CoQuanCap` | `DM_COQUAN_CAP` | `ID_CoQuanCap` | `TenCoQuanCap`, dự phòng `Display` | Đã xác minh qua schema |
+| `XE_DANGKIEM` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_BAOHIEM` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_BAOHIEM` | `Ref_CongTyBaoHiem` | `DM_CTY_BAOHIEM` | `ID_CongTyBaoHiem` | `TenCongTyBaoHiem`, dự phòng `TenVietTat`, `MaBaoHiem` | Đã xác minh qua schema |
+| `XE_TAXIMET` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_TAXIMET` | `Ref_DonViKiemDinh` | `DM_CQKD_TAXIMET` | `ID_CQKD` | `TenDonVI`, dự phòng `TenDonVi`, `Display` | Đã xác minh qua schema |
+| `XE_THECHAP_NGANHANG` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_THECHAP_NGANHANG` | `Ref_NganHang` | `DM_NGANHANG` | `ID_NganHang` | `TenNganHang`, dự phòng `TenVietTat`, `MaNganHang` | Đã xác minh qua schema |
+| `LAIXE_PHANCONG_XE` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `LAIXE_PHANCONG_XE` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `HoTen`, `CCCD`, `SoDienThoai` | Đã xác minh qua schema |
+| `LAIXE_GPLX` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `SoGPLX`, `HangGPLX`, `NgayHetHan` của GPLX hiện hành | Đã xác minh qua schema |
+| `NHANSU_SUCKHOE` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `NgayHetHan`, `TrangThai` của sức khỏe hiện hành | Đã xác minh qua schema |
+| `NHANSU_HOPDONG_LAODONG` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `SoHopDong`, `TrangThai`, ngày hợp đồng hiện hành | Đã xác minh qua schema |
+| `LAIXE_DAOTAO` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `NoiDungDaoTao`, `NgayHetHan`, `TrangThai` | Đã xác minh qua schema |
+| `NHANSU_BHXH` | `Ref_NhanSu` | `NHANSU` | `ID_NhanSu` | `TrangThaiBHXH`, dự phòng `SoSoBHXH`, `MaSoBHXH` | Đã xác minh qua schema |
+| `XE_SO_KM_THANG` | `Ref_Xe` | `XE` | `ID_Xe` | `SoKmHoatDong`, `LuyKeKmXeChay`, `SoChuyenTrongThang`, `LuyKeSoChuyen` | Đã xác minh qua schema |
+| `XE_BAODUONG_SUACHUA` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Đã xác minh qua schema |
+| `XE_BAODUONG_SUACHUA` | `Ref_NoiDungBaoDuong` | `DM_NOIDUNG_BD_SC` | `ID_NoiDung` | `TenNoiDung`, dự phòng `MaNoiDung` | Đã xác minh qua schema |
+| `XE_BAODUONG_SUACHUA` | `Ref_DonViSuaChua` | `DM_DONVI_SUACHUA` | `ID_DonViSuaChua` | `TenDonVi`, thêm `DiaChi` nếu có | Đã xác minh qua schema |
+| `XE_LICHSU_NGUNG_HOATDONG` | `Ref_Xe` | `XE` | `ID_Xe` | `BienSo`, `MaDam` | Cần kiểm tra thêm vì bảng hiện chưa có dữ liệu mẫu |
+
+Khi render hồ sơ xe, không hiển thị trực tiếp mã Ref từ các bảng pháp lý, kỹ thuật hoặc lái xe. Nếu một bảng phụ chưa đọc được, endpoint vẫn trả hồ sơ chính và thêm `missingSources`; UI hiển thị cảnh báo bảng thiếu thay vì trắng trang. PDF của web app chỉ tải về máy người dùng, không lưu Google Drive và không cập nhật các cột PDF trong bảng `XE`.
+
 ## Nghiệp vụ thỏa thuận trách nhiệm dân sự
 
 | Bảng chính | Cột lưu mã Ref | Bảng cần gọi thêm | Khóa bảng Ref | Cột nên hiển thị |

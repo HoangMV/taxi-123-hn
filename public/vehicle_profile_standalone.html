@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ lý lịch phương tiện</title>
+  <style>
+    :root {
+      --blue: #0b2d5c;
+      --blue-light: #dbeafe;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      letter-spacing: 0;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .toolbar,
+    .hero,
+    .message {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    .toolbar {
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      gap: 12px;
+      align-items: end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+
+    input {
+      height: 40px;
+      min-width: 120px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0 10px;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    button {
+      height: 40px;
+      min-width: 130px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 0 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .7;
+    }
+
+    .primary {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .green {
+      background: #059669;
+      color: #fff;
+    }
+
+    .secondary {
+      background: #fff;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .ghost {
+      background: transparent;
+      color: var(--muted);
+      padding-left: 0;
+      min-width: 0;
+    }
+
+    .btn-spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, .35);
+      border-top-color: #fff;
+      animation: spin .6s linear infinite;
+      flex: 0 0 auto;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .pdf-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, .55);
+      backdrop-filter: blur(2px);
+    }
+
+    .pdf-overlay[hidden] {
+      display: none;
+    }
+
+    .pdf-overlay-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 32px 40px;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+    }
+
+    .pdf-overlay-spinner {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 5px solid #d1e3f8;
+      border-top-color: #2563eb;
+      animation: spin .8s linear infinite;
+    }
+
+    .pdf-overlay-text {
+      color: #172033;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .message {
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .message.error {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .message.warn {
+      border-color: #fde68a;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .profile {
+      display: grid;
+      gap: 18px;
+    }
+
+    .a4-page {
+      width: min(100%, 297mm);
+      aspect-ratio: 297 / 210;
+      margin: 0 auto;
+      padding: 8mm;
+      background: #fff;
+      border: 1px solid #cfd9e6;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, .14);
+      overflow: hidden;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .a4-page-number {
+      position: absolute;
+      right: 8mm;
+      bottom: 4mm;
+      color: #9fb2c8;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .measure-sandbox {
+      position: absolute;
+      left: -99999px;
+      top: 0;
+      visibility: hidden;
+    }
+
+    .measure-sandbox .a4-content {
+      width: calc(min(100vw, 297mm) - 16mm);
+    }
+
+    .executive-header {
+      display: grid;
+      grid-template-columns: 12px minmax(0, 1fr) 190px;
+      gap: 12px;
+      align-items: stretch;
+      min-height: 88px;
+      border: 2.2px solid #2f6690;
+      border-radius: 14px;
+      background: linear-gradient(115deg, #fff 0%, #f7fbff 48%, #eaf3fb 100%);
+      padding: 11px 13px 10px 0;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .7);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .eh-left-accent {
+      background: linear-gradient(180deg, #f4b400 0%, #ffd45c 50%, #f4b400 100%);
+      border-right: 2px solid #2f6690;
+    }
+
+    .eh-brand-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .eh-logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 142px;
+      min-width: 142px;
+      height: 48px;
+      padding: 9px 13px;
+      border-radius: 11px;
+      background: linear-gradient(180deg, #ffc928 0%, #f4b400 100%);
+      border: 2.5px solid #1f4e79;
+      color: #172033;
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: .2px;
+      flex: 0 0 auto;
+      box-shadow: 0 2px 0 rgba(31, 78, 121, .18);
+    }
+
+    .eh-doc-title {
+      color: #1f4e79;
+      font-size: 24px;
+      line-height: 1.05;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .2px;
+    }
+
+    .eh-company {
+      display: inline-block;
+      margin-top: 4px;
+      color: #1f4e79;
+      font-size: 15px;
+      line-height: 1.15;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-bottom: 3px solid #f4b400;
+    }
+
+    .eh-info-row {
+      margin-top: 10px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      background: #eef6fd;
+      color: #344054;
+      font-size: 10.8px;
+      line-height: 1.32;
+      font-weight: 500;
+    }
+
+    .eh-info-row b {
+      color: #1f4e79;
+    }
+
+    .eh-sep {
+      color: #9fb2c8;
+      padding: 0 6px;
+    }
+
+    .eh-meta-card {
+      border-radius: 12px;
+      border: 1.7px solid #9fb2c8;
+      background: rgba(255, 255, 255, .78);
+      color: #344054;
+      padding: 9px 10px;
+      text-align: right;
+    }
+
+    .eh-meta-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid #d7e3ef;
+      padding: 5px 0;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .eh-meta-line:last-child {
+      border-bottom: 0;
+    }
+
+    .eh-meta-line span {
+      color: #667085;
+    }
+
+    .eh-meta-line b {
+      color: #172033;
+      font-size: 11.2px;
+    }
+
+    .cover-section-title,
+    .section-head {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 12px 0 8px;
+      border-radius: 9px;
+      border: 2px solid #2f6690;
+      background: linear-gradient(90deg, #eaf3fb 0%, #dcebf7 100%);
+      color: #1f4e79;
+      padding: 7px 10px;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .cover-section-no,
+    .section-no {
+      display: inline-flex;
+      width: 30px;
+      height: 30px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #f4b400;
+      color: #173b63;
+      font-size: 13px;
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .section-title,
+    .cover-section-text {
+      min-width: 0;
+      font-size: 14px;
+      line-height: 1.1;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .section-body {
+      padding: 0 0 2px;
+    }
+
+    .vehicle-overview-pro {
+      display: grid;
+      grid-template-columns: 31fr 52fr 17fr;
+      gap: 8px;
+      margin: 6px 0 8px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .vo-card {
+      border: 2px solid #2f6690;
+      border-radius: 13px;
+      padding: 10px 11px;
+      color: #172033;
+      background: #fff;
+    }
+
+    .vo-plate-card {
+      text-align: center;
+      background: linear-gradient(180deg, #fffdf3 0%, #fff7d6 100%);
+    }
+
+    .vo-quick-card {
+      background: linear-gradient(180deg, #fff 0%, #f7fbff 100%);
+    }
+
+    .vo-qr-card {
+      text-align: center;
+    }
+
+    .vo-card-title {
+      margin: 0 0 8px;
+      color: #1f4e79;
+      font-size: 11.8px;
+      line-height: 1.1;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .vo-card-title.center {
+      text-align: center;
+    }
+
+    .vo-plate {
+      display: inline-block;
+      min-width: 210px;
+      margin: 2px 0 9px;
+      padding: 9px 18px;
+      border: 3px solid #2f6690;
+      border-radius: 14px;
+      background: #fff;
+      color: #172033;
+      font-size: 32px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-align: center;
+    }
+
+    .vo-status {
+      display: inline-block;
+      padding: 5px 13px;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: #166534;
+      border: 1.8px solid #16a34a;
+      font-size: 11.5px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .vo-quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .vo-quick-grid-main {
+      margin-bottom: 7px;
+    }
+
+    .vo-item {
+      min-width: 0;
+      background: #eef6fd;
+      border: 1.4px solid #9fb2c8;
+      border-radius: 9px;
+      padding: 7px 8px;
+    }
+
+    .vo-item span,
+    .field-label {
+      display: block;
+      color: #667085;
+      font-size: 9.8px;
+      line-height: 1.1;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .vo-item b,
+    .field-value {
+      display: block;
+      color: #172033;
+      font-size: 12.2px;
+      line-height: 1.18;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .vo-identity-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      margin-bottom: 7px;
+    }
+
+    .vo-id-item {
+      min-width: 0;
+      background: #fff;
+      border: 1.4px solid #9fb2c8;
+      border-radius: 9px;
+      padding: 7px 8px;
+    }
+
+    .vo-id-item span,
+    .vo-register-line span {
+      display: block;
+      color: #667085;
+      font-size: 9.6px;
+      line-height: 1.1;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .vo-id-item b,
+    .vo-register-line b {
+      display: block;
+      color: #172033;
+      font-size: 11.6px;
+      line-height: 1.18;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .vo-register-line {
+      display: grid;
+      grid-template-columns: minmax(0, 68%) minmax(0, 32%);
+      gap: 12px;
+      background: #fff7d6;
+      border-left: 5px solid #f4b400;
+      border-radius: 9px;
+      padding: 7px 8px;
+    }
+
+    .vo-register-date {
+      text-align: right;
+    }
+
+    .vo-register-date b {
+      color: #1f4e79;
+      font-size: 11.8px;
+    }
+
+    .vo-qr-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 92px;
+      height: 92px;
+      margin: 0 auto 5px;
+      border: 1.2px solid #9fb2c8;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .qr-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(45deg, #fff, #fff 5px, #eef6fd 5px, #eef6fd 10px);
+      color: #1f4e79;
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .qr-img {
+      display: block;
+      width: 84px;
+      height: 84px;
+      margin: 0 auto;
+      object-fit: contain;
+    }
+
+    .vo-qr-wrap svg {
+      display: block;
+      width: 84px;
+      height: 84px;
+      margin: 0 auto;
+    }
+
+    .vo-qr-note {
+      color: #344054;
+      font-size: 8.8px;
+      line-height: 1.1;
+      font-weight: 700;
+    }
+
+    .cover-dashboard {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .cover-card {
+      min-width: 0;
+      border: 1.5px solid #9fb2c8;
+      border-radius: 10px;
+      background: #fff;
+      padding: 8px;
+    }
+
+    .cover-card.hot {
+      background: linear-gradient(180deg, #fffdf3 0%, #fff7d6 100%);
+      border-color: #f4b400;
+    }
+
+    .cover-card-title {
+      color: #1f4e79;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .cover-card-value {
+      margin-top: 6px;
+      color: #172033;
+      font-size: 13px;
+      line-height: 1.12;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .cover-card-note {
+      margin-top: 5px;
+      color: #667085;
+      font-size: 9.5px;
+      line-height: 1.15;
+      font-weight: 500;
+    }
+
+    .cover-info-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .cover-info-box {
+      border: 1.5px solid #9fb2c8;
+      border-radius: 10px;
+      background: #fff;
+      padding: 9px 10px;
+      color: #344054;
+    }
+
+    .cover-info-box.dark {
+      background: #eaf3fb;
+      color: #344054;
+      border-color: #9fb2c8;
+    }
+
+    .cover-info-box.dark .cover-info-title {
+      color: #1f4e79;
+    }
+
+    .cover-info-box.yellow {
+      background: #fff7d6;
+      border-color: #f4b400;
+    }
+
+    .cover-info-title {
+      margin-bottom: 6px;
+      color: inherit;
+      font-size: 11px;
+      line-height: 1.1;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .cover-info-line {
+      font-size: 10.8px;
+      line-height: 1.35;
+      font-weight: 500;
+      overflow-wrap: anywhere;
+    }
+
+    .page-head {
+      display: none;
+    }
+
+    .grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .field {
+      min-width: 0;
+      border: 1.4px solid #9fb2c8;
+      border-radius: 8px;
+      background: #eef6fd;
+      padding: 7px 8px;
+    }
+
+    .field.strong {
+      background: #fff7d6;
+      border-color: #f4b400;
+    }
+
+    .field.strong .field-value {
+      color: #172033;
+      font-weight: 700;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 10px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .metric {
+      min-width: 0;
+      border: 1.6px solid #9fb2c8;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #eaf3fb 0%, #fff 100%);
+      padding: 10px 11px;
+      color: #172033;
+    }
+
+    .metric-label {
+      color: #1f4e79;
+      font-size: 10px;
+      line-height: 1.15;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin-top: 6px;
+      color: #172033;
+      font-size: 18px;
+      line-height: 1.1;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .metric-note {
+      margin-top: 5px;
+      color: #667085;
+      font-size: 10px;
+      line-height: 1.25;
+      font-weight: 500;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 8px;
+      border: 2px solid #3f5870;
+      background: #fff;
+      font-size: 10.6px;
+      line-height: 1.2;
+    }
+
+    thead {
+      display: table-header-group;
+    }
+
+    tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: #dcebf7;
+      color: #1f4e79;
+      font-size: 9.8px;
+      line-height: 1.1;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    th,
+    td {
+      border: 1px solid #7f93a8;
+      padding: 5px 6px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: #f8fbff;
+    }
+
+    .empty-cell {
+      color: #667085;
+      padding: 24px 8px;
+      font-weight: 500;
+    }
+
+    .month-table {
+      table-layout: fixed;
+      font-size: 10.4px;
+      width: 100%;
+    }
+
+    .month-table col.col-tt {
+      width: 34px;
+    }
+
+    .month-table col.col-content {
+      width: 150px;
+    }
+
+    .month-table col.col-month {
+      width: 64px;
+    }
+
+    .month-table col.col-total {
+      width: 78px;
+    }
+
+    .month-table col.col-period {
+      width: 100px;
+    }
+
+    .month-table col.col-place {
+      width: 160px;
+    }
+
+    .month-table th,
+    .month-table td {
+      padding: 4px 6px;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .value-strong {
+      color: #172033;
+      font-weight: 700;
+    }
+
+    .badge {
+      display: inline-flex;
+      border: 1.3px solid #9fb2c8;
+      border-radius: 999px;
+      padding: 3px 7px;
+      font-size: 9.4px;
+      line-height: 1.1;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tone-do,
+    .tone-đỏ {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .tone-vang,
+    .tone-vàng {
+      border-color: #fde68a;
+      background: #fffbeb;
+      color: #b45309;
+    }
+
+    .tone-xanh {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+      color: #047857;
+    }
+
+    .badge-ok {
+      color: #166534;
+      background: #dcfce7;
+      border-color: #86efac;
+    }
+
+    .badge-warn {
+      color: #92400e;
+      background: #fef3c7;
+      border-color: #fcd34d;
+    }
+
+    .badge-bad {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: #fca5a5;
+    }
+
+    .badge-info {
+      color: #1e40af;
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    .status-bad {
+      color: #b91c1c !important;
+    }
+
+    .status-warn {
+      color: #b45309 !important;
+    }
+
+    .status-ok {
+      color: #047857 !important;
+    }
+
+    .code-cell {
+      background: #fff7d6;
+      color: #173b63;
+      font-weight: 700;
+    }
+
+    .days-cell {
+      color: #1f4e79;
+      font-weight: 700;
+    }
+
+    .section-note,
+    .legend {
+      margin: 0 0 7px;
+      padding: 7px 9px;
+      border-left: 5px solid #f4b400;
+      border-radius: 8px;
+      background: #fff7d6;
+      color: #344054;
+      font-size: 10.8px;
+      line-height: 1.3;
+      font-weight: 500;
+    }
+
+    .legend {
+      margin-top: 7px;
+      border: 1.3px solid #9fb2c8;
+      border-left: 5px solid #f4b400;
+      background: #eef6fd;
+    }
+
+    .warning-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .warning {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .warning {
+      border: 1px solid #9fb2c8;
+      border-left: 5px solid #9fb2c8;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fff;
+      color: #1f2937;
+    }
+
+    .warning.tone-do,
+    .warning.tone-đỏ {
+      border-color: #fca5a5;
+      border-left-color: #dc2626;
+      background: #fef2f2;
+    }
+
+    .warning.tone-vang,
+    .warning.tone-vàng {
+      border-color: #fcd34d;
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    .warning.tone-xanh {
+      border-color: #86efac;
+      border-left-color: #16a34a;
+      background: #f0fdf4;
+    }
+
+    .warning-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .warning-note {
+      margin-top: 4px;
+      font-size: 11.5px;
+      font-weight: 500;
+      opacity: .85;
+    }
+
+    .signature {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 30px;
+      text-align: center;
+      color: #172033;
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 700;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .loading {
+      display: grid;
+      gap: 14px;
+    }
+
+    .skeleton {
+      border-radius: 8px;
+      background: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 45%, #e2e8f0 65%);
+      background-size: 220% 100%;
+      animation: pulse 1.2s infinite;
+    }
+
+    .sk-hero {
+      height: 150px;
+    }
+
+    .sk-card {
+      height: 220px;
+    }
+
+    @keyframes pulse {
+      0% {
+        background-position: 100% 0;
+      }
+
+      100% {
+        background-position: -100% 0;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .a4-page {
+        width: 100%;
+        height: auto;
+        aspect-ratio: auto;
+        padding: 14px;
+      }
+
+      .executive-header {
+        grid-template-columns: 7px 1fr;
+      }
+
+      .eh-meta-card {
+        grid-column: 2;
+      }
+
+      .vehicle-overview-pro,
+      .cover-info-row {
+        grid-template-columns: 1fr;
+      }
+
+      .cover-dashboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .vo-quick-grid,
+      .grid,
+      .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .vo-register-line {
+        grid-template-columns: 1fr;
+      }
+
+      .vo-register-date {
+        text-align: left;
+      }
+
+      .warning-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .wrap {
+        padding: 12px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .plate {
+        width: 100%;
+        text-align: left;
+      }
+
+      .actions {
+        width: 100%;
+      }
+
+      button,
+      input {
+        width: 100%;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .toolbar,
+      .no-print {
+        display: none !important;
+      }
+
+      .wrap {
+        max-width: none;
+        padding: 0;
+      }
+
+      .profile {
+        gap: 0;
+      }
+
+      .a4-page {
+        width: 297mm !important;
+        height: 210mm !important;
+        margin: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        page-break-after: always;
+      }
+
+      .a4-page:last-child {
+        page-break-after: auto;
+      }
+
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+    }
+
+    body.pdf-export .a4-page {
+      border: 0 !important;
+      box-shadow: none !important;
+    }
+
+    body.pdf-export .a4-page-number {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="pdfOverlay" class="pdf-overlay no-print" hidden>
+    <div class="pdf-overlay-box">
+      <div class="pdf-overlay-spinner"></div>
+      <div class="pdf-overlay-text">Đang tạo PDF, vui lòng đợi...</div>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="toolbar no-print">
+      <div class="toolbar-row">
+        <div>
+          <h1>Hồ sơ lý lịch phương tiện</h1>
+          <p class="subtitle">Nhập ID_Xe hoặc biển số xe để tìm hồ sơ.</p>
+        </div>
+        <div class="actions">
+          <input id="idInput" placeholder="Nhập ID_Xe hoặc biển số xe">
+          <button class="primary" type="button" id="loadButton">Tải hồ sơ</button>
+          <button class="secondary" type="button" id="printButton" disabled>In</button>
+          <button class="green" type="button" id="pdfButton" disabled>Tải PDF</button>
+        </div>
+      </div>
+    </div>
+    <div id="message"></div>
+    <main id="app"></main>
+  </div>
+
+  <script>
+    const HTML2CANVAS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    const QRCODE_URL = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js';
+    const state = { bundle: null, loadingPdf: false, pdfLibPromise: null, qrLibPromise: null };
+    const app = document.getElementById('app');
+    const message = document.getElementById('message');
+    const idInput = document.getElementById('idInput');
+    const loadButton = document.getElementById('loadButton');
+    const printButton = document.getElementById('printButton');
+    const pdfButton = document.getElementById('pdfButton');
+    const pdfOverlay = document.getElementById('pdfOverlay');
+
+    function clean(value) { return value == null ? '' : String(value).trim(); }
+    function escapeHtml(value) { return clean(value).replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char])); }
+    function tone(level) { const text = clean(level).toLowerCase(); if (text.includes('đỏ') || text.includes('do')) return 'tone-do'; if (text.includes('vàng') || text.includes('vang')) return 'tone-vang'; if (text.includes('xanh')) return 'tone-xanh'; return ''; }
+    function statusClass(textValue) { const text = clean(textValue).toLowerCase(); if (text.includes('hết hạn') || text.includes('thiếu') || text.includes('đỏ') || text.includes('chưa có') || text.includes('quá hạn')) return 'status-bad'; if (text.includes('sắp') || text.includes('vàng') || text.includes('cảnh báo') || text.includes('theo dõi')) return 'status-warn'; if (text.includes('hiệu lực') || text.includes('xanh') || text.includes('đang') || text.includes('hoàn thành')) return 'status-ok'; return 'status-info'; }
+    function badgeClass(textValue) { const cls = statusClass(textValue); return cls === 'status-bad' ? 'badge-bad' : cls === 'status-warn' ? 'badge-warn' : cls === 'status-ok' ? 'badge-ok' : 'badge-info'; }
+    function value(value) { return clean(value) || '—'; }
+    function showMessage(text, type) { message.innerHTML = text ? `<div class="message ${type || 'warn'}">${escapeHtml(text)}</div>` : ''; }
+    function field(label, valueText, strong) { return `<div class="field ${strong ? 'strong' : ''}"><div class="field-label">${escapeHtml(label)}</div><div class="field-value">${escapeHtml(value(valueText))}</div></div>`; }
+    function section(no, title, body) { return `<div class="section-head"><span class="section-no">${no}</span><h2 class="section-title">${escapeHtml(title)}</h2></div>${body}`; }
+    function badge(valueText) { return `<span class="badge ${badgeClass(valueText)}">${escapeHtml(value(valueText))}</span>`; }
+    function renderQr(qr) { if (qr?.svgMarkup) return qr.svgMarkup; if (qr?.imageDataUri) return `<img class="qr-img" src="${qr.imageDataUri}" alt="">`; return `<div class="qr-placeholder">Chưa tạo<br>được QR</div>`; }
+    function legalByName(profile, name) { return (profile.legalRows || []).find((row) => clean(row.loai).toLowerCase().includes(clean(name).toLowerCase())) || {}; }
+    function parseVnDate(v) { const m = clean(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1])) : null; }
+    function totalDaysFromText(v) { const s = clean(v); if (!s || s === '—' || s === '-') return 0; let total = 0; let matched = false; const re = /(\d{1,2}\/\d{1,2}\/\d{4})\s*[-–—]\s*(\d{1,2}\/\d{1,2}\/\d{4})/g; let m; while ((m = re.exec(s))) { const from = parseVnDate(m[1]); const to = parseVnDate(m[2]); if (from !== null && to !== null && to >= from) { matched = true; total += Math.floor((to - from) / 86400000) + 1; } } if (!matched) { const singles = s.match(/\d{1,2}\/\d{1,2}\/\d{4}/g); total += singles ? singles.length : 0; } return total; }
+    function daysText(v) { const days = totalDaysFromText(v); return days > 0 ? `${days} ngày` : '—'; }
+    function totalDaysRows(rows) { const days = (rows || []).reduce((sum, row) => sum + totalDaysFromText(row.thoiGian), 0); return days > 0 ? `${days} ngày` : '—'; }
+    function script(src) { return new Promise((resolve, reject) => { const s = document.createElement('script'); s.src = src; s.onload = resolve; s.onerror = reject; document.head.appendChild(s); }); }
+    function getParam(names) { const params = new URLSearchParams(window.location.search); for (const name of names) { const val = clean(params.get(name)); if (val) return val; } return ''; }
+
+    async function ensurePdfLib() {
+      if (window.html2canvas && window.jspdf) return;
+      if (!state.pdfLibPromise) {
+        state.pdfLibPromise = Promise.all([
+          window.html2canvas ? null : script(HTML2CANVAS_URL),
+          window.jspdf ? null : script(JSPDF_URL)
+        ]);
+      }
+      await state.pdfLibPromise;
+    }
+
+    async function ensureQrLib() {
+      if (window.QRCode) return;
+      if (!state.qrLibPromise) state.qrLibPromise = script(QRCODE_URL);
+      await state.qrLibPromise;
+    }
+
+    function renderLoading() {
+      app.innerHTML = '<div class="loading"><div class="skeleton sk-hero"></div><div class="skeleton sk-card"></div><div class="skeleton sk-card"></div></div>';
+    }
+
+    async function fetchProfile() {
+      const idXe = clean(idInput.value);
+      if (!idXe) { showMessage('Vui lòng nhập ID_Xe để tải hồ sơ phương tiện.', 'error'); return; }
+      showMessage('');
+      renderLoading();
+      setBusy(true);
+      try {
+        const params = new URLSearchParams({ ID_Xe: idXe });
+        const response = await fetch(`/api/vehicle-profile?${params.toString()}`, { headers: { Accept: 'application/json' } });
+        const text = await response.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch {
+          throw new Error('API trả về HTML thay vì JSON. Khi chạy local, hãy chạy thêm npm run proxy cùng với npm start, rồi tải lại trang.');
+        }
+        if (!response.ok) throw new Error(data.error || `Không tải được hồ sơ phương tiện (${response.status}).`);
+        state.bundle = data;
+        renderProfile(data.profile);
+        const resolvedId = clean(data.profile?.vehicle?.idXe) || idXe;
+        idInput.value = resolvedId;
+        window.history.replaceState(null, '', `/vehicle_profile_standalone.html?ID_Xe=${encodeURIComponent(resolvedId)}`);
+      } catch (error) {
+        state.bundle = null;
+        app.innerHTML = '';
+        showMessage(error.message || 'Không tải được hồ sơ phương tiện.', 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function setBusy(isBusy) {
+      loadButton.disabled = isBusy;
+      printButton.disabled = !state.bundle;
+      pdfButton.disabled = !state.bundle || state.loadingPdf;
+      loadButton.innerHTML = isBusy ? '<span class="btn-spinner"></span>Đang tải...' : 'Tải hồ sơ';
+      pdfButton.innerHTML = state.loadingPdf ? '<span class="btn-spinner"></span>Đang tạo PDF...' : 'Tải PDF';
+    }
+
+    function renderTable(columns, rows, emptyText) {
+      const safeRows = Array.isArray(rows) ? rows : [];
+      const head = `<thead class="repeat-head"><tr>${columns.map((col) => `<th class="head-cell" ${col.width ? `style="width:${escapeHtml(col.width)}"` : ''}>${escapeHtml(col.label)}</th>`).join('')}</tr></thead>`;
+      const body = safeRows.map((row, index) => `<tr>${columns.map((col) => `<td class="${escapeHtml(col.className || '')}">${col.render ? col.render(row, index) : col.badge ? badge(row[col.key]) : escapeHtml(value(row[col.key]))}</td>`).join('')}</tr>`).join('') ||
+        `<tr><td colspan="${columns.length}" class="center empty-cell">${escapeHtml(emptyText || 'Chưa có dữ liệu.')}</td></tr>`;
+      return `<table>${head}<tbody>${body}</tbody></table>`;
+    }
+
+    function renderMonthTable(rows) {
+      function half(from, to) {
+        const months = Array.from({ length: to - from + 1 }, (_, index) => from + index);
+        const colgroup = `<colgroup><col class="col-tt"><col class="col-content">${months.map(() => '<col class="col-month">').join('')}<col class="col-total"><col class="col-period"><col class="col-place"></colgroup>`;
+        const head = `<thead><tr><th rowspan="2" class="center">TT</th><th rowspan="2">Nội dung</th><th colspan="${months.length}" class="center">Tháng ${from} - Tháng ${to}</th><th rowspan="2" class="center">Tổng năm</th><th rowspan="2" class="center">Số ngày BDSC, cải tạo lũy kế</th><th rowspan="2">Địa điểm BDSC, cải tạo</th></tr><tr>${months.map((m) => `<th class="center">${m}</th>`).join('')}</tr></thead>`;
+        const body = (rows || []).map((row) => `<tr><td class="center">${escapeHtml(row.tt)}</td><td class="value-strong">${escapeHtml(row.noiDung)}</td>${months.map((m) => { const cell = row.values?.[m - 1] || ''; const code = String(cell).includes('BD') || String(cell).includes('SC') || String(cell).includes('CT'); return `<td class="center ${code ? 'code-cell' : ''}">${escapeHtml(cell)}</td>`; }).join('')}<td class="center value-strong">${escapeHtml(row.total)}</td><td class="center days-cell">${escapeHtml(daysText(row.thoiGian))}</td><td>${escapeHtml(row.diaDiem)}</td></tr>`).join('');
+        return `<table class="month-table">${colgroup}${head}<tbody>${body}</tbody></table>`;
+      }
+      return `${half(1, 6)}${half(7, 12)}<div class="legend"><b>Chú thích:</b> BD = Bảo dưỡng, SC = Sửa chữa, CT = Cải tạo. Số ngày kỹ thuật được tính bao gồm cả ngày bắt đầu và ngày kết thúc; nếu có nhiều đợt thì cộng dồn lũy kế.</div>`;
+    }
+
+    const legalColumns = [
+      { key: 'loai', label: 'Loại hồ sơ', width: '135px', className: 'value-strong' }, { key: 'so', label: 'Số hồ sơ / thiết bị', width: '145px' }, { key: 'donVi', label: 'Đơn vị liên quan' },
+      { key: 'ngayCap', label: 'Ngày cấp', width: '88px', className: 'center' }, { key: 'ngayHetHan', label: 'Ngày hết hạn', width: '98px', className: 'center value-strong' }, { key: 'trangThai', label: 'Trạng thái', width: '145px', className: 'center', badge: true },
+      { key: 'file', label: 'File', width: '65px', className: 'center', render: (row) => row.file ? 'Có' : '—' }
+    ];
+    const bdscColumns = [
+      { key: 'ma', label: 'Mã', width: '50px', className: 'center value-strong' }, { key: 'thoiGian', label: 'Thời gian', width: '120px', className: 'center' }, { key: 'soNgay', label: 'Số ngày', width: '75px', className: 'center days-cell', render: (row) => escapeHtml(daysText(row.thoiGian)) }, { key: 'loai', label: 'Loại phiếu', width: '125px' },
+      { key: 'noiDung', label: 'Nội dung' }, { key: 'soKm', label: 'Km', width: '60px', className: 'right' }, { key: 'donVi', label: 'Đơn vị SC', width: '120px' },
+      { key: 'chiPhi', label: 'Chi phí', width: '88px', className: 'right' }, { key: 'trangThai', label: 'Trạng thái', width: '95px', className: 'center', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }
+    ];
+    const histories = [
+      ['phuHieu', 'Lịch sử cấp phù hiệu', [{ key: 'loai', label: 'Loại' }, { key: 'so', label: 'Số phù hiệu' }, { key: 'coQuanCap', label: 'Cơ quan cấp' }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'ngayHetHieuLucThucTe', label: 'Hết hiệu lực TT' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'lyDo', label: 'Lý do/Ghi chú', render: (row) => escapeHtml(value(row.lyDo || row.ghiChu)) }]],
+      ['dangKiem', 'Lịch sử đăng kiểm', [{ key: 'so', label: 'Số đăng kiểm' }, { key: 'donVi', label: 'Đơn vị' }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }]],
+      ['baoHiem', 'Lịch sử bảo hiểm', [{ key: 'loai', label: 'Loại' }, { key: 'so', label: 'Số hợp đồng' }, { key: 'congTy', label: 'Công ty' }, { key: 'nguon', label: 'Nguồn mua' }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'giaTri', label: 'Giá trị' }, { key: 'trangThai', label: 'Trạng thái', badge: true }]],
+      ['taximet', 'Lịch sử kiểm định taximet', [{ key: 'so', label: 'Số thiết bị' }, { key: 'donVi', label: 'Đơn vị' }, { key: 'ngayLapDat', label: 'Ngày lắp' }, { key: 'ngayKiemDinh', label: 'Ngày kiểm định' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }]],
+      ['theChap', 'Lịch sử thế chấp ngân hàng', [{ key: 'nganHang', label: 'Ngân hàng' }, { key: 'soHopDong', label: 'Hợp đồng' }, { key: 'ngayTheChap', label: 'Ngày thế chấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'ngayGiaiChap', label: 'Ngày giải chấp' }, { key: 'soTienVay', label: 'Số tiền vay' }, { key: 'tinhTrangHoSoGoc', label: 'HS gốc' }, { key: 'trangThaiTheChap', label: 'Trạng thái', badge: true }, { key: 'trangThaiKhoanVay', label: 'Khoản vay' }]],
+      ['ngungHoatDong', 'Lịch sử xe ngừng hoạt động', [{ key: 'tuNgay', label: 'Từ ngày' }, { key: 'denNgay', label: 'Đến ngày' }, { key: 'lyDo', label: 'Lý do' }, { key: 'trangThaiTruoc', label: 'Trước ngừng' }, { key: 'trangThaiSau', label: 'Sau ngừng' }, { key: 'ghiChu', label: 'Ghi chú' }]],
+      ['laiXe', 'Lịch sử lái xe', [{ key: 'hoTen', label: 'Lái xe' }, { key: 'cccd', label: 'CCCD' }, { key: 'soDienThoai', label: 'Điện thoại' }, { key: 'donViLamViec', label: 'Đơn vị' }, { key: 'tuNgay', label: 'Từ ngày' }, { key: 'denNgay', label: 'Đến ngày' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }]]
+    ];
+
+    function renderProfile(profile) {
+      const vehicle = profile.vehicle || {};
+      const driver = profile.driver || {};
+      const technical = profile.technicalSummary || {};
+      profile.qr = { profileUrl: vehicle.idXe ? `${window.location.origin}${window.location.pathname}?ID_Xe=${encodeURIComponent(vehicle.idXe)}` : '' };
+      const missing = profile.missingSources?.length ? `<div class="message warn">Một số bảng phụ chưa đọc được: ${escapeHtml(profile.missingSources.map((item) => item.table).join(', '))}. Hồ sơ vẫn hiển thị phần dữ liệu đã tải được.</div>` : '';
+      const coverCards = [
+        ['Đăng kiểm', legalByName(profile, 'Đăng kiểm')],
+        ['Phù hiệu', legalByName(profile, 'Phù hiệu')],
+        ['Bảo hiểm TNDS', legalByName(profile, 'Bảo hiểm TNDS')],
+        ['Taximet', legalByName(profile, 'Taximet')],
+        ['Thế chấp', legalByName(profile, 'Thế chấp')],
+        ['Cảnh báo', { ngayHetHan: `${profile.warnings?.length || 0} nội dung`, trangThai: 'Ưu tiên xử lý màu đỏ/vàng' }]
+      ].map(([label, row], index) => `<div class="cover-card ${index < 3 ? 'hot' : ''}"><div class="cover-card-title">${escapeHtml(label)}</div><div class="cover-card-value ${statusClass(row.trangThai)}">${escapeHtml(value(row.ngayHetHan))}</div><div class="cover-card-note">${label === 'Cảnh báo' ? escapeHtml(row.trangThai) : (row.donVi ? escapeHtml(row.donVi) : badge(row.trangThai))}</div></div>`).join('');
+      const cover = `<div class="executive-header">
+            <div class="eh-left-accent"></div>
+            <div class="eh-main">
+              <div class="eh-brand-row"><div class="eh-logo">TAXI 123</div><div><div class="eh-doc-title">Hồ sơ lý lịch phương tiện</div><div class="eh-company">${escapeHtml(profile.company?.tenCongTy || profile.meta?.appName)}</div></div></div>
+              <div class="eh-info-row"><span><b>Địa chỉ:</b> ${escapeHtml(value(profile.company?.diaChi))}</span><span class="eh-sep">|</span><span><b>MST/ĐKKD:</b> ${escapeHtml(value(profile.company?.maSoThue || profile.company?.soDangKyKinhDoanh))}</span><span class="eh-sep">|</span><span><b>Điện thoại:</b> ${escapeHtml(value(profile.company?.soDienThoai))}</span></div>
+            </div>
+            <div class="eh-meta-card"><div class="eh-meta-line"><span>Năm hồ sơ</span><b>${escapeHtml(profile.meta?.year)}</b></div><div class="eh-meta-line"><span>Ngày tạo</span><b>${escapeHtml(profile.meta?.printDate)}</b></div><div class="eh-meta-line"><span>Mã xe</span><b>${escapeHtml(vehicle.idXe)}</b></div></div>
+          </div>
+          ${missing}
+          <div class="cover-section-title"><div class="cover-section-no">01</div><div class="cover-section-text">Tổng quan phương tiện</div></div>
+          <div class="vehicle-overview-pro">
+            <div class="vo-card vo-plate-card"><div class="vo-card-title">Biển kiểm soát</div><div class="vo-plate">${escapeHtml(vehicle.bienSo || vehicle.idXe)}</div><div class="vo-status">${escapeHtml(value(vehicle.trangThaiXe))}</div></div>
+            <div class="vo-card vo-quick-card"><div class="vo-card-title">Thông tin xe</div><div class="vo-quick-grid vo-quick-grid-main"><div class="vo-item"><span>Nhãn hiệu</span><b>${escapeHtml(value(vehicle.nhanHieu))}</b></div><div class="vo-item"><span>Loại xe</span><b>${escapeHtml(value(vehicle.loaiXe))}</b></div><div class="vo-item"><span>Số chỗ</span><b>${escapeHtml(value(vehicle.soCho))}</b></div><div class="vo-item"><span>Năm SX</span><b>${escapeHtml(value(vehicle.namSanXuat))}</b></div></div><div class="vo-identity-grid"><div class="vo-id-item"><span>Số khung</span><b>${escapeHtml(value(vehicle.soKhung))}</b></div><div class="vo-id-item"><span>Số máy</span><b>${escapeHtml(value(vehicle.soMay))}</b></div></div><div class="vo-register-line"><div class="vo-register-name"><span>Tên đăng ký xe</span><b>${escapeHtml(value(vehicle.tenDangKyXe))}</b></div><div class="vo-register-date"><span>Ngày vào HĐ</span><b>${escapeHtml(value(vehicle.ngayDuaVaoHoatDong || vehicle.ngayDuaVaoHD))}</b></div></div></div>
+            <div class="vo-card vo-qr-card"><div class="vo-card-title center">QR hồ sơ xe</div><a class="vo-qr-wrap" id="vehicleQrWrap" href="${escapeHtml(profile.qr?.profileUrl || '')}" target="_blank" rel="noopener">${renderQr(profile.qr)}</a><div class="vo-qr-note">Quét hoặc bấm để mở hồ sơ</div></div>
+          </div>
+          <div class="cover-section-title"><div class="cover-section-no">02</div><div class="cover-section-text">Tình trạng pháp lý, khai thác và cảnh báo</div></div>
+          <div class="cover-dashboard">${coverCards}</div>
+          <div class="cover-info-row"><div class="cover-info-box dark"><div class="cover-info-title">Thông tin khai thác</div><div class="cover-info-line"><b>Lái xe:</b> ${escapeHtml(value(driver.hoTen))}</div><div class="cover-info-line"><b>Điện thoại:</b> ${escapeHtml(value(driver.soDienThoai))}</div><div class="cover-info-line"><b>Ngày bắt đầu:</b> ${escapeHtml(value(driver.ngayBatDau))}</div><div class="cover-info-line"><b>Đơn vị quản lý:</b> ${escapeHtml(value(vehicle.donViQuanLy))}</div></div><div class="cover-info-box yellow"><div class="cover-info-title">Sản lượng năm ${escapeHtml(profile.meta?.year)}</div><div class="cover-info-line"><b>Tổng km:</b> ${escapeHtml(value(technical.totalKm))}</div><div class="cover-info-line"><b>Tổng chuyến:</b> ${escapeHtml(value(technical.totalTrips))}</div><div class="cover-info-line"><b>Bảo dưỡng/Sửa chữa/Cải tạo:</b> ${escapeHtml(`${technical.totalBD || 0}/${technical.totalSC || 0}/${technical.totalCT || 0}`)}</div><div class="cover-info-line"><b>Tổng ngày kỹ thuật:</b> ${escapeHtml(totalDaysRows(profile.bdscRows))}</div><div class="cover-info-line"><b>Chi phí kỹ thuật:</b> ${escapeHtml(technical.totalCost || '0 đ')}</div></div><div class="cover-info-box"><div class="cover-info-title">Cảnh báo nổi bật</div>${(profile.warnings || []).slice(0, 3).map((item) => `<div class="cover-info-line"><b>${escapeHtml(item.level)}:</b> ${escapeHtml(item.content)}</div>`).join('')}</div></div>`;
+      const driverHtml = section('03', 'Lái xe đang khai thác', `<table><thead class="repeat-head"><tr><th class="head-cell">Họ tên</th><th class="head-cell">CCCD</th><th class="head-cell">Điện thoại</th><th class="head-cell">Ngày bắt đầu</th><th class="head-cell">GPLX</th><th class="head-cell">Hạng</th><th class="head-cell">Hạn GPLX</th><th class="head-cell">Hạn sức khỏe</th><th class="head-cell">BHXH</th></tr></thead><tbody><tr><td class="value-strong">${escapeHtml(value(driver.hoTen))}</td><td>${escapeHtml(value(driver.cccd))}</td><td>${escapeHtml(value(driver.soDienThoai))}</td><td class="center">${escapeHtml(value(driver.ngayBatDau))}</td><td>${escapeHtml(value(driver.soGPLX))}</td><td class="center">${escapeHtml(value(driver.hangGPLX))}</td><td class="center">${escapeHtml(value(driver.hanGPLX))}</td><td class="center">${escapeHtml(value(driver.hanSucKhoe))}</td><td>${escapeHtml(value(driver.bhxh))}</td></tr></tbody></table>`);
+      const technicalHtml = section('04', `Tổng hợp khai thác năm ${profile.meta?.year || ''}`, `<div class="metric-grid"><div class="metric"><div class="metric-label">Tổng km năm</div><div class="metric-value">${escapeHtml(value(technical.totalKm))}</div><div class="metric-note">Lũy kế: ${escapeHtml(value(technical.lastKm))}</div></div><div class="metric"><div class="metric-label">Tổng chuyến năm</div><div class="metric-value">${escapeHtml(value(technical.totalTrips))}</div><div class="metric-note">Lũy kế: ${escapeHtml(value(technical.lastTrips))}</div></div><div class="metric"><div class="metric-label">Bảo dưỡng / sửa chữa / cải tạo</div><div class="metric-value">${escapeHtml(`${technical.totalBD || 0}/${technical.totalSC || 0}/${technical.totalCT || 0}`)}</div><div class="metric-note">BD / SC / CT · Tổng ngày: ${escapeHtml(totalDaysRows(profile.bdscRows))}</div></div><div class="metric"><div class="metric-label">Chi phí kỹ thuật</div><div class="metric-value">${escapeHtml(technical.totalCost || '0 đ')}</div><div class="metric-note">Theo phiếu đã nhập</div></div></div>`);
+      const legal = section('05', 'Hồ sơ pháp lý phương tiện', `<div class="section-note">Các điều kiện khai thác bắt buộc gồm đăng kiểm, phù hiệu, bảo hiểm, taximet và thế chấp ngân hàng. Nội dung thiếu, hết hạn hoặc sắp hết hạn cần được ưu tiên xử lý.</div>${renderTable(legalColumns, profile.legalRows, 'Chưa phát sinh hồ sơ pháp lý.')}`);
+      const month = section('06', 'Bảng theo dõi hoạt động và kỹ thuật', renderMonthTable(profile.monthRows));
+      const bdsc = section('07', 'Nhật ký kỹ thuật chi tiết', renderTable(bdscColumns, profile.bdscRows, 'Chưa phát sinh nhật ký kỹ thuật.'));
+      const historyMap = Object.fromEntries(histories.map(([key, title, columns]) => [key, { title, columns }]));
+      const historyHtml = section('08', 'Lịch sử cấp phù hiệu', renderTable(historyMap.phuHieu.columns, profile.histories?.phuHieu || [], 'Chưa phát sinh lịch sử cấp phù hiệu.'))
+        + section('09', 'Lịch sử đăng kiểm', renderTable(historyMap.dangKiem.columns, profile.histories?.dangKiem || [], 'Chưa phát sinh lịch sử đăng kiểm.'))
+        + section('10', 'Lịch sử bảo hiểm', renderTable(historyMap.baoHiem.columns, profile.histories?.baoHiem || [], 'Chưa phát sinh lịch sử bảo hiểm.'))
+        + section('11', 'Lịch sử kiểm định taximet', renderTable(historyMap.taximet.columns, profile.histories?.taximet || [], 'Chưa phát sinh lịch sử kiểm định taximet.'))
+        + section('12', 'Lịch sử thế chấp ngân hàng', renderTable(historyMap.theChap.columns, profile.histories?.theChap || [], 'Chưa phát sinh lịch sử thế chấp ngân hàng.'))
+        + section('13', 'Lịch sử xe ngừng hoạt động', renderTable(historyMap.ngungHoatDong.columns, profile.histories?.ngungHoatDong || [], 'Chưa phát sinh lịch sử xe ngừng hoạt động.'))
+        + section('14', 'Lịch sử lái xe', renderTable(historyMap.laiXe.columns, profile.histories?.laiXe || [], 'Chưa phát sinh lịch sử lái xe.'));
+      const warnings = section('15', 'Cảnh báo quản trị cần theo dõi', `<div class="warning-grid">${(profile.warnings || []).map((item) => `<div class="warning ${tone(item.level)}"><div class="warning-title">${escapeHtml(value(item.level))}: ${escapeHtml(value(item.content))}</div><div class="warning-note">${escapeHtml(value(item.note))}</div></div>`).join('')}</div>`) + `<div class="signature"><div>NGƯỜI LẬP HỒ SƠ<br><br><br><br>........................................</div><div>LÃNH ĐẠO ĐƠN VỊ<br><br><br><br>........................................</div></div>`;
+      const fullHtml = `${cover}${driverHtml}${technicalHtml}${legal}${month}${bdsc}${historyHtml}${warnings}`;
+      paginateAndRender(fullHtml);
+      setBusy(false);
+      renderQrIntoPage(profile.qr?.profileUrl);
+    }
+
+    async function renderQrIntoPage(profileUrl) {
+      const wrap = document.getElementById('vehicleQrWrap');
+      if (!wrap || !profileUrl) return;
+      try {
+        await ensureQrLib();
+        const dataUrl = await window.QRCode.toDataURL(profileUrl, { width: 168, margin: 0, color: { dark: '#1f4e79', light: '#ffffff' } });
+        wrap.innerHTML = `<img class="qr-img" src="${dataUrl}" alt="QR hồ sơ xe">`;
+      } catch (error) {
+        wrap.innerHTML = `<div class="qr-placeholder">Chưa tạo<br>được QR</div>`;
+      }
+    }
+
+    const PAGE_PADDING_MM = 8;
+    const PAGE_WIDTH_MM = 297;
+    const PAGE_HEIGHT_MM = 210;
+
+    function mmToPx(mm, pxPerMm) { return mm * pxPerMm; }
+
+    function splitTableIntoRowGroups(table) {
+      const thead = table.querySelector('thead');
+      const tbody = table.querySelector('tbody');
+      const rows = tbody ? Array.from(tbody.children) : [];
+      return { table, thead, rows };
+    }
+
+    function cloneTableWithRows(original, theadClone, rowClones) {
+      const clone = original.cloneNode(false);
+      Array.from(original.attributes).forEach((attr) => clone.setAttribute(attr.name, attr.value));
+      const colgroup = original.querySelector('colgroup');
+      if (colgroup) clone.appendChild(colgroup.cloneNode(true));
+      if (theadClone) clone.appendChild(theadClone.cloneNode(true));
+      const tbody = document.createElement('tbody');
+      rowClones.forEach((row) => tbody.appendChild(row.cloneNode(true)));
+      clone.appendChild(tbody);
+      return clone;
+    }
+
+    function paginateAndRender(html) {
+      const sandbox = document.createElement('div');
+      sandbox.className = 'measure-sandbox';
+      const content = document.createElement('div');
+      content.className = 'a4-content';
+      content.innerHTML = html;
+      sandbox.appendChild(content);
+      document.body.appendChild(sandbox);
+
+      const pxPerMm = content.getBoundingClientRect().width / (PAGE_WIDTH_MM - PAGE_PADDING_MM * 2);
+      const pageHeightPx = mmToPx(PAGE_HEIGHT_MM - PAGE_PADDING_MM * 2, pxPerMm);
+
+      const pages = [[]];
+      let currentHeight = 0;
+
+      function pushBlock(node, height) {
+        if (currentHeight + height > pageHeightPx && currentHeight > 0) {
+          pages.push([]);
+          currentHeight = 0;
+        }
+        pages[pages.length - 1].push(node);
+        currentHeight += height;
+      }
+
+      function measureHeight(node) {
+        const rect = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        return rect.height + parseFloat(style.marginTop || 0) + parseFloat(style.marginBottom || 0);
+      }
+
+      Array.from(content.children).forEach((block) => {
+        if (block.tagName === 'TABLE') {
+          const { thead, rows } = splitTableIntoRowGroups(block);
+          const theadHeight = thead ? measureHeight(thead) : 0;
+          if (rows.length === 0) {
+            pushBlock(block.cloneNode(true), measureHeight(block));
+            return;
+          }
+          let rowBuffer = [];
+          let bufferHeight = theadHeight;
+          let bufferIsFreshPage = false;
+          rows.forEach((row, index) => {
+            const rowHeight = measureHeight(row);
+            const baseHeight = bufferIsFreshPage ? 0 : currentHeight;
+            if (baseHeight + bufferHeight + rowHeight > pageHeightPx && baseHeight > 0 && rowBuffer.length > 0) {
+              pushBlock(cloneTableWithRows(block, thead, rowBuffer), bufferHeight);
+              rowBuffer = [];
+              bufferHeight = theadHeight;
+              bufferIsFreshPage = true;
+            }
+            rowBuffer.push(row);
+            bufferHeight += rowHeight;
+            if (index === rows.length - 1) {
+              pushBlock(cloneTableWithRows(block, thead, rowBuffer), bufferHeight);
+            }
+          });
+          return;
+        }
+        pushBlock(block.cloneNode(true), measureHeight(block));
+      });
+
+      document.body.removeChild(sandbox);
+
+      const validPages = pages.filter((blocks) => blocks.length > 0);
+      const pagesHtml = validPages
+        .map((blocks, index) => {
+          const wrapper = document.createElement('div');
+          blocks.forEach((node) => wrapper.appendChild(node));
+          return `<section class="a4-page">${wrapper.innerHTML}<span class="a4-page-number no-print">Trang ${index + 1}/${validPages.length}</span></section>`;
+        })
+        .join('');
+
+      app.innerHTML = `<div class="profile" id="profilePrintArea">${pagesHtml}</div>`;
+    }
+
+    function fileName(profile) {
+      const token = clean(profile?.vehicle?.bienSo || profile?.vehicle?.idXe || 'XE').replace(/\s+/g, '_').replace(/[\\/:*?"<>|.\-]/g, '').toUpperCase();
+      return `HOSO_DIENTU_XE_${token}_${profile?.meta?.year || new Date().getFullYear()}.pdf`;
+    }
+
+    async function downloadPdf() {
+      const profile = state.bundle?.profile;
+      const element = document.getElementById('profilePrintArea');
+      const pageNodes = element ? Array.from(element.querySelectorAll('.a4-page')) : [];
+      if (!profile || !element || pageNodes.length === 0) return;
+      state.loadingPdf = true;
+      setBusy(false);
+      pdfOverlay.hidden = false;
+      document.body.classList.add('pdf-export');
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      try {
+        await ensurePdfLib();
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+        for (let i = 0; i < pageNodes.length; i++) {
+          const canvas = await window.html2canvas(pageNodes[i], { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+          const imgData = canvas.toDataURL('image/jpeg', 0.98);
+          if (i > 0) pdf.addPage('a4', 'landscape');
+          pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+        }
+        pdf.save(fileName(profile));
+      } catch (error) {
+        showMessage(`Không tải được PDF tự động: ${error.message}. Có thể dùng nút In để lưu PDF.`, 'warn');
+        window.print();
+      } finally {
+        document.body.classList.remove('pdf-export');
+        pdfOverlay.hidden = true;
+        state.loadingPdf = false;
+        setBusy(false);
+      }
+    }
+
+    loadButton.addEventListener('click', fetchProfile);
+    printButton.addEventListener('click', () => window.print());
+    pdfButton.addEventListener('click', downloadPdf);
+
+    idInput.value = getParam(['ID_Xe', 'idXe', 'idxe', 'IDXe']);
+    if (idInput.value) fetchProfile();
+  </script>
+</body>
+
+</html>
