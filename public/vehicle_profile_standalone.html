@@ -788,7 +788,7 @@
 
     .metric-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
       margin: 0 0 10px;
       break-inside: avoid;
@@ -835,7 +835,7 @@
       margin: 0 0 8px;
       border: 2px solid #3f5870;
       background: #fff;
-      font-size: 12px;
+      font-size: 13.5px;
       line-height: 1.2;
     }
 
@@ -851,7 +851,7 @@
     th {
       background: #dcebf7;
       color: #1f4e79;
-      font-size: 11px;
+      font-size: 12.4px;
       line-height: 1.1;
       font-weight: 700;
       text-align: center;
@@ -879,7 +879,7 @@
 
     .month-table {
       table-layout: fixed;
-      font-size: 11.7px;
+      font-size: 13.2px;
       width: 100%;
     }
 
@@ -933,7 +933,7 @@
       border: 1.3px solid #9fb2c8;
       border-radius: 999px;
       padding: 3px 7px;
-      font-size: 10.6px;
+      font-size: 12px;
       line-height: 1.1;
       font-weight: 700;
       white-space: nowrap;
@@ -1335,8 +1335,8 @@
     ];
     const histories = [
       ['phuHieu', 'Lịch sử cấp phù hiệu', [{ key: 'loai', label: 'Loại' }, { key: 'so', label: 'Số phù hiệu' }, { key: 'coQuanCap', label: 'Cơ quan cấp' }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'ngayHetHieuLucThucTe', label: 'Hết hiệu lực TT' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'lyDo', label: 'Lý do/Ghi chú', render: (row) => escapeHtml(value(row.lyDo || row.ghiChu)) }]],
-      ['dangKiem', 'Lịch sử đăng kiểm', [{ key: 'so', label: 'Số đăng kiểm' }, { key: 'donVi', label: 'Đơn vị' }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }]],
-      ['baoHiem', 'Lịch sử bảo hiểm', [{ key: 'loai', label: 'Loại' }, { key: 'so', label: 'Số hợp đồng' }, { key: 'congTy', label: 'Công ty' }, { key: 'nguon', label: 'Nguồn mua' }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'giaTri', label: 'Giá trị' }, { key: 'trangThai', label: 'Trạng thái', badge: true }]],
+      ['dangKiem', 'Lịch sử đăng kiểm', [{ key: 'stt', label: 'STT', width: '40px', className: 'center', render: (row, index) => index + 1 }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }]],
+      ['baoHiem', 'Lịch sử bảo hiểm', [{ key: 'loai', label: 'Loại' }, { key: 'congTy', label: 'Công ty' }, { key: 'nguon', label: 'Nguồn mua' }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'giaTri', label: 'Giá trị' }, { key: 'trangThai', label: 'Trạng thái', badge: true }]],
       ['taximet', 'Lịch sử kiểm định taximet', [{ key: 'so', label: 'Số thiết bị' }, { key: 'donVi', label: 'Đơn vị' }, { key: 'ngayLapDat', label: 'Ngày lắp' }, { key: 'ngayKiemDinh', label: 'Ngày kiểm định' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }]],
       ['theChap', 'Lịch sử thế chấp ngân hàng', [{ key: 'nganHang', label: 'Ngân hàng' }, { key: 'soHopDong', label: 'Hợp đồng' }, { key: 'ngayTheChap', label: 'Ngày thế chấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'ngayGiaiChap', label: 'Ngày giải chấp' }, { key: 'soTienVay', label: 'Số tiền vay' }, { key: 'tinhTrangHoSoGoc', label: 'HS gốc' }, { key: 'trangThaiTheChap', label: 'Trạng thái', badge: true }, { key: 'trangThaiKhoanVay', label: 'Khoản vay' }]],
       ['ngungHoatDong', 'Lịch sử xe ngừng hoạt động', [{ key: 'tuNgay', label: 'Từ ngày' }, { key: 'denNgay', label: 'Đến ngày' }, { key: 'lyDo', label: 'Lý do' }, { key: 'trangThaiTruoc', label: 'Trước ngừng' }, { key: 'trangThaiSau', label: 'Sau ngừng' }, { key: 'ghiChu', label: 'Ghi chú' }]],
@@ -1374,9 +1374,9 @@
           </div>
           <div class="cover-section-title"><div class="cover-section-no">02</div><div class="cover-section-text">Tình trạng pháp lý, khai thác và cảnh báo</div></div>
           <div class="cover-dashboard">${coverCards}</div>
-          <div class="cover-info-row"><div class="cover-info-box dark"><div class="cover-info-title">Thông tin khai thác</div><div class="cover-info-line"><b>Lái xe:</b> ${escapeHtml(value(driver.hoTen))}</div><div class="cover-info-line"><b>Điện thoại:</b> ${escapeHtml(value(driver.soDienThoai))}</div><div class="cover-info-line"><b>Ngày bắt đầu:</b> ${escapeHtml(value(driver.ngayBatDau))}</div><div class="cover-info-line"><b>Đơn vị quản lý:</b> ${escapeHtml(value(vehicle.donViQuanLy))}</div></div><div class="cover-info-box yellow"><div class="cover-info-title">Sản lượng năm ${escapeHtml(profile.meta?.year)}</div><div class="cover-info-line"><b>Tổng km:</b> ${escapeHtml(value(technical.totalKm))}</div><div class="cover-info-line"><b>Tổng chuyến:</b> ${escapeHtml(value(technical.totalTrips))}</div><div class="cover-info-line"><b>Bảo dưỡng/Sửa chữa/Cải tạo:</b> ${escapeHtml(`${technical.totalBD || 0}/${technical.totalSC || 0}/${technical.totalCT || 0}`)}</div><div class="cover-info-line"><b>Tổng ngày kỹ thuật:</b> ${escapeHtml(totalDaysRows(profile.bdscRows))}</div><div class="cover-info-line"><b>Chi phí kỹ thuật:</b> ${escapeHtml(technical.totalCost || '0 đ')}</div></div><div class="cover-info-box"><div class="cover-info-title">Cảnh báo nổi bật</div>${(profile.warnings || []).slice(0, 3).map((item) => `<div class="cover-info-line"><b>${escapeHtml(item.level)}:</b> ${escapeHtml(item.content)}</div>`).join('')}</div></div>`;
+          <div class="cover-info-row"><div class="cover-info-box dark"><div class="cover-info-title">Thông tin khai thác</div><div class="cover-info-line"><b>Lái xe:</b> ${escapeHtml(value(driver.hoTen))}</div><div class="cover-info-line"><b>Điện thoại:</b> ${escapeHtml(value(driver.soDienThoai))}</div><div class="cover-info-line"><b>Ngày bắt đầu:</b> ${escapeHtml(value(driver.ngayBatDau))}</div><div class="cover-info-line"><b>Đơn vị quản lý:</b> ${escapeHtml(value(vehicle.donViQuanLy))}</div></div><div class="cover-info-box yellow"><div class="cover-info-title">Sản lượng năm ${escapeHtml(profile.meta?.year)}</div><div class="cover-info-line"><b>Tổng km:</b> ${escapeHtml(value(technical.totalKm))}</div><div class="cover-info-line"><b>Tổng chuyến:</b> ${escapeHtml(value(technical.totalTrips))}</div><div class="cover-info-line"><b>Bảo dưỡng/Sửa chữa/Cải tạo:</b> ${escapeHtml(`${technical.totalBD || 0}/${technical.totalSC || 0}/${technical.totalCT || 0}`)}</div><div class="cover-info-line"><b>Tổng ngày kỹ thuật:</b> ${escapeHtml(totalDaysRows(profile.bdscRows))}</div></div><div class="cover-info-box"><div class="cover-info-title">Cảnh báo nổi bật</div>${(profile.warnings || []).slice(0, 3).map((item) => `<div class="cover-info-line"><b>${escapeHtml(item.level)}:</b> ${escapeHtml(item.content)}</div>`).join('')}</div></div>`;
       const driverHtml = section('03', 'Lái xe đang khai thác', `<table><thead class="repeat-head"><tr><th class="head-cell">Họ tên</th><th class="head-cell">CCCD</th><th class="head-cell">Điện thoại</th><th class="head-cell">Ngày bắt đầu</th><th class="head-cell">GPLX</th><th class="head-cell">Hạng</th><th class="head-cell">Hạn GPLX</th><th class="head-cell">Hạn sức khỏe</th><th class="head-cell">BHXH</th></tr></thead><tbody><tr><td class="value-strong">${escapeHtml(value(driver.hoTen))}</td><td>${escapeHtml(value(driver.cccd))}</td><td>${escapeHtml(value(driver.soDienThoai))}</td><td class="center">${escapeHtml(value(driver.ngayBatDau))}</td><td>${escapeHtml(value(driver.soGPLX))}</td><td class="center">${escapeHtml(value(driver.hangGPLX))}</td><td class="center">${escapeHtml(value(driver.hanGPLX))}</td><td class="center">${escapeHtml(value(driver.hanSucKhoe))}</td><td>${escapeHtml(value(driver.bhxh))}</td></tr></tbody></table>`);
-      const technicalHtml = section('04', `Tổng hợp khai thác năm ${profile.meta?.year || ''}`, `<div class="metric-grid"><div class="metric"><div class="metric-label">Tổng km năm</div><div class="metric-value">${escapeHtml(value(technical.totalKm))}</div><div class="metric-note">Lũy kế: ${escapeHtml(value(technical.lastKm))}</div></div><div class="metric"><div class="metric-label">Tổng chuyến năm</div><div class="metric-value">${escapeHtml(value(technical.totalTrips))}</div><div class="metric-note">Lũy kế: ${escapeHtml(value(technical.lastTrips))}</div></div><div class="metric"><div class="metric-label">Bảo dưỡng / sửa chữa / cải tạo</div><div class="metric-value">${escapeHtml(`${technical.totalBD || 0}/${technical.totalSC || 0}/${technical.totalCT || 0}`)}</div><div class="metric-note">BD / SC / CT · Tổng ngày: ${escapeHtml(totalDaysRows(profile.bdscRows))}</div></div><div class="metric"><div class="metric-label">Chi phí kỹ thuật</div><div class="metric-value">${escapeHtml(technical.totalCost || '0 đ')}</div><div class="metric-note">Theo phiếu đã nhập</div></div></div>`);
+      const technicalHtml = section('04', `Tổng hợp khai thác năm ${profile.meta?.year || ''}`, `<div class="metric-grid"><div class="metric"><div class="metric-label">Tổng km năm</div><div class="metric-value">${escapeHtml(value(technical.totalKm))}</div><div class="metric-note">Lũy kế: ${escapeHtml(value(technical.lastKm))}</div></div><div class="metric"><div class="metric-label">Tổng chuyến năm</div><div class="metric-value">${escapeHtml(value(technical.totalTrips))}</div><div class="metric-note">Lũy kế: ${escapeHtml(value(technical.lastTrips))}</div></div><div class="metric"><div class="metric-label">Bảo dưỡng / sửa chữa / cải tạo</div><div class="metric-value">${escapeHtml(`${technical.totalBD || 0}/${technical.totalSC || 0}/${technical.totalCT || 0}`)}</div><div class="metric-note">BD / SC / CT · Tổng ngày: ${escapeHtml(totalDaysRows(profile.bdscRows))}</div></div></div>`);
       const legal = section('05', 'Hồ sơ pháp lý phương tiện', `<div class="section-note">Các điều kiện khai thác bắt buộc gồm đăng kiểm, phù hiệu, bảo hiểm, taximet và thế chấp ngân hàng. Nội dung thiếu, hết hạn hoặc sắp hết hạn cần được ưu tiên xử lý.</div>${renderTable(legalColumns, profile.legalRows, 'Chưa phát sinh hồ sơ pháp lý.')}`);
       const month = section('06', 'Bảng theo dõi hoạt động và kỹ thuật', renderMonthTable(profile.monthRows));
       const bdsc = section('07', 'Nhật ký kỹ thuật chi tiết', renderTable(bdscColumns, profile.bdscRows, 'Chưa phát sinh nhật ký kỹ thuật.'));
