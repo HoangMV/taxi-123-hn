@@ -245,13 +245,21 @@
       width: min(100%, 297mm);
       aspect-ratio: 297 / 210;
       margin: 0 auto;
-      padding: 8mm;
       background: #fff;
       border: 1px solid #cfd9e6;
       box-shadow: 0 18px 42px rgba(15, 23, 42, .14);
       overflow: hidden;
       position: relative;
       box-sizing: border-box;
+    }
+
+    .a4-page-inner {
+      width: 297mm;
+      height: 210mm;
+      padding: 8mm;
+      box-sizing: border-box;
+      transform-origin: top left;
+      position: relative;
     }
 
     .a4-page-number {
@@ -271,7 +279,7 @@
     }
 
     .measure-sandbox .a4-content {
-      width: calc(min(100vw, 297mm) - 16mm);
+      width: calc(297mm - 16mm);
     }
 
     .executive-header {
@@ -455,6 +463,10 @@
     }
 
     .vo-plate-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
       background: linear-gradient(180deg, #fffdf3 0%, #fff7d6 100%);
     }
@@ -464,6 +476,10 @@
     }
 
     .vo-qr-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
     }
 
@@ -1107,70 +1123,22 @@
     }
 
     @media (max-width: 900px) {
-      .a4-page {
-        width: 100%;
-        height: auto;
-        aspect-ratio: auto;
-        padding: 14px;
-      }
-
-      .executive-header {
-        grid-template-columns: 7px 1fr;
-      }
-
-      .eh-meta-card {
-        grid-column: 2;
-      }
-
-      .vehicle-overview-pro,
-      .cover-info-row {
-        grid-template-columns: 1fr;
-      }
-
-      .cover-dashboard {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .vo-quick-grid,
-      .grid,
-      .metric-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .vo-register-line {
-        grid-template-columns: 1fr;
-      }
-
-      .vo-register-date {
-        text-align: left;
-      }
-
-      .warning-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 620px) {
       .wrap {
         padding: 12px;
       }
 
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .plate {
-        width: 100%;
-        text-align: left;
-      }
-
       .actions {
         width: 100%;
+        flex-wrap: wrap;
       }
 
-      button,
-      input {
+      .actions input {
         width: 100%;
+      }
+
+      .actions button {
+        flex: 1 1 0;
+        min-width: 0;
       }
     }
 
@@ -1240,7 +1208,6 @@
         <div class="actions">
           <input id="idInput" placeholder="Nhập ID_Xe hoặc biển số xe">
           <button class="primary" type="button" id="loadButton">Tải hồ sơ</button>
-          <button class="secondary" type="button" id="printButton" disabled>In</button>
           <button class="green" type="button" id="pdfButton" disabled>Tải PDF</button>
         </div>
       </div>
@@ -1258,7 +1225,6 @@
     const message = document.getElementById('message');
     const idInput = document.getElementById('idInput');
     const loadButton = document.getElementById('loadButton');
-    const printButton = document.getElementById('printButton');
     const pdfButton = document.getElementById('pdfButton');
     const pdfOverlay = document.getElementById('pdfOverlay');
 
@@ -1333,7 +1299,6 @@
 
     function setBusy(isBusy) {
       loadButton.disabled = isBusy;
-      printButton.disabled = !state.bundle;
       pdfButton.disabled = !state.bundle || state.loadingPdf;
       loadButton.innerHTML = isBusy ? '<span class="btn-spinner"></span>Đang tải...' : 'Tải hồ sơ';
       pdfButton.innerHTML = state.loadingPdf ? '<span class="btn-spinner"></span>Đang tạo PDF...' : 'Tải PDF';
@@ -1535,12 +1500,39 @@
         .map((blocks, index) => {
           const wrapper = document.createElement('div');
           blocks.forEach((node) => wrapper.appendChild(node));
-          return `<section class="a4-page">${wrapper.innerHTML}<span class="a4-page-number no-print">Trang ${index + 1}/${validPages.length}</span></section>`;
+          return `<section class="a4-page"><div class="a4-page-inner">${wrapper.innerHTML}<span class="a4-page-number no-print">Trang ${index + 1}/${validPages.length}</span></div></section>`;
         })
         .join('');
 
       app.innerHTML = `<div class="profile" id="profilePrintArea">${pagesHtml}</div>`;
+      scaleA4Pages();
     }
+
+    function scaleA4Pages() {
+      const pages = document.querySelectorAll('.a4-page');
+      const pxPerMm = mmToPxReal(1);
+      pages.forEach((page) => {
+        const inner = page.querySelector('.a4-page-inner');
+        if (!inner) return;
+        const scale = page.clientWidth / (PAGE_WIDTH_MM * pxPerMm);
+        inner.style.transform = `scale(${scale})`;
+      });
+    }
+
+    function mmToPxReal(mm) {
+      if (!state.mmProbe) {
+        const probe = document.createElement('div');
+        probe.style.width = '1mm';
+        probe.style.position = 'absolute';
+        probe.style.visibility = 'hidden';
+        document.body.appendChild(probe);
+        state.mmProbe = probe.getBoundingClientRect().width;
+        document.body.removeChild(probe);
+      }
+      return mm * state.mmProbe;
+    }
+
+    window.addEventListener('resize', () => { if (document.querySelector('.a4-page')) scaleA4Pages(); });
 
     function fileName(profile) {
       const token = clean(profile?.vehicle?.bienSo || profile?.vehicle?.idXe || 'XE').replace(/\s+/g, '_').replace(/[\\/:*?"<>|.\-]/g, '').toUpperCase();
@@ -1562,10 +1554,35 @@
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
         for (let i = 0; i < pageNodes.length; i++) {
-          const canvas = await window.html2canvas(pageNodes[i], { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+          const pageNode = pageNodes[i];
+          const inner = pageNode.querySelector('.a4-page-inner');
+          const prevPageWidth = pageNode.style.width;
+          const prevInnerTransform = inner?.style.transform;
+          pageNode.style.width = '297mm';
+          if (inner) inner.style.transform = 'none';
+          const canvas = await window.html2canvas(pageNode, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+          const qrLink = pageNode.querySelector('#vehicleQrWrap');
+          let qrLinkBox = null;
+          if (qrLink && qrLink.getAttribute('href')) {
+            const pageRect = pageNode.getBoundingClientRect();
+            const qrRect = qrLink.getBoundingClientRect();
+            const mmPerPx = 297 / pageRect.width;
+            qrLinkBox = {
+              x: (qrRect.left - pageRect.left) * mmPerPx,
+              y: (qrRect.top - pageRect.top) * mmPerPx,
+              w: qrRect.width * mmPerPx,
+              h: qrRect.height * mmPerPx,
+              url: qrLink.getAttribute('href')
+            };
+          }
+          pageNode.style.width = prevPageWidth;
+          if (inner) inner.style.transform = prevInnerTransform || '';
           const imgData = canvas.toDataURL('image/jpeg', 0.98);
           if (i > 0) pdf.addPage('a4', 'landscape');
           pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+          if (qrLinkBox) {
+            pdf.link(qrLinkBox.x, qrLinkBox.y, qrLinkBox.w, qrLinkBox.h, { url: qrLinkBox.url });
+          }
         }
         pdf.save(fileName(profile));
       } catch (error) {
@@ -1580,7 +1597,6 @@
     }
 
     loadButton.addEventListener('click', fetchProfile);
-    printButton.addEventListener('click', () => window.print());
     pdfButton.addEventListener('click', downloadPdf);
 
     idInput.value = getParam(['ID_Xe', 'idXe', 'idxe', 'IDXe']);

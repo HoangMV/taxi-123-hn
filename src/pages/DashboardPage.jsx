@@ -370,7 +370,7 @@ function DataTable({ type, rows, page, pageSize, onPageChange, onPageSizeChange 
                     ) : type === 'xe' && key === 'bienSo' && row.idXe ? (
                       <a
                         className="inline-flex max-w-full items-center gap-1 font-black text-blue-700 underline-offset-2 hover:underline"
-                        href={`/vehicle-profile?ID_Xe=${encodeURIComponent(row.idXe)}`}
+                        href={`/vehicle_profile_standalone.html?ID_Xe=${encodeURIComponent(row.idXe)}`}
                         target="_blank"
                         rel="noreferrer"
                         title={`Mở hồ sơ xe ${row.bienSo || row.idXe}`}

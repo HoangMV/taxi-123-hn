@@ -19,12 +19,10 @@ import ThanhLyKyQuyLaiXePage from '../pages/ThanhLyKyQuyLaiXePage';
 import ThongBaoNgungPhuHieuPage from '../pages/ThongBaoNgungPhuHieuPage';
 import ThongKePhuHieuDonViPage from '../pages/ThongKePhuHieuDonViPage';
 import ThoaThuanDanSuPage from '../pages/ThoaThuanDanSuPage';
-import VehicleProfilePage from '../pages/VehicleProfilePage';
 
 export const appRoutes = [
   { path: config.ROUTES.HOME, element: <Navigate to={config.ROUTES.MENU} replace /> },
   { path: config.ROUTES.DASHBOARD, element: <DashboardPage /> },
-  { path: config.ROUTES.VEHICLE_PROFILE_REACT, element: <VehicleProfilePage /> },
   { path: config.ROUTES.MENU, element: <MenuPage /> },
   { path: config.ROUTES.THONG_KE_PHU_HIEU_REACT, element: <ThongKePhuHieuDonViPage /> },
   { path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT, element: <DeNghiCapPhuHieuXePage /> },
