@@ -122,6 +122,16 @@ function matchesText(value, selected) {
   return normalizeText(value) === normalizeText(selected);
 }
 
+function matchesWarningLevel(row, selected) {
+  if (!cleanValue(selected)) return true;
+  const target = normalizeText(selected);
+  if (Array.isArray(row.warningItems)) {
+    if (target === 'xanh') return row.warningItems.length === 0;
+    return row.warningItems.some((item) => normalizeText(item.level) === target);
+  }
+  return normalizeText(row.warningLevel) === target;
+}
+
 function parseMonthValue(value) {
   const text = cleanValue(value);
   if (!text) return null;
@@ -154,7 +164,7 @@ export function filterNhanSuRows(rows, filters) {
     matchesText(row.loaiHopDong, filters.loaiHopDong) &&
     matchesText(row.trangThaiHopDong, filters.trangThaiHopDong) &&
     matchesText(row.trangThaiBhxh, filters.trangThaiBhxh) &&
-    matchesText(row.warningLevel, filters.nhomCanhBao) &&
+    matchesWarningLevel(row, filters.nhomCanhBao) &&
     matchesMonthRange(row, ['ngayKyHopDong', 'ngayBatDau', 'ngayKetThuc', 'hanGplx', 'hanSucKhoe'], filters)
   )).map((row, index) => ({ ...row, stt: index + 1 }));
 }
@@ -165,7 +175,7 @@ export function filterXeRows(rows, filters) {
     matchesText(row.doiXe, filters.doiXe) &&
     matchesText(row.loaiXe, filters.loaiXe) &&
     matchesText(row.trangThaiXe, filters.trangThaiXe) &&
-    matchesText(row.warningLevel, filters.nhomCanhBao) &&
+    matchesWarningLevel(row, filters.nhomCanhBao) &&
     matchesMonthRange(row, ['hanPhuHieu', 'hanDangKiem', 'hanBaoHiemTnds', 'hanBaoHiemThanVo', 'hanTaximet', 'hanTheChap'], filters)
   )).map((row, index) => ({ ...row, stt: index + 1 }));
 }

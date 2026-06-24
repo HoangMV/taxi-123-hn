@@ -219,6 +219,15 @@
       function escapeHtml(value) { return clean(value).replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char])); }
       function normalize(value) { return clean(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase(); }
       function match(value, selected) { return !clean(selected) || normalize(value) === normalize(selected); }
+      function matchWarningLevel(row, selected) {
+        if (!clean(selected)) return true;
+        const target = normalize(selected);
+        if (Array.isArray(row.warningItems)) {
+          if (target === 'xanh') return row.warningItems.length === 0;
+          return row.warningItems.some((item) => normalize(item.level) === target);
+        }
+        return normalize(row.warningLevel) === target;
+      }
       function number(value) { return Number(value || 0).toLocaleString('vi-VN'); }
       function percent(value, total) { return total ? `${Math.round(Number(value || 0) / total * 100)}%` : '0%'; }
       function numeric(value) { return Number(String(value || '').replace(/[^0-9.-]/g, '') || 0); }
@@ -228,6 +237,12 @@
       async function ensureExcelLibs() { if (window.ExcelJS && window.saveAs) return; if (state.loadingLibs) return; state.loadingLibs = true; await script(EXCELJS_URL); await script(FILE_SAVER_URL); state.loadingLibs = false; }
       function warningText(level) { return ({ do: 'Đỏ', vang: 'Vàng', xanh: 'Xanh', xam: 'Xám' })[level] || 'Xám'; }
       function filterOptionText(key, value) { return key === 'nhomCanhBao' ? warningText(value) : value; }
+      function renderWarningCell(row) {
+        const items = Array.isArray(row.warningItems) ? row.warningItems : [];
+        if (!items.length) return `<td><div class="warning-cell"><span class="badge xanh">Còn hiệu lực</span></div></td>`;
+        const badges = items.map((item) => `<span class="badge ${item.level || 'xam'}">${escapeHtml(item.label || warningText(item.level))}: ${escapeHtml(item.name)}${item.date ? ` (${escapeHtml(item.date)})` : ''}</span>`).join('');
+        return `<td><div class="warning-cell">${badges}</div></td>`;
+      }
       function skeleton(width = '100%', className = 'skeleton-line') {
         return `<div class="skeleton ${className}" style="width:${width};"></div>`;
       }
@@ -320,10 +335,10 @@
       }
 
       function filterNhanSu() {
-        return (state.data?.reports?.nhanSu || []).filter((row) => match(row.donVi, state.filters.donVi) && match(row.doiXe, state.filters.doiXe) && match(row.trangThaiLamViec, state.filters.trangThaiNhanSu) && match(row.loaiHopDong, state.filters.loaiHopDong) && match(row.trangThaiHopDong, state.filters.trangThaiHopDong) && match(row.trangThaiBhxh, state.filters.trangThaiBhxh) && match(row.warningLevel, state.filters.nhomCanhBao) && matchMonthRange(row, ['ngayKyHopDong', 'ngayBatDau', 'ngayKetThuc', 'hanGplx', 'hanSucKhoe'])).map((row, index) => ({ ...row, stt: index + 1 }));
+        return (state.data?.reports?.nhanSu || []).filter((row) => match(row.donVi, state.filters.donVi) && match(row.doiXe, state.filters.doiXe) && match(row.trangThaiLamViec, state.filters.trangThaiNhanSu) && match(row.loaiHopDong, state.filters.loaiHopDong) && match(row.trangThaiHopDong, state.filters.trangThaiHopDong) && match(row.trangThaiBhxh, state.filters.trangThaiBhxh) && matchWarningLevel(row, state.filters.nhomCanhBao) && matchMonthRange(row, ['ngayKyHopDong', 'ngayBatDau', 'ngayKetThuc', 'hanGplx', 'hanSucKhoe'])).map((row, index) => ({ ...row, stt: index + 1 }));
       }
       function filterXe() {
-        return (state.data?.reports?.xe || []).filter((row) => match(row.donViChuQuan, state.filters.donVi) && match(row.doiXe, state.filters.doiXe) && match(row.loaiXe, state.filters.loaiXe) && match(row.trangThaiXe, state.filters.trangThaiXe) && match(row.warningLevel, state.filters.nhomCanhBao) && matchMonthRange(row, ['hanPhuHieu', 'hanDangKiem', 'hanBaoHiemTnds', 'hanBaoHiemThanVo', 'hanTaximet', 'hanTheChap'])).map((row, index) => ({ ...row, stt: index + 1 }));
+        return (state.data?.reports?.xe || []).filter((row) => match(row.donViChuQuan, state.filters.donVi) && match(row.doiXe, state.filters.doiXe) && match(row.loaiXe, state.filters.loaiXe) && match(row.trangThaiXe, state.filters.trangThaiXe) && matchWarningLevel(row, state.filters.nhomCanhBao) && matchMonthRange(row, ['hanPhuHieu', 'hanDangKiem', 'hanBaoHiemTnds', 'hanBaoHiemThanVo', 'hanTaximet', 'hanTheChap'])).map((row, index) => ({ ...row, stt: index + 1 }));
       }
       function countBy(rows, key) { const map = new Map(); rows.forEach((row) => { const label = clean(row[key]) || 'Chưa có dữ liệu'; map.set(label, (map.get(label) || 0) + 1); }); return [...map].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 6); }
       function donutBg(items) { const total = items.reduce((sum, item) => sum + Number(item.value || 0), 0); if (!total) return '#e2e8f0'; let current = 0; return `conic-gradient(${items.map((item, index) => { const start = current; current += Number(item.value || 0) / total * 360; return `${palette[index % palette.length]} ${start}deg ${current}deg`; }).join(', ')})`; }
@@ -383,7 +398,7 @@
         const end = Math.min(start + state.pageSize, rows.length);
         const pageRows = rows.slice(start, end);
         const head = `<thead><tr>${shownColumns.map(([, label]) => `<th>${label}</th>`).join('')}</tr></thead>`;
-        const body = pageRows.map((row) => `<tr>${shownColumns.map(([key]) => key === 'canhBao' ? `<td><div class="warning-cell"><span class="badge ${row.warningLevel || 'xam'}">${warningText(row.warningLevel)}</span><span>${escapeHtml(row[key])}</span></div></td>` : renderVehicleProfileCell(row, key)).join('')}</tr>`).join('') || `<tr><td colspan="${shownColumns.length}" style="text-align:center;color:var(--muted);padding:28px;">Không có dữ liệu phù hợp bộ lọc.</td></tr>`;
+        const body = pageRows.map((row) => `<tr>${shownColumns.map(([key]) => key === 'canhBao' ? renderWarningCell(row) : renderVehicleProfileCell(row, key)).join('')}</tr>`).join('') || `<tr><td colspan="${shownColumns.length}" style="text-align:center;color:var(--muted);padding:28px;">Không có dữ liệu phù hợp bộ lọc.</td></tr>`;
         document.getElementById('reportTable').innerHTML = head + `<tbody>${body}</tbody>`;
         document.getElementById('pagination').innerHTML = `
           <div>${rows.length ? `Hiển thị ${number(start + 1)}-${number(end)} / ${number(rows.length)} dòng` : 'Không có dòng để hiển thị'}</div>

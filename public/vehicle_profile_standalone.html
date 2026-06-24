@@ -670,7 +670,7 @@
 
     .cover-dashboard {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 8px;
       margin-bottom: 10px;
       break-inside: avoid;
@@ -716,7 +716,7 @@
 
     .cover-info-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       break-inside: avoid;
       page-break-inside: avoid;
@@ -1332,14 +1332,14 @@
         const months = Array.from({ length: to - from + 1 }, (_, index) => from + index);
         const colgroup = `<colgroup><col class="col-tt"><col class="col-content">${months.map(() => '<col class="col-month">').join('')}<col class="col-total"><col class="col-period"><col class="col-place"></colgroup>`;
         const head = `<thead><tr><th rowspan="2" class="center">TT</th><th rowspan="2">Nội dung</th><th colspan="${months.length}" class="center">Tháng ${from} - Tháng ${to}</th><th rowspan="2" class="center">Tổng năm</th><th rowspan="2" class="center">Số ngày BDSC, cải tạo lũy kế</th><th rowspan="2">Địa điểm BDSC, cải tạo</th></tr><tr>${months.map((m) => `<th class="center">${m}</th>`).join('')}</tr></thead>`;
-        const body = (rows || []).map((row) => `<tr><td class="center">${escapeHtml(row.tt)}</td><td class="value-strong">${escapeHtml(row.noiDung)}</td>${months.map((m) => { const cell = row.values?.[m - 1] || ''; const code = String(cell).includes('BD') || String(cell).includes('SC') || String(cell).includes('CT'); return `<td class="center ${code ? 'code-cell' : ''}">${escapeHtml(cell)}</td>`; }).join('')}<td class="center value-strong">${escapeHtml(row.total)}</td><td class="center days-cell">${escapeHtml(daysText(row.thoiGian))}</td><td>${escapeHtml(row.diaDiem)}</td></tr>`).join('');
+        const body = (rows || []).map((row) => `<tr ${row.tt ? '' : 'data-keep-with-prev="1"'}><td class="center">${escapeHtml(row.tt)}</td><td class="value-strong">${escapeHtml(row.noiDung)}</td>${months.map((m) => { const cell = row.values?.[m - 1] || ''; const code = String(cell).includes('BD') || String(cell).includes('SC') || String(cell).includes('CT'); return `<td class="center ${code ? 'code-cell' : ''}">${escapeHtml(cell)}</td>`; }).join('')}<td class="center value-strong">${escapeHtml(row.total)}</td><td class="center days-cell">${escapeHtml(daysText(row.thoiGian))}</td><td>${escapeHtml(row.diaDiem)}</td></tr>`).join('');
         return `<table class="month-table">${colgroup}${head}<tbody>${body}</tbody></table>`;
       }
       return `${half(1, 6)}${half(7, 12)}<div class="legend"><b>Chú thích:</b> BD = Bảo dưỡng, SC = Sửa chữa, CT = Cải tạo. Số ngày kỹ thuật được tính bao gồm cả ngày bắt đầu và ngày kết thúc; nếu có nhiều đợt thì cộng dồn lũy kế.</div>`;
     }
 
     const legalColumns = [
-      { key: 'loai', label: 'Loại hồ sơ', width: '135px', className: 'value-strong' }, { key: 'so', label: 'Số hồ sơ / thiết bị', width: '145px' }, { key: 'donVi', label: 'Đơn vị liên quan' },
+      { key: 'loai', label: 'Loại hồ sơ', width: '165px', className: 'value-strong' }, { key: 'so', label: 'Số hồ sơ / thiết bị', width: '145px' }, { key: 'donVi', label: 'Đơn vị liên quan' },
       { key: 'ngayCap', label: 'Ngày cấp', width: '88px', className: 'center' }, { key: 'ngayHetHan', label: 'Ngày hết hạn', width: '98px', className: 'center value-strong' }, { key: 'trangThai', label: 'Trạng thái', width: '145px', className: 'center', badge: true },
       { key: 'file', label: 'File', width: '65px', className: 'center', render: (row) => row.file ? 'Có' : '—' }
     ];
@@ -1353,7 +1353,7 @@
       ['dangKiem', 'Lịch sử đăng kiểm', [{ key: 'stt', label: 'STT', width: '40px', className: 'center', render: (row, index) => index + 1 }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }]],
       ['baoHiem', 'Lịch sử bảo hiểm', [{ key: 'loai', label: 'Loại' }, { key: 'congTy', label: 'Công ty' }, { key: 'nguon', label: 'Nguồn mua' }, { key: 'ngayCap', label: 'Ngày cấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'giaTri', label: 'Giá trị' }, { key: 'trangThai', label: 'Trạng thái', badge: true }]],
       ['taximet', 'Lịch sử kiểm định taximet', [{ key: 'so', label: 'Số thiết bị' }, { key: 'donVi', label: 'Đơn vị' }, { key: 'ngayLapDat', label: 'Ngày lắp' }, { key: 'ngayKiemDinh', label: 'Ngày kiểm định' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }]],
-      ['theChap', 'Lịch sử thế chấp ngân hàng', [{ key: 'nganHang', label: 'Ngân hàng' }, { key: 'soHopDong', label: 'Hợp đồng' }, { key: 'ngayTheChap', label: 'Ngày thế chấp' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'ngayGiaiChap', label: 'Ngày giải chấp' }, { key: 'soTienVay', label: 'Số tiền vay' }, { key: 'tinhTrangHoSoGoc', label: 'HS gốc' }, { key: 'trangThaiTheChap', label: 'Trạng thái', badge: true }, { key: 'trangThaiKhoanVay', label: 'Khoản vay' }]],
+      ['theChap', 'Lịch sử thế chấp ngân hàng', [{ key: 'nganHang', label: 'Ngân hàng' }, { key: 'ngayHetHan', label: 'Hạn' }, { key: 'tinhTrangHoSoGoc', label: 'HS gốc' }, { key: 'trangThaiTheChap', label: 'Trạng thái', badge: true }, { key: 'trangThaiKhoanVay', label: 'Khoản vay' }]],
       ['ngungHoatDong', 'Lịch sử xe ngừng hoạt động', [{ key: 'tuNgay', label: 'Từ ngày' }, { key: 'denNgay', label: 'Đến ngày' }, { key: 'lyDo', label: 'Lý do' }, { key: 'trangThaiTruoc', label: 'Trước ngừng' }, { key: 'trangThaiSau', label: 'Sau ngừng' }, { key: 'ghiChu', label: 'Ghi chú' }]],
       ['laiXe', 'Lịch sử lái xe', [{ key: 'hoTen', label: 'Lái xe' }, { key: 'cccd', label: 'CCCD' }, { key: 'soDienThoai', label: 'Điện thoại' }, { key: 'donViLamViec', label: 'Đơn vị' }, { key: 'tuNgay', label: 'Từ ngày' }, { key: 'denNgay', label: 'Đến ngày' }, { key: 'trangThai', label: 'Trạng thái', badge: true }, { key: 'ghiChu', label: 'Ghi chú' }]]
     ];
@@ -1369,9 +1369,8 @@
         ['Phù hiệu', legalByName(profile, 'Phù hiệu')],
         ['Bảo hiểm TNDS', legalByName(profile, 'Bảo hiểm TNDS')],
         ['Taximet', legalByName(profile, 'Taximet')],
-        ['Thế chấp', legalByName(profile, 'Thế chấp')],
-        ['Cảnh báo', { ngayHetHan: `${profile.warnings?.length || 0} nội dung`, trangThai: 'Ưu tiên xử lý màu đỏ/vàng' }]
-      ].map(([label, row], index) => `<div class="cover-card ${index < 3 ? 'hot' : ''}"><div class="cover-card-title">${escapeHtml(label)}</div><div class="cover-card-value ${statusClass(row.trangThai)}">${escapeHtml(value(row.ngayHetHan))}</div><div class="cover-card-note">${label === 'Cảnh báo' ? escapeHtml(row.trangThai) : (row.donVi ? escapeHtml(row.donVi) : badge(row.trangThai))}</div></div>`).join('');
+        ['Thế chấp', legalByName(profile, 'Thế chấp')]
+      ].map(([label, row], index) => `<div class="cover-card ${index < 3 ? 'hot' : ''}"><div class="cover-card-title">${escapeHtml(label)}</div><div class="cover-card-value ${statusClass(row.trangThai)}">${escapeHtml(value(row.ngayHetHan))}</div><div class="cover-card-note">${row.donVi ? escapeHtml(row.donVi) : badge(row.trangThai)}</div></div>`).join('');
       const cover = `<div class="executive-header">
             <div class="eh-left-accent"></div>
             <div class="eh-main">
@@ -1387,9 +1386,9 @@
             <div class="vo-card vo-quick-card"><div class="vo-card-title">Thông tin xe</div><div class="vo-quick-grid vo-quick-grid-main"><div class="vo-item"><span>Nhãn hiệu</span><b>${escapeHtml(value(vehicle.nhanHieu))}</b></div><div class="vo-item"><span>Loại xe</span><b>${escapeHtml(value(vehicle.loaiXe))}</b></div><div class="vo-item"><span>Số chỗ</span><b>${escapeHtml(value(vehicle.soCho))}</b></div><div class="vo-item"><span>Năm SX</span><b>${escapeHtml(value(vehicle.namSanXuat))}</b></div></div><div class="vo-identity-grid"><div class="vo-id-item"><span>Số khung</span><b>${escapeHtml(value(vehicle.soKhung))}</b></div><div class="vo-id-item"><span>Số máy</span><b>${escapeHtml(value(vehicle.soMay))}</b></div></div><div class="vo-register-line"><div class="vo-register-name"><span>Tên đăng ký xe</span><b>${escapeHtml(value(vehicle.tenDangKyXe))}</b></div><div class="vo-register-date"><span>Ngày vào HĐ</span><b>${escapeHtml(value(vehicle.ngayDuaVaoHoatDong || vehicle.ngayDuaVaoHD))}</b></div></div></div>
             <div class="vo-card vo-qr-card"><div class="vo-card-title center">QR hồ sơ xe</div><a class="vo-qr-wrap" id="vehicleQrWrap" href="${escapeHtml(profile.qr?.profileUrl || '')}" target="_blank" rel="noopener">${renderQr(profile.qr)}</a><div class="vo-qr-note">Quét hoặc bấm để mở hồ sơ</div></div>
           </div>
-          <div class="cover-section-title"><div class="cover-section-no">02</div><div class="cover-section-text">Tình trạng pháp lý, khai thác và cảnh báo</div></div>
+          <div class="cover-section-title"><div class="cover-section-no">02</div><div class="cover-section-text">Tình trạng pháp lý, khai thác</div></div>
           <div class="cover-dashboard">${coverCards}</div>
-          <div class="cover-info-row"><div class="cover-info-box dark"><div class="cover-info-title">Thông tin khai thác</div><div class="cover-info-line"><b>Lái xe:</b> ${escapeHtml(value(driver.hoTen))}</div><div class="cover-info-line"><b>Điện thoại:</b> ${escapeHtml(value(driver.soDienThoai))}</div><div class="cover-info-line"><b>Ngày bắt đầu:</b> ${escapeHtml(value(driver.ngayBatDau))}</div><div class="cover-info-line"><b>Đơn vị quản lý:</b> ${escapeHtml(value(vehicle.donViQuanLy))}</div></div><div class="cover-info-box yellow"><div class="cover-info-title">Sản lượng năm ${escapeHtml(profile.meta?.year)}</div><div class="cover-info-line"><b>Tổng km:</b> ${escapeHtml(value(technical.totalKm))}</div><div class="cover-info-line"><b>Tổng chuyến:</b> ${escapeHtml(value(technical.totalTrips))}</div><div class="cover-info-line"><b>Bảo dưỡng/Sửa chữa/Cải tạo:</b> ${escapeHtml(`${technical.totalBD || 0}/${technical.totalSC || 0}/${technical.totalCT || 0}`)}</div><div class="cover-info-line"><b>Tổng ngày kỹ thuật:</b> ${escapeHtml(totalDaysRows(profile.bdscRows))}</div></div><div class="cover-info-box"><div class="cover-info-title">Cảnh báo nổi bật</div>${(profile.warnings || []).slice(0, 3).map((item) => `<div class="cover-info-line"><b>${escapeHtml(item.level)}:</b> ${escapeHtml(item.content)}</div>`).join('')}</div></div>`;
+          <div class="cover-info-row"><div class="cover-info-box dark"><div class="cover-info-title">Thông tin khai thác</div><div class="cover-info-line"><b>Lái xe:</b> ${escapeHtml(value(driver.hoTen))}</div><div class="cover-info-line"><b>Điện thoại:</b> ${escapeHtml(value(driver.soDienThoai))}</div><div class="cover-info-line"><b>Ngày bắt đầu:</b> ${escapeHtml(value(driver.ngayBatDau))}</div><div class="cover-info-line"><b>Đơn vị quản lý:</b> ${escapeHtml(value(vehicle.donViQuanLy))}</div></div><div class="cover-info-box yellow"><div class="cover-info-title">Sản lượng năm ${escapeHtml(profile.meta?.year)}</div><div class="cover-info-line"><b>Tổng km:</b> ${escapeHtml(value(technical.totalKm))}</div><div class="cover-info-line"><b>Tổng chuyến:</b> ${escapeHtml(value(technical.totalTrips))}</div><div class="cover-info-line"><b>Bảo dưỡng/Sửa chữa/Cải tạo:</b> ${escapeHtml(`${technical.totalBD || 0}/${technical.totalSC || 0}/${technical.totalCT || 0}`)}</div><div class="cover-info-line"><b>Tổng ngày kỹ thuật:</b> ${escapeHtml(totalDaysRows(profile.bdscRows))}</div></div></div>`;
       const driverHtml = section('03', 'Lái xe đang khai thác', `<table><thead class="repeat-head"><tr><th class="head-cell">Họ tên</th><th class="head-cell">CCCD</th><th class="head-cell">Điện thoại</th><th class="head-cell">Ngày bắt đầu</th><th class="head-cell">GPLX</th><th class="head-cell">Hạng</th><th class="head-cell">Hạn GPLX</th><th class="head-cell">Hạn sức khỏe</th><th class="head-cell">BHXH</th></tr></thead><tbody><tr><td class="value-strong">${escapeHtml(value(driver.hoTen))}</td><td>${escapeHtml(value(driver.cccd))}</td><td>${escapeHtml(value(driver.soDienThoai))}</td><td class="center">${escapeHtml(value(driver.ngayBatDau))}</td><td>${escapeHtml(value(driver.soGPLX))}</td><td class="center">${escapeHtml(value(driver.hangGPLX))}</td><td class="center">${escapeHtml(value(driver.hanGPLX))}</td><td class="center">${escapeHtml(value(driver.hanSucKhoe))}</td><td>${escapeHtml(value(driver.bhxh))}</td></tr></tbody></table>`);
       const technicalHtml = section('04', `Tổng hợp khai thác năm ${profile.meta?.year || ''}`, `<div class="metric-grid"><div class="metric"><div class="metric-label">Tổng km năm</div><div class="metric-value">${escapeHtml(value(technical.totalKm))}</div><div class="metric-note">Lũy kế: ${escapeHtml(value(technical.lastKm))}</div></div><div class="metric"><div class="metric-label">Tổng chuyến năm</div><div class="metric-value">${escapeHtml(value(technical.totalTrips))}</div><div class="metric-note">Lũy kế: ${escapeHtml(value(technical.lastTrips))}</div></div><div class="metric"><div class="metric-label">Bảo dưỡng / sửa chữa / cải tạo</div><div class="metric-value">${escapeHtml(`${technical.totalBD || 0}/${technical.totalSC || 0}/${technical.totalCT || 0}`)}</div><div class="metric-note">BD / SC / CT · Tổng ngày: ${escapeHtml(totalDaysRows(profile.bdscRows))}</div></div></div>`);
       const legal = section('05', 'Hồ sơ pháp lý phương tiện', `<div class="section-note">Các điều kiện khai thác bắt buộc gồm đăng kiểm, phù hiệu, bảo hiểm, taximet và thế chấp ngân hàng. Nội dung thiếu, hết hạn hoặc sắp hết hạn cần được ưu tiên xử lý.</div>${renderTable(legalColumns, profile.legalRows, 'Chưa phát sinh hồ sơ pháp lý.')}`);
@@ -1403,7 +1402,7 @@
         + section('12', 'Lịch sử thế chấp ngân hàng', renderTable(historyMap.theChap.columns, profile.histories?.theChap || [], 'Chưa phát sinh lịch sử thế chấp ngân hàng.'))
         + section('13', 'Lịch sử xe ngừng hoạt động', renderTable(historyMap.ngungHoatDong.columns, profile.histories?.ngungHoatDong || [], 'Chưa phát sinh lịch sử xe ngừng hoạt động.'))
         + section('14', 'Lịch sử lái xe', renderTable(historyMap.laiXe.columns, profile.histories?.laiXe || [], 'Chưa phát sinh lịch sử lái xe.'));
-      const warnings = section('15', 'Cảnh báo quản trị cần theo dõi', `<div class="warning-grid">${(profile.warnings || []).map((item) => `<div class="warning ${tone(item.level)}"><div class="warning-title">${escapeHtml(value(item.level))}: ${escapeHtml(value(item.content))}</div><div class="warning-note">${escapeHtml(value(item.note))}</div></div>`).join('')}</div>`) + `<div class="signature"><div>NGƯỜI LẬP HỒ SƠ<br><br><br><br>........................................</div><div>LÃNH ĐẠO ĐƠN VỊ<br><br><br><br>........................................</div></div>`;
+      const warnings = `<div class="signature"><div>NGƯỜI LẬP HỒ SƠ<br><br><br><br>........................................</div><div>LÃNH ĐẠO ĐƠN VỊ<br><br><br><br>........................................</div></div>`;
       const fullHtml = `${cover}${driverHtml}${technicalHtml}${legal}${month}${bdsc}${historyHtml}${warnings}`;
       paginateAndRender(fullHtml);
       setBusy(false);
@@ -1467,6 +1466,10 @@
           pages.push([]);
           currentHeight = 0;
         }
+        pushBlockNoBreakCheck(node, height);
+      }
+
+      function pushBlockNoBreakCheck(node, height) {
         pages[pages.length - 1].push(node);
         currentHeight += height;
       }
@@ -1477,6 +1480,18 @@
         return rect.height + parseFloat(style.marginTop || 0) + parseFloat(style.marginBottom || 0);
       }
 
+      function groupRows(rows) {
+        const groups = [];
+        rows.forEach((row) => {
+          if (row.dataset.keepWithPrev === '1' && groups.length > 0) {
+            groups[groups.length - 1].push(row);
+          } else {
+            groups.push([row]);
+          }
+        });
+        return groups;
+      }
+
       Array.from(content.children).forEach((block) => {
         if (block.tagName === 'TABLE') {
           const { thead, rows } = splitTableIntoRowGroups(block);
@@ -1485,22 +1500,30 @@
             pushBlock(block.cloneNode(true), measureHeight(block));
             return;
           }
+          if (currentHeight > 0 && currentHeight + theadHeight + measureHeight(rows[0]) > pageHeightPx) {
+            pages.push([]);
+            currentHeight = 0;
+          }
+
+          const rowGroups = groupRows(rows);
           let rowBuffer = [];
           let bufferHeight = theadHeight;
           let bufferIsFreshPage = false;
-          rows.forEach((row, index) => {
-            const rowHeight = measureHeight(row);
+          rowGroups.forEach((group, index) => {
+            const groupHeight = group.reduce((sum, row) => sum + measureHeight(row), 0);
             const baseHeight = bufferIsFreshPage ? 0 : currentHeight;
-            if (baseHeight + bufferHeight + rowHeight > pageHeightPx && baseHeight > 0 && rowBuffer.length > 0) {
-              pushBlock(cloneTableWithRows(block, thead, rowBuffer), bufferHeight);
+            if (baseHeight + bufferHeight + groupHeight > pageHeightPx && baseHeight > 0 && rowBuffer.length > 0) {
+              pushBlockNoBreakCheck(cloneTableWithRows(block, thead, rowBuffer), bufferHeight);
+              pages.push([]);
+              currentHeight = 0;
               rowBuffer = [];
               bufferHeight = theadHeight;
               bufferIsFreshPage = true;
             }
-            rowBuffer.push(row);
-            bufferHeight += rowHeight;
-            if (index === rows.length - 1) {
-              pushBlock(cloneTableWithRows(block, thead, rowBuffer), bufferHeight);
+            rowBuffer.push(...group);
+            bufferHeight += groupHeight;
+            if (index === rowGroups.length - 1) {
+              pushBlockNoBreakCheck(cloneTableWithRows(block, thead, rowBuffer), bufferHeight);
             }
           });
           return;

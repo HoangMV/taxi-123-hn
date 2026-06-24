@@ -296,6 +296,12 @@ function buildWarningNote(items) {
     .join('; ');
 }
 
+function pickActiveWarnings(items) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => item && item.level && item.level !== 'xanh')
+    .map((item) => ({ name: item.name, date: item.date || '', level: item.level, label: item.label }));
+}
+
 function countBy(items, keyName) {
   const counts = new Map();
   (Array.isArray(items) ? items : []).forEach((item) => {
@@ -441,7 +447,8 @@ function buildDashboardReport(tables, missingSources) {
       trangThaiBhxh: cleanValue(bhxh?.TrangThaiBHXH),
       mucLuongDongBhxh: cleanValue(bhxh?.MucLuongDongBHXH),
       canhBao: buildWarningNote(warningItems),
-      warningLevel: warningItems.some((item) => item.level === 'do') ? 'do' : warningItems.some((item) => item.level === 'vang') ? 'vang' : warningItems.some((item) => item.level === 'xam') ? 'xam' : 'xanh'
+      warningLevel: warningItems.some((item) => item.level === 'do') ? 'do' : warningItems.some((item) => item.level === 'vang') ? 'vang' : warningItems.some((item) => item.level === 'xam') ? 'xam' : 'xanh',
+      warningItems: pickActiveWarnings(warningItems)
     };
   });
 
@@ -469,7 +476,7 @@ function buildDashboardReport(tables, missingSources) {
       { name: 'Bảo hiểm TNDS', date: formatDashboardDate(baoHiemTnds?.NgayHetHan), ...getWarningLevel(baoHiemTnds?.NgayHetHan) },
       { name: 'Bảo hiểm thân vỏ', date: formatDashboardDate(baoHiemThanVo?.NgayHetHan), ...getWarningLevel(baoHiemThanVo?.NgayHetHan) },
       { name: 'Taximet', date: formatDashboardDate(taximet?.NgayHetHanKiemDinh), ...getWarningLevel(taximet?.NgayHetHanKiemDinh) },
-      { name: 'Thế chấp', date: formatDashboardDate(theChap?.NgayHetHan), ...getWarningLevel(theChap?.NgayHetHan) }
+      ...(theChap ? [{ name: 'Thế chấp', date: formatDashboardDate(theChap?.NgayHetHan), ...getWarningLevel(theChap?.NgayHetHan) }] : [])
     ];
     if (doiXeWarning) warningItems.push(doiXeWarning);
     warningItems.forEach((item) => {
@@ -507,7 +514,8 @@ function buildDashboardReport(tables, missingSources) {
       kmLuyKe: cleanValue(kmRow?.LuyKeKmXeChay) || cleanValue(kmRow?.SoKmHoatDong),
       soChuyenThang: cleanValue(kmRow?.SoChuyenTrongThang),
       canhBao: buildWarningNote(warningItems),
-      warningLevel: warningItems.some((item) => item.level === 'do') ? 'do' : warningItems.some((item) => item.level === 'vang') ? 'vang' : warningItems.some((item) => item.level === 'xam') ? 'xam' : 'xanh'
+      warningLevel: warningItems.some((item) => item.level === 'do') ? 'do' : warningItems.some((item) => item.level === 'vang') ? 'vang' : warningItems.some((item) => item.level === 'xam') ? 'xam' : 'xanh',
+      warningItems: pickActiveWarnings(warningItems)
     };
   });
 

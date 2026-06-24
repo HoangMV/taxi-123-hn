@@ -522,9 +522,9 @@ function buildTechnicalData(model, idXe, nam) {
 
   const monthRows = [
     { tt: '1', noiDung: 'Km xe chạy trong tháng', values: kmThangRaw.map(formatNumberCell), total: formatNumberCell(sumNumbers(kmThangRaw)), thoiGian: '', diaDiem: '' },
-    { tt: '', noiDung: 'Km xe chạy lũy kế', values: kmLuyKeRaw.map(formatNumberCell), total: formatNumberCell(lastNumber(kmLuyKeRaw)), thoiGian: '', diaDiem: '' },
+    { tt: '', noiDung: 'Km xe chạy lũy kế', values: kmLuyKeRaw.map(formatNumberCell), total: formatNumberCell(sumNumbers(kmThangRaw)), thoiGian: '', diaDiem: '' },
     { tt: '2', noiDung: 'Số chuyến trong tháng', values: chuyenThangRaw.map(formatNumberCell), total: formatNumberCell(sumNumbers(chuyenThangRaw)), thoiGian: '', diaDiem: '' },
-    { tt: '', noiDung: 'Số chuyến xe lũy kế', values: chuyenLuyKeRaw.map(formatNumberCell), total: formatNumberCell(lastNumber(chuyenLuyKeRaw)), thoiGian: '', diaDiem: '' },
+    { tt: '', noiDung: 'Số chuyến xe lũy kế', values: chuyenLuyKeRaw.map(formatNumberCell), total: formatNumberCell(sumNumbers(chuyenThangRaw)), thoiGian: '', diaDiem: '' },
     { tt: '3', noiDung: 'Bảo dưỡng', values: baoDuong, total: bdscAnnotated.filter((item) => item.type === 'BD').length, thoiGian: collectByType(bdscAnnotated, 'BD', 'period'), diaDiem: collectByType(bdscAnnotated, 'BD', 'place') },
     { tt: '4', noiDung: 'Sửa chữa', values: suaChua, total: bdscAnnotated.filter((item) => item.type === 'SC').length, thoiGian: collectByType(bdscAnnotated, 'SC', 'period'), diaDiem: collectByType(bdscAnnotated, 'SC', 'place') },
     { tt: '5', noiDung: 'Cải tạo', values: caiTao, total: bdscAnnotated.filter((item) => item.type === 'CT').length, thoiGian: collectByType(bdscAnnotated, 'CT', 'period'), diaDiem: collectByType(bdscAnnotated, 'CT', 'place') }
@@ -552,8 +552,10 @@ function buildTechnicalData(model, idXe, nam) {
     });
 
   const totalCost = bdscRows.reduce((sum, row) => sum + numberValue(row.chiPhiNumber), 0);
+  const totalKmRaw = sumNumbers(kmThangRaw);
   const summary = {
-    totalKm: formatNumberCell(sumNumbers(kmThangRaw)),
+    totalKm: formatNumberCell(totalKmRaw),
+    totalKmRaw,
     totalTrips: formatNumberCell(sumNumbers(chuyenThangRaw)),
     lastKm: formatNumberCell(lastNumber(kmLuyKeRaw)),
     lastTrips: formatNumberCell(lastNumber(chuyenLuyKeRaw)),
@@ -681,7 +683,7 @@ function buildWarnings(legalRows, summary, driver, technical) {
     warnings.push({ level: warningLevelFromText(note), content: note, note: 'Nguồn: BC_XE_TONGHOP' });
   }
 
-  if (!numberValue(technical.summary.totalKm)) {
+  if (!technical.summary.totalKmRaw) {
     warnings.push({ level: 'Vàng', content: 'Chưa có dữ liệu km hoạt động trong năm', note: 'Kiểm tra bảng XE_SO_KM_THANG' });
   }
 

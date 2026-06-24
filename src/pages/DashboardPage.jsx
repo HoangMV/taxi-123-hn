@@ -192,12 +192,24 @@ function TopBarChart({ title, rows, unit }) {
   );
 }
 
-function WarningBadge({ level }) {
-  const cleanLevel = level || 'xam';
+function WarningBadge({ item }) {
+  const cleanLevel = item.level || 'xam';
   return (
     <span className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-bold ${warningClasses[cleanLevel] || warningClasses.xam}`}>
-      {warningLabels[cleanLevel] || 'Xám'}
+      {item.label || warningLabels[cleanLevel] || 'Xám'}: {item.name}{item.date ? ` (${item.date})` : ''}
     </span>
+  );
+}
+
+function WarningBadgeList({ items }) {
+  const list = Array.isArray(items) ? items : [];
+  if (list.length === 0) {
+    return <span className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-bold ${warningClasses.xanh}`}>Còn hiệu lực</span>;
+  }
+  return (
+    <div className="flex flex-col items-start gap-1">
+      {list.map((item, index) => <WarningBadge key={`${item.name}-${index}`} item={item} />)}
+    </div>
   );
 }
 
@@ -364,8 +376,7 @@ function DataTable({ type, rows, page, pageSize, onPageChange, onPageSizeChange 
                   <td key={key} className="max-w-[240px] px-3 py-3 text-slate-700">
                     {key === 'canhBao' ? (
                       <div className="flex min-w-40 flex-col items-start gap-1">
-                        <WarningBadge level={row.warningLevel} />
-                        <span className="line-clamp-2">{row[key] || ''}</span>
+                        <WarningBadgeList items={row.warningItems} />
                       </div>
                     ) : type === 'xe' && key === 'bienSo' && row.idXe ? (
                       <a
