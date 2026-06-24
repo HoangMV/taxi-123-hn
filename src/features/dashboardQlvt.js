@@ -71,8 +71,39 @@ export const EMPTY_FILTERS = {
   trangThaiHopDong: '',
   trangThaiBhxh: '',
   nhomCanhBao: '',
+  loaiGiayTo: '',
+  tinhTrangHan: '',
+  chucDanh: '',
+  nhomTrangThaiNhanSu: '',
+  nhomTrangThaiXe: '',
   tuThang: '',
   denThang: ''
+};
+
+// Các loại giấy tờ có hạn theo từng nhóm, dùng cho bộ lọc "theo từng loại".
+export const LOAI_GIAY_TO_NHAN_SU = ['Hợp đồng lao động', 'GPLX', 'Sức khỏe'];
+export const LOAI_GIAY_TO_XE = ['Phù hiệu', 'Đăng kiểm', 'Bảo hiểm', 'Bảo hiểm TNDS', 'Bảo hiểm thân vỏ', 'Taximet', 'Thế chấp'];
+
+// Các mức tình trạng hạn cho bộ lọc nhanh.
+// 'canh-bao' = quá hạn HOẶC sắp hết hạn (khớp với số trên card KPI giấy tờ).
+export const TINH_TRANG_HAN_OPTIONS = [
+  { value: 'canh-bao', label: 'Quá hạn / sắp hết hạn' },
+  { value: 'qua-han', label: 'Đã quá hạn' },
+  { value: 'sap-15', label: 'Sắp hết hạn ≤ 15 ngày' },
+  { value: 'sap-30', label: 'Sắp hết hạn ≤ 30 ngày' },
+  { value: 'con-hieu-luc', label: 'Còn hiệu lực' }
+];
+
+// Nhóm trạng thái nhân sự để lọc nhanh từ card (đang làm việc / nghỉ việc).
+export const NHOM_TRANG_THAI_NHAN_SU = {
+  'dang-lam': (value) => Boolean(cleanValue(value)) && !normalizeText(value).includes('nghi'),
+  nghi: (value) => normalizeText(value).includes('nghi')
+};
+
+// Nhóm trạng thái xe để lọc nhanh từ card (đang hoạt động / ngừng).
+export const NHOM_TRANG_THAI_XE = {
+  'hoat-dong': (value) => Boolean(cleanValue(value)) && !normalizeText(value).includes('ngung'),
+  ngung: (value) => normalizeText(value).includes('ngung')
 };
 
 function cleanValue(value) {
@@ -132,6 +163,56 @@ function matchesWarningLevel(row, selected) {
   return normalizeText(row.warningLevel) === target;
 }
 
+// Số ngày còn lại tới khi hết hạn (âm = đã quá hạn). Ưu tiên giá trị days từ
+// backend, nếu không có thì tự tính lại từ chuỗi ngày để bộ lọc vẫn chạy.
+function warningDaysLeft(item, today = new Date()) {
+  if (item && Number.isFinite(item.days)) return item.days;
+  const date = parseDateValue(item?.date);
+  if (!date) return null;
+  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.ceil((target.getTime() - startToday.getTime()) / 86400000);
+}
+
+// Một item warning có khớp loại giấy tờ đang chọn không.
+// "Bảo hiểm" (gộp) khớp cả TNDS lẫn thân vỏ để dùng chung cho card KPI.
+function warningItemMatchesLoai(item, selected) {
+  const target = normalizeText(selected);
+  if (target === normalizeText('Bảo hiểm')) return normalizeText(item?.name).includes('bao hiem');
+  return normalizeText(item?.name) === target;
+}
+
+// Bộ lọc theo từng loại giấy tờ (đăng kiểm, bảo hiểm, GPLX...).
+function matchesLoaiGiayTo(row, selected) {
+  if (!cleanValue(selected)) return true;
+  const items = Array.isArray(row.warningItems) ? row.warningItems : [];
+  return items.some((item) => warningItemMatchesLoai(item, selected));
+}
+
+// Bộ lọc theo tình trạng hạn: quá hạn / sắp hết hạn 15-30 ngày / còn hiệu lực.
+// Khi đã chọn loại giấy tờ thì chỉ xét đúng loại đó, nếu không thì xét mọi cảnh báo.
+function matchesTinhTrangHan(row, filters) {
+  const status = cleanValue(filters.tinhTrangHan);
+  if (!status) return true;
+  const items = (Array.isArray(row.warningItems) ? row.warningItems : [])
+    .filter((item) => !cleanValue(filters.loaiGiayTo) || warningItemMatchesLoai(item, filters.loaiGiayTo));
+
+  if (status === 'con-hieu-luc') {
+    return items.every((item) => normalizeText(item.level) === 'xanh');
+  }
+  return items.some((item) => {
+    const level = normalizeText(item.level);
+    if (status === 'qua-han') return level === 'do';
+    if (status === 'canh-bao') return level === 'do' || level === 'vang';
+    if (level !== 'do' && level !== 'vang') return false;
+    const days = warningDaysLeft(item);
+    if (days === null) return false;
+    if (status === 'sap-15') return days >= 0 && days <= 15;
+    if (status === 'sap-30') return days >= 0 && days <= 30;
+    return false;
+  });
+}
+
 function parseMonthValue(value) {
   const text = cleanValue(value);
   if (!text) return null;
@@ -156,15 +237,31 @@ function matchesMonthRange(row, keys, filters) {
   return months.some((month) => (!from || month >= from) && (!to || month <= to));
 }
 
+// Khớp chức danh kiểu chứa (vd "Lái xe" khớp cả "Lái xe hạng B").
+function matchesChucDanh(value, selected) {
+  if (!cleanValue(selected)) return true;
+  return normalizeText(value).includes(normalizeText(selected));
+}
+
+// Khớp nhóm trạng thái (đang làm việc / nghỉ; hoạt động / ngừng) theo cùng quy tắc với card KPI.
+function matchesNhomTrangThai(value, selected, groups) {
+  const predicate = groups[cleanValue(selected)];
+  return predicate ? predicate(value) : true;
+}
+
 export function filterNhanSuRows(rows, filters) {
   return (Array.isArray(rows) ? rows : []).filter((row) => (
     matchesText(row.donVi, filters.donVi) &&
     matchesText(row.doiXe, filters.doiXe) &&
     matchesText(row.trangThaiLamViec, filters.trangThaiNhanSu) &&
+    matchesNhomTrangThai(row.trangThaiLamViec, filters.nhomTrangThaiNhanSu, NHOM_TRANG_THAI_NHAN_SU) &&
+    matchesChucDanh(row.chucDanh, filters.chucDanh) &&
     matchesText(row.loaiHopDong, filters.loaiHopDong) &&
     matchesText(row.trangThaiHopDong, filters.trangThaiHopDong) &&
     matchesText(row.trangThaiBhxh, filters.trangThaiBhxh) &&
     matchesWarningLevel(row, filters.nhomCanhBao) &&
+    matchesLoaiGiayTo(row, filters.loaiGiayTo) &&
+    matchesTinhTrangHan(row, filters) &&
     matchesMonthRange(row, ['ngayKyHopDong', 'ngayBatDau', 'ngayKetThuc', 'hanGplx', 'hanSucKhoe'], filters)
   )).map((row, index) => ({ ...row, stt: index + 1 }));
 }
@@ -175,7 +272,10 @@ export function filterXeRows(rows, filters) {
     matchesText(row.doiXe, filters.doiXe) &&
     matchesText(row.loaiXe, filters.loaiXe) &&
     matchesText(row.trangThaiXe, filters.trangThaiXe) &&
+    matchesNhomTrangThai(row.trangThaiXe, filters.nhomTrangThaiXe, NHOM_TRANG_THAI_XE) &&
     matchesWarningLevel(row, filters.nhomCanhBao) &&
+    matchesLoaiGiayTo(row, filters.loaiGiayTo) &&
+    matchesTinhTrangHan(row, filters) &&
     matchesMonthRange(row, ['hanPhuHieu', 'hanDangKiem', 'hanBaoHiemTnds', 'hanBaoHiemThanVo', 'hanTaximet', 'hanTheChap'], filters)
   )).map((row, index) => ({ ...row, stt: index + 1 }));
 }

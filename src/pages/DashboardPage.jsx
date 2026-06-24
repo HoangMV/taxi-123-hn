@@ -7,18 +7,24 @@ import {
   ChevronRight,
   Download,
   ExternalLink,
+  FileCheck,
   FileSpreadsheet,
   Gauge,
+  HeartPulse,
+  IdCard,
   Loader2,
   RefreshCw,
-  UserCircle,
+  ShieldCheck,
+  Stamp,
   Users
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
 import {
   EMPTY_FILTERS,
+  LOAI_GIAY_TO_NHAN_SU,
+  LOAI_GIAY_TO_XE,
+  TINH_TRANG_HAN_OPTIONS,
   buildDashboardExcelFileName,
   buildDashboardExcelWorkbook,
   countBy,
@@ -70,6 +76,27 @@ function buildDonutItems(rows, key) {
   return items.length ? items : [{ label: 'Chưa có dữ liệu', value: 0 }];
 }
 
+// Thống kê số giấy tờ quá hạn / sắp hết hạn theo từng loại (đăng kiểm, bảo hiểm...).
+function buildWarningCategoryRows(rows, categories) {
+  const map = new Map(categories.map((name) => [name, { label: name, do: 0, vang: 0 }]));
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    (Array.isArray(row.warningItems) ? row.warningItems : []).forEach((item) => {
+      const bucket = map.get(item?.name);
+      if (!bucket) return;
+      const level = String(item?.level || '').toLowerCase();
+      if (level === 'do') bucket.do += 1;
+      else if (level === 'vang') bucket.vang += 1;
+    });
+  });
+  return [...map.values()].sort((left, right) => (right.do + right.vang) - (left.do + left.vang));
+}
+
+// Tổng số giấy tờ quá hạn + sắp hết hạn của một loại trong danh sách warning rows.
+function warningCount(rows, name) {
+  const found = (Array.isArray(rows) ? rows : []).find((row) => row.label === name);
+  return found ? found.do + found.vang : 0;
+}
+
 function donutBackground(items) {
   const total = items.reduce((sum, item) => sum + Number(item.value || 0), 0);
   if (!total) return '#e2e8f0';
@@ -82,7 +109,13 @@ function donutBackground(items) {
   return `conic-gradient(${stops.join(', ')})`;
 }
 
-function SelectFilter({ label, value, options, onChange, getOptionLabel = (option) => option }) {
+function SelectFilter({ label, value, options, onChange, getOptionLabel = (option) => option, allLabel = 'Tất cả' }) {
+  // Hỗ trợ cả options dạng chuỗi ['a','b'] và dạng object [{ value, label }].
+  const normalized = options.map((option) => (
+    option && typeof option === 'object'
+      ? { value: option.value, label: option.label }
+      : { value: option, label: getOptionLabel(option) }
+  ));
   return (
     <label className="min-w-0 space-y-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
       <span>{label}</span>
@@ -91,33 +124,191 @@ function SelectFilter({ label, value, options, onChange, getOptionLabel = (optio
         onChange={(event) => onChange(event.target.value)}
         className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm font-medium normal-case tracking-normal text-slate-800 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
       >
-        <option value="">Tất cả</option>
-        {options.map((option) => (
-          <option key={option} value={option}>{getOptionLabel(option)}</option>
+        <option value="">{allLabel}</option>
+        {normalized.map((option) => (
+          <option key={option.value} value={option.value}>{option.label}</option>
         ))}
       </select>
     </label>
   );
 }
 
-function MetricCard({ icon: Icon, label, value, percent, tone, bars }) {
+// Dropdown Tháng + Năm tiếng Việt, trả về chuỗi 'YYYY-MM' giống <input type="month">.
+const MONTH_YEAR_RANGE = (() => {
+  const current = new Date().getFullYear();
+  const years = [];
+  for (let year = current + 1; year >= current - 10; year -= 1) years.push(year);
+  return years;
+})();
+
+function MonthInput({ label, value, onChange }) {
+  const match = /^(\d{4})-(\d{2})$/.exec(value || '');
+  const year = match ? match[1] : '';
+  const month = match ? match[2] : '';
+
+  const currentYear = String(new Date().getFullYear());
+
+  // Chọn tháng/năm độc lập: thiếu phần còn lại thì tự điền mặc định hợp lý,
+  // chọn lại "Tháng"/"Năm" (rỗng) thì xoá luôn bộ lọc mốc đó.
+  const onMonthChange = (nextMonth) => {
+    if (!nextMonth) { onChange(''); return; }
+    onChange(`${year || currentYear}-${nextMonth}`);
+  };
+  const onYearChange = (nextYear) => {
+    if (!nextYear) { onChange(''); return; }
+    onChange(`${nextYear}-${month || '01'}`);
+  };
+
+  const selectClass = 'h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm font-medium normal-case tracking-normal text-slate-800 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="min-w-0 space-y-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+      <span>{label}</span>
+      <div className="grid grid-cols-2 gap-1.5">
+        <select className={selectClass} value={month} onChange={(event) => onMonthChange(event.target.value)}>
+          <option value="">Tháng</option>
+          {Array.from({ length: 12 }).map((_, index) => {
+            const monthValue = String(index + 1).padStart(2, '0');
+            return <option key={monthValue} value={monthValue}>Th{index + 1}</option>;
+          })}
+        </select>
+        <select className={selectClass} value={year} onChange={(event) => onYearChange(event.target.value)}>
+          <option value="">Năm</option>
+          {MONTH_YEAR_RANGE.map((yearValue) => <option key={yearValue} value={String(yearValue)}>{yearValue}</option>)}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function FilterActions({ onReset }) {
+  return (
+    <div className="flex gap-2">
+      <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={() => toast.success('Đã áp dụng bộ lọc dashboard.')}>Áp dụng</Button>
+      <Button type="button" variant="secondary" onClick={onReset}>Xóa lọc</Button>
+    </div>
+  );
+}
+
+function toMonthToken(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// Nút bấm nhanh đặt khoảng "Từ tháng" / "Đến tháng" cho các mốc hay dùng.
+function QuickRangeButtons({ filters, setRange }) {
+  const now = new Date();
+  const thisMonth = toMonthToken(now);
+  const ranges = [
+    { id: 'thang-nay', label: 'Tháng này', from: thisMonth, to: thisMonth },
+    { id: 'quy-nay', label: 'Quý này', from: toMonthToken(new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)), to: toMonthToken(new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 2, 1)) },
+    { id: 'nam-nay', label: 'Năm nay', from: `${now.getFullYear()}-01`, to: `${now.getFullYear()}-12` },
+    { id: '3-thang', label: '3 tháng tới', from: thisMonth, to: toMonthToken(new Date(now.getFullYear(), now.getMonth() + 2, 1)) },
+    { id: '6-thang', label: '6 tháng tới', from: thisMonth, to: toMonthToken(new Date(now.getFullYear(), now.getMonth() + 5, 1)) }
+  ];
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {ranges.map((range) => {
+        const isActive = filters.tuThang === range.from && filters.denThang === range.to;
+        return (
+          <button
+            key={range.id}
+            type="button"
+            onClick={() => setRange(isActive ? '' : range.from, isActive ? '' : range.to)}
+            className={`rounded-full border px-3 py-1 text-xs font-bold transition ${isActive ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-700'}`}
+          >
+            {range.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function NhanSuFilterBar({ data, filters, setFilter, setRange, onReset }) {
+  return (
+    <section className="-mt-1 rounded-b-lg border border-t-0 border-slate-200 bg-white p-4 shadow-sm">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-6">
+        <SelectFilter label="Đơn vị" value={filters.donVi} options={getOptions(data, 'donVi')} onChange={(value) => setFilter('donVi', value)} />
+        <SelectFilter label="Đội xe" value={filters.doiXe} options={getOptions(data, 'doiXe')} onChange={(value) => setFilter('doiXe', value)} />
+        <SelectFilter label="Trạng thái nhân sự" value={filters.trangThaiNhanSu} options={getOptions(data, 'trangThaiNhanSu')} onChange={(value) => setFilter('trangThaiNhanSu', value)} />
+        <SelectFilter label="Loại hợp đồng" value={filters.loaiHopDong} options={getOptions(data, 'loaiHopDong')} onChange={(value) => setFilter('loaiHopDong', value)} />
+        <SelectFilter label="Trạng thái hợp đồng" value={filters.trangThaiHopDong} options={getOptions(data, 'trangThaiHopDong')} onChange={(value) => setFilter('trangThaiHopDong', value)} />
+        <SelectFilter label="Trạng thái BHXH" value={filters.trangThaiBhxh} options={getOptions(data, 'trangThaiBhxh')} onChange={(value) => setFilter('trangThaiBhxh', value)} />
+      </div>
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-slate-100 pt-3">
+        <div className="grid flex-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <SelectFilter label="Loại giấy tờ" value={filters.loaiGiayTo} options={LOAI_GIAY_TO_NHAN_SU} onChange={(value) => setFilter('loaiGiayTo', value)} allLabel="Tất cả giấy tờ" />
+          <SelectFilter label="Tình trạng hạn" value={filters.tinhTrangHan} options={TINH_TRANG_HAN_OPTIONS} onChange={(value) => setFilter('tinhTrangHan', value)} allLabel="Tất cả tình trạng" />
+          <SelectFilter label="Cảnh báo" value={filters.nhomCanhBao} options={getOptions(data, 'nhomCanhBao')} getOptionLabel={(option) => warningLabels[option] || option} onChange={(value) => setFilter('nhomCanhBao', value)} />
+          <MonthInput label="Từ tháng" value={filters.tuThang} onChange={(value) => setFilter('tuThang', value)} />
+          <MonthInput label="Đến tháng" value={filters.denThang} onChange={(value) => setFilter('denThang', value)} />
+        </div>
+        <FilterActions onReset={onReset} />
+      </div>
+      <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Chọn nhanh:</span>
+        <QuickRangeButtons filters={filters} setRange={setRange} />
+      </div>
+    </section>
+  );
+}
+
+function XeFilterBar({ data, filters, setFilter, setRange, onReset }) {
+  return (
+    <section className="-mt-1 rounded-b-lg border border-t-0 border-slate-200 bg-white p-4 shadow-sm">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-6">
+        <SelectFilter label="Đơn vị" value={filters.donVi} options={getOptions(data, 'donVi')} onChange={(value) => setFilter('donVi', value)} />
+        <SelectFilter label="Đội xe" value={filters.doiXe} options={getOptions(data, 'doiXe')} onChange={(value) => setFilter('doiXe', value)} />
+        <SelectFilter label="Loại xe" value={filters.loaiXe} options={getOptions(data, 'loaiXe')} onChange={(value) => setFilter('loaiXe', value)} />
+        <SelectFilter label="Trạng thái xe" value={filters.trangThaiXe} options={getOptions(data, 'trangThaiXe')} onChange={(value) => setFilter('trangThaiXe', value)} />
+        <SelectFilter label="Loại giấy tờ" value={filters.loaiGiayTo} options={LOAI_GIAY_TO_XE} onChange={(value) => setFilter('loaiGiayTo', value)} allLabel="Tất cả giấy tờ" />
+        <SelectFilter label="Tình trạng hạn" value={filters.tinhTrangHan} options={TINH_TRANG_HAN_OPTIONS} onChange={(value) => setFilter('tinhTrangHan', value)} allLabel="Tất cả tình trạng" />
+      </div>
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-slate-100 pt-3">
+        <div className="grid flex-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <SelectFilter label="Cảnh báo" value={filters.nhomCanhBao} options={getOptions(data, 'nhomCanhBao')} getOptionLabel={(option) => warningLabels[option] || option} onChange={(value) => setFilter('nhomCanhBao', value)} />
+          <MonthInput label="Từ tháng" value={filters.tuThang} onChange={(value) => setFilter('tuThang', value)} />
+          <MonthInput label="Đến tháng" value={filters.denThang} onChange={(value) => setFilter('denThang', value)} />
+        </div>
+        <FilterActions onReset={onReset} />
+      </div>
+      <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Chọn nhanh:</span>
+        <QuickRangeButtons filters={filters} setRange={setRange} />
+      </div>
+    </section>
+  );
+}
+
+function MetricCard({ icon: Icon, label, value, percent, tone, barColor, ratio, onClick, active }) {
+  // ratio: tỉ lệ 0-1 để vẽ thanh tiến độ thật. Nếu không có thì ẩn thanh.
+  const width = Number.isFinite(ratio) ? Math.max(0, Math.min(1, ratio)) * 100 : null;
+  const clickable = typeof onClick === 'function';
+  return (
+    <div
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={clickable ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick(); } } : undefined}
+      className={`rounded-lg border bg-white p-4 shadow-sm transition ${clickable ? 'cursor-pointer hover:border-blue-300 hover:shadow' : ''} ${active ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-200'}`}
+      title={clickable ? (active ? 'Đang lọc — bấm để bỏ lọc' : `Lọc theo: ${label}`) : undefined}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-slate-500">{label}</p>
           <p className="mt-2 text-3xl font-bold leading-none text-slate-950">{formatNumber(value)}</p>
-          <p className="mt-2 text-xs font-semibold text-slate-500">{percent}</p>
+          <p className="mt-2 text-xs font-semibold text-slate-500">{active ? 'Đang lọc — bấm để bỏ' : percent}</p>
         </div>
         <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${tone}`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
-      <div className="mt-4 flex h-9 items-end gap-1.5 overflow-hidden">
-        {bars.map((height, index) => (
-          <span key={`${label}-${index}`} className="flex-1 rounded-t bg-slate-200" style={{ height: `${height}%` }} />
-        ))}
-      </div>
+      {width !== null && (
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+          <div className={`h-full rounded-full ${barColor || 'bg-blue-500'}`} style={{ width: `${width}%` }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -132,11 +323,11 @@ function DonutChart({ title, rows, keyName, icon: Icon }) {
         <h3 className="truncate text-sm font-bold text-slate-800">{title}</h3>
         <span className="text-xs font-semibold text-slate-500">{formatNumber(total)}</span>
       </div>
-      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-        <div className="relative h-36 w-36 shrink-0 rounded-full" style={{ background: donutBackground(items) }}>
+      <div className="flex flex-col items-center gap-4">
+        <div className="relative h-32 w-32 shrink-0 rounded-full" style={{ background: donutBackground(items) }}>
           <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white shadow-inner">
             <Icon className="h-5 w-5 text-blue-700" />
-            <span className="mt-1 text-xl font-bold text-slate-950">{formatNumber(total)}</span>
+            <span className="mt-1 text-lg font-bold text-slate-950">{formatNumber(total)}</span>
           </div>
         </div>
         <div className="w-full min-w-0 space-y-2">
@@ -153,14 +344,14 @@ function DonutChart({ title, rows, keyName, icon: Icon }) {
   );
 }
 
-function ChartPanel({ title, totalLabel, children }) {
+function ChartPanel({ title, totalLabel, children, gridClassName = 'sm:grid-cols-2 xl:grid-cols-4' }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
         <h2 className="text-base font-bold text-slate-950">{title}</h2>
         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{totalLabel}</span>
       </div>
-      <div className="grid gap-4 p-4 xl:grid-cols-2">{children}</div>
+      <div className={`grid gap-4 p-4 ${gridClassName}`}>{children}</div>
     </section>
   );
 }
@@ -345,12 +536,14 @@ function DataTable({ type, rows, page, pageSize, onPageChange, onPageSizeChange 
     ? [
       ['stt', 'STT'], ['hoTen', 'Họ tên'], ['cccd', 'CCCD'], ['doiXe', 'Đội xe'],
       ['chucDanh', 'Chức danh'], ['trangThaiLamViec', 'Trạng thái'], ['bienSoXe', 'Biển số'],
-      ['hanGplx', 'Hạn GPLX'], ['hanSucKhoe', 'Hạn sức khỏe'], ['canhBao', 'Cảnh báo']
+      ['ngayKetThuc', 'Hạn HĐLĐ'], ['hanGplx', 'Hạn GPLX'], ['hanSucKhoe', 'Hạn sức khỏe'], ['canhBao', 'Cảnh báo']
     ]
     : [
       ['stt', 'STT'], ['bienSo', 'Biển số'], ['maDam', 'Mã đàm'], ['loaiXe', 'Loại xe'],
       ['doiXe', 'Đội xe'], ['trangThaiXe', 'Trạng thái'], ['laiXeDangLai', 'Lái xe'],
-      ['hanPhuHieu', 'Hạn phù hiệu'], ['hanDangKiem', 'Hạn đăng kiểm'], ['canhBao', 'Cảnh báo']
+      ['hanPhuHieu', 'Hạn phù hiệu'], ['hanDangKiem', 'Hạn đăng kiểm'],
+      ['hanBaoHiemTnds', 'Hạn BH TNDS'], ['hanBaoHiemThanVo', 'Hạn BH thân vỏ'], ['hanTaximet', 'Hạn taximet'],
+      ['canhBao', 'Cảnh báo']
     ];
 
   const totalRows = rows.length;
@@ -436,8 +629,10 @@ function DataTable({ type, rows, page, pageSize, onPageChange, onPageSizeChange 
 
 const DashboardPage = () => {
   const [data, setData] = useState(null);
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  // Mỗi tab giữ bộ lọc riêng, lọc tab này không ảnh hưởng tab kia.
+  const [filtersByTab, setFiltersByTab] = useState({ 'nhan-su': EMPTY_FILTERS, xe: EMPTY_FILTERS });
   const [activeTab, setActiveTab] = useState('nhan-su');
+  const filters = filtersByTab[activeTab];
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState('');
@@ -461,8 +656,8 @@ const DashboardPage = () => {
 
   useEffect(() => { loadDashboard(false); }, []);
 
-  const filteredNhanSu = useMemo(() => filterNhanSuRows(data?.reports?.nhanSu || [], filters), [data, filters]);
-  const filteredXe = useMemo(() => filterXeRows(data?.reports?.xe || [], filters), [data, filters]);
+  const filteredNhanSu = useMemo(() => filterNhanSuRows(data?.reports?.nhanSu || [], filtersByTab['nhan-su']), [data, filtersByTab]);
+  const filteredXe = useMemo(() => filterXeRows(data?.reports?.xe || [], filtersByTab.xe), [data, filtersByTab]);
   const activeRows = activeTab === 'nhan-su' ? filteredNhanSu : filteredXe;
   const totalTablePages = Math.max(1, Math.ceil(activeRows.length / tablePageSize));
 
@@ -485,10 +680,47 @@ const DashboardPage = () => {
   }, [filteredNhanSu, filteredXe]);
   const topKmRows = useMemo(() => buildTopRows(filteredXe, 'kmLuyKe', 'bienSo'), [filteredXe]);
   const topTripRows = useMemo(() => buildTopRows(filteredXe, 'soChuyenThang', 'bienSo'), [filteredXe]);
+  const nhanSuWarningRows = useMemo(() => buildWarningCategoryRows(filteredNhanSu, LOAI_GIAY_TO_NHAN_SU), [filteredNhanSu]);
+  const xeWarningRows = useMemo(() => buildWarningCategoryRows(filteredXe, LOAI_GIAY_TO_XE), [filteredXe]);
+
+  // Thêm các KPI giấy tờ (số quá hạn + sắp hết hạn) cho card tổng quan.
+  const nhanSuKpi = useMemo(() => {
+    const laiXe = filteredNhanSu.filter((row) => String(row.chucDanh || '').toLowerCase().includes('lái xe')).length;
+    const gplx = warningCount(nhanSuWarningRows, 'GPLX');
+    const sucKhoe = warningCount(nhanSuWarningRows, 'Sức khỏe');
+    return { laiXe, gplx, sucKhoe };
+  }, [filteredNhanSu, nhanSuWarningRows]);
+  const xeKpi = useMemo(() => {
+    const dangKiem = warningCount(xeWarningRows, 'Đăng kiểm');
+    const baoHiem = warningCount(xeWarningRows, 'Bảo hiểm TNDS') + warningCount(xeWarningRows, 'Bảo hiểm thân vỏ');
+    const phuHieu = warningCount(xeWarningRows, 'Phù hiệu');
+    return { dangKiem, baoHiem, phuHieu };
+  }, [xeWarningRows]);
+
   const updatedAt = data?.generatedAt ? new Date(data.generatedAt).toLocaleString('vi-VN') : 'Chưa cập nhật';
 
+  // Cập nhật bộ lọc của riêng tab đang xem.
+  function patchActiveFilters(patch) {
+    setFiltersByTab((current) => ({ ...current, [activeTab]: { ...current[activeTab], ...patch } }));
+  }
   function setFilter(key, value) {
-    setFilters((current) => ({ ...current, [key]: value }));
+    patchActiveFilters({ [key]: value });
+  }
+  function setRange(tuThang, denThang) {
+    patchActiveFilters({ tuThang, denThang });
+  }
+  function resetActiveFilters() {
+    setFiltersByTab((current) => ({ ...current, [activeTab]: EMPTY_FILTERS }));
+  }
+
+  // Card KPI bấm để lọc: áp dụng tập filter của card, bấm lại (đang active) thì gỡ về mặc định.
+  function isCardActive(patch) {
+    return Object.entries(patch).every(([key, value]) => filters[key] === value);
+  }
+  function toggleCardFilter(patch) {
+    const active = Object.entries(patch).every(([key, value]) => filters[key] === value);
+    const cleared = Object.fromEntries(Object.keys(patch).map((key) => [key, EMPTY_FILTERS[key]]));
+    patchActiveFilters(active ? cleared : patch);
   }
 
   function setActiveReportTab(tab) {
@@ -531,54 +763,44 @@ const DashboardPage = () => {
               <p className="mt-0.5 text-sm font-medium text-blue-100">Cập nhật: {updatedAt}</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="secondary" className="h-9 bg-white/10 text-white hover:bg-white/20" onClick={() => loadDashboard(true)} disabled={refreshing}>
-              {refreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              Cập nhật
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex rounded-lg bg-white/10 p-1">
+              <button
+                type="button"
+                onClick={() => setActiveReportTab('nhan-su')}
+                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-bold transition ${activeTab === 'nhan-su' ? 'bg-white text-[#0b2d5c] shadow-sm' : 'text-blue-100 hover:bg-white/10'}`}
+              >
+                <Users className="h-4 w-4" /> Nhân sự
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveReportTab('xe')}
+                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-bold transition ${activeTab === 'xe' ? 'bg-white text-[#0b2d5c] shadow-sm' : 'text-blue-100 hover:bg-white/10'}`}
+              >
+                <Car className="h-4 w-4" /> Phương tiện
+              </button>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-10 w-10 shrink-0 rounded-full bg-white/10 p-0 text-white hover:bg-white/20"
+              onClick={() => loadDashboard(true)}
+              disabled={refreshing}
+              title="Cập nhật dữ liệu"
+              aria-label="Cập nhật dữ liệu"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
-            <Button type="button" className="h-9 bg-blue-500 hover:bg-blue-600" onClick={() => exportExcel('nhan-su')} disabled={Boolean(exporting)}>
-              {exporting === 'nhan-su' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSpreadsheet className="mr-2 h-4 w-4" />}
-              Xuất nhân sự
-            </Button>
-            <Button type="button" className="h-9 bg-emerald-500 hover:bg-emerald-600" onClick={() => exportExcel('xe')} disabled={Boolean(exporting)}>
-              {exporting === 'xe' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-              Xuất phương tiện
-            </Button>
-            <UserCircle className="hidden h-9 w-9 text-blue-100 sm:block" />
           </div>
         </div>
       </div>
 
       <div className="px-4 pb-8 lg:px-8">
-        <section className="-mt-1 rounded-b-lg border border-t-0 border-slate-200 bg-white p-4 shadow-sm">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-8">
-            <SelectFilter label="Đơn vị" value={filters.donVi} options={getOptions(data, 'donVi')} onChange={(value) => setFilter('donVi', value)} />
-            <SelectFilter label="Đội xe" value={filters.doiXe} options={getOptions(data, 'doiXe')} onChange={(value) => setFilter('doiXe', value)} />
-            <SelectFilter label="Loại xe" value={filters.loaiXe} options={getOptions(data, 'loaiXe')} onChange={(value) => setFilter('loaiXe', value)} />
-            <SelectFilter label="Trạng thái xe" value={filters.trangThaiXe} options={getOptions(data, 'trangThaiXe')} onChange={(value) => setFilter('trangThaiXe', value)} />
-            <SelectFilter label="Trạng thái nhân sự" value={filters.trangThaiNhanSu} options={getOptions(data, 'trangThaiNhanSu')} onChange={(value) => setFilter('trangThaiNhanSu', value)} />
-            <SelectFilter label="Cảnh báo" value={filters.nhomCanhBao} options={getOptions(data, 'nhomCanhBao')} getOptionLabel={(option) => warningLabels[option] || option} onChange={(value) => setFilter('nhomCanhBao', value)} />
-            <label className="min-w-0 space-y-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-              <span>Từ tháng</span>
-              <Input className="h-9" type="month" value={filters.tuThang} onChange={(event) => setFilter('tuThang', event.target.value)} />
-            </label>
-            <label className="min-w-0 space-y-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-              <span>Đến tháng</span>
-              <Input className="h-9" type="month" value={filters.denThang} onChange={(event) => setFilter('denThang', event.target.value)} />
-            </label>
-          </div>
-          <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-slate-100 pt-3">
-            <div className="grid flex-1 gap-3 md:grid-cols-3">
-              <SelectFilter label="Loại hợp đồng" value={filters.loaiHopDong} options={getOptions(data, 'loaiHopDong')} onChange={(value) => setFilter('loaiHopDong', value)} />
-              <SelectFilter label="Trạng thái hợp đồng" value={filters.trangThaiHopDong} options={getOptions(data, 'trangThaiHopDong')} onChange={(value) => setFilter('trangThaiHopDong', value)} />
-              <SelectFilter label="Trạng thái BHXH" value={filters.trangThaiBhxh} options={getOptions(data, 'trangThaiBhxh')} onChange={(value) => setFilter('trangThaiBhxh', value)} />
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={() => toast.success('Đã áp dụng bộ lọc dashboard.')}>Áp dụng</Button>
-              <Button type="button" variant="secondary" onClick={() => setFilters(EMPTY_FILTERS)}>Xóa lọc</Button>
-            </div>
-          </div>
-        </section>
+        {activeTab === 'nhan-su' ? (
+          <NhanSuFilterBar data={data} filters={filters} setFilter={setFilter} setRange={setRange} onReset={resetActiveFilters} />
+        ) : (
+          <XeFilterBar data={data} filters={filters} setFilter={setFilter} setRange={setRange} onReset={resetActiveFilters} />
+        )}
 
         {error && <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         {data?.missingSources?.length > 0 && (
@@ -587,55 +809,98 @@ const DashboardPage = () => {
           </div>
         )}
 
-        <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <MetricCard icon={Users} label="Tổng nhân sự" value={summary.tongNhanSu} percent="Theo bộ lọc" tone="bg-blue-50 text-blue-700" bars={[45, 70, 50, 82, 62, 78]} />
-          <MetricCard icon={BriefcaseBusiness} label="Đang làm việc" value={summary.nhanSuDangLamViec} percent={getPercent(summary.nhanSuDangLamViec, summary.tongNhanSu)} tone="bg-emerald-50 text-emerald-700" bars={[35, 52, 68, 58, 76, 84]} />
-          <MetricCard icon={AlertTriangle} label="Nghỉ việc" value={summary.nhanSuNghiViec} percent={getPercent(summary.nhanSuNghiViec, summary.tongNhanSu)} tone="bg-amber-50 text-amber-700" bars={[25, 42, 36, 55, 32, 44]} />
-          <MetricCard icon={Car} label="Tổng số xe" value={summary.tongXe} percent="Theo bộ lọc" tone="bg-indigo-50 text-indigo-700" bars={[52, 48, 63, 72, 66, 80]} />
-          <MetricCard icon={Gauge} label="Xe hoạt động" value={summary.xeHoatDong} percent={getPercent(summary.xeHoatDong, summary.tongXe)} tone="bg-cyan-50 text-cyan-700" bars={[38, 58, 74, 61, 83, 90]} />
-          <MetricCard icon={AlertTriangle} label="Xe ngừng" value={summary.xeNgung} percent={getPercent(summary.xeNgung, summary.tongXe)} tone="bg-red-50 text-red-700" bars={[18, 30, 24, 36, 28, 42]} />
-        </section>
+        {activeTab === 'nhan-su' ? (
+          <>
+            <section className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+              <MetricCard icon={Users} label="Tổng nhân sự" value={summary.tongNhanSu} percent="Theo bộ lọc" tone="bg-blue-50 text-blue-700" barColor="bg-blue-500" ratio={1} />
+              <MetricCard icon={BriefcaseBusiness} label="Đang làm việc" value={summary.nhanSuDangLamViec} percent={getPercent(summary.nhanSuDangLamViec, summary.tongNhanSu)} tone="bg-emerald-50 text-emerald-700" barColor="bg-emerald-500" ratio={summary.tongNhanSu ? summary.nhanSuDangLamViec / summary.tongNhanSu : 0} onClick={() => toggleCardFilter({ nhomTrangThaiNhanSu: 'dang-lam' })} active={isCardActive({ nhomTrangThaiNhanSu: 'dang-lam' })} />
+              <MetricCard icon={AlertTriangle} label="Nghỉ việc" value={summary.nhanSuNghiViec} percent={getPercent(summary.nhanSuNghiViec, summary.tongNhanSu)} tone="bg-amber-50 text-amber-700" barColor="bg-amber-500" ratio={summary.tongNhanSu ? summary.nhanSuNghiViec / summary.tongNhanSu : 0} onClick={() => toggleCardFilter({ nhomTrangThaiNhanSu: 'nghi' })} active={isCardActive({ nhomTrangThaiNhanSu: 'nghi' })} />
+              <MetricCard icon={Car} label="Lái xe" value={nhanSuKpi.laiXe} percent={getPercent(nhanSuKpi.laiXe, summary.tongNhanSu)} tone="bg-indigo-50 text-indigo-700" barColor="bg-indigo-500" ratio={summary.tongNhanSu ? nhanSuKpi.laiXe / summary.tongNhanSu : 0} onClick={() => toggleCardFilter({ chucDanh: 'Lái xe' })} active={isCardActive({ chucDanh: 'Lái xe' })} />
+              <MetricCard icon={IdCard} label="GPLX hết/sắp hết hạn" value={nhanSuKpi.gplx} percent={getPercent(nhanSuKpi.gplx, summary.tongNhanSu)} tone="bg-rose-50 text-rose-700" barColor="bg-rose-500" ratio={summary.tongNhanSu ? nhanSuKpi.gplx / summary.tongNhanSu : 0} onClick={() => toggleCardFilter({ loaiGiayTo: 'GPLX', tinhTrangHan: 'canh-bao' })} active={isCardActive({ loaiGiayTo: 'GPLX', tinhTrangHan: 'canh-bao' })} />
+              <MetricCard icon={HeartPulse} label="Sức khỏe hết/sắp hết hạn" value={nhanSuKpi.sucKhoe} percent={getPercent(nhanSuKpi.sucKhoe, summary.tongNhanSu)} tone="bg-orange-50 text-orange-700" barColor="bg-orange-500" ratio={summary.tongNhanSu ? nhanSuKpi.sucKhoe / summary.tongNhanSu : 0} onClick={() => toggleCardFilter({ loaiGiayTo: 'Sức khỏe', tinhTrangHan: 'canh-bao' })} active={isCardActive({ loaiGiayTo: 'Sức khỏe', tinhTrangHan: 'canh-bao' })} />
+            </section>
 
-        <section className="mt-5 grid gap-5 xl:grid-cols-2">
-          <ChartPanel title="Cơ cấu nhân sự" totalLabel={`${formatNumber(filteredNhanSu.length)} nhân sự`}>
-            <DonutChart title="Nhân sự theo trạng thái" rows={filteredNhanSu} keyName="trangThaiLamViec" icon={Users} />
-            <DonutChart title="Nhân sự theo chức danh" rows={filteredNhanSu} keyName="chucDanh" icon={BriefcaseBusiness} />
-          </ChartPanel>
-          <ChartPanel title="Cơ cấu đội xe" totalLabel={`${formatNumber(filteredXe.length)} xe`}>
-            <DonutChart title="Xe theo trạng thái" rows={filteredXe} keyName="trangThaiXe" icon={Car} />
-            <DonutChart title="Xe theo loại" rows={filteredXe} keyName="loaiXe" icon={Gauge} />
-          </ChartPanel>
-        </section>
+            <section className="mt-5">
+              <ChartPanel title="Cơ cấu nhân sự" totalLabel={`${formatNumber(filteredNhanSu.length)} nhân sự`}>
+                <DonutChart title="Nhân sự theo trạng thái" rows={filteredNhanSu} keyName="trangThaiLamViec" icon={Users} />
+                <DonutChart title="Nhân sự theo chức danh" rows={filteredNhanSu} keyName="chucDanh" icon={BriefcaseBusiness} />
+                <DonutChart title="Nhân sự theo đội xe" rows={filteredNhanSu} keyName="doiXe" icon={Car} />
+                <DonutChart title="Nhân sự theo loại hợp đồng" rows={filteredNhanSu} keyName="loaiHopDong" icon={BriefcaseBusiness} />
+              </ChartPanel>
+            </section>
 
-        <section className="mt-5 grid gap-5 xl:grid-cols-2">
-          <TopBarChart title="Top 10 xe chạy nhiều km nhất" rows={topKmRows} unit="km" />
-          <TopBarChart title="Top 10 xe có nhiều chuyến nhất" rows={topTripRows} unit="chuyến" />
-        </section>
+            <section className="mt-5 rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-slate-950">Danh sách nhân sự</h2>
+                  <p className="mt-1 text-sm text-slate-500">Có {formatNumber(filteredNhanSu.length)} dòng sau lọc. Excel xuất toàn bộ dữ liệu đang lọc.</p>
+                </div>
+                <Button type="button" className="h-9 bg-blue-500 hover:bg-blue-600" onClick={() => exportExcel('nhan-su')} disabled={Boolean(exporting)}>
+                  {exporting === 'nhan-su' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSpreadsheet className="mr-2 h-4 w-4" />}
+                  Xuất nhân sự
+                </Button>
+              </div>
+              <div className="p-4">
+                <DataTable
+                  type="nhan-su"
+                  rows={filteredNhanSu}
+                  page={tablePage}
+                  pageSize={tablePageSize}
+                  onPageChange={setTablePage}
+                  onPageSizeChange={setTablePageSize}
+                />
+              </div>
+            </section>
+          </>
+        ) : (
+          <>
+            <section className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+              <MetricCard icon={Car} label="Tổng số xe" value={summary.tongXe} percent="Theo bộ lọc" tone="bg-indigo-50 text-indigo-700" barColor="bg-indigo-500" ratio={1} />
+              <MetricCard icon={Gauge} label="Xe hoạt động" value={summary.xeHoatDong} percent={getPercent(summary.xeHoatDong, summary.tongXe)} tone="bg-cyan-50 text-cyan-700" barColor="bg-cyan-500" ratio={summary.tongXe ? summary.xeHoatDong / summary.tongXe : 0} onClick={() => toggleCardFilter({ nhomTrangThaiXe: 'hoat-dong' })} active={isCardActive({ nhomTrangThaiXe: 'hoat-dong' })} />
+              <MetricCard icon={AlertTriangle} label="Xe ngừng" value={summary.xeNgung} percent={getPercent(summary.xeNgung, summary.tongXe)} tone="bg-red-50 text-red-700" barColor="bg-red-500" ratio={summary.tongXe ? summary.xeNgung / summary.tongXe : 0} onClick={() => toggleCardFilter({ nhomTrangThaiXe: 'ngung' })} active={isCardActive({ nhomTrangThaiXe: 'ngung' })} />
+              <MetricCard icon={FileCheck} label="Đăng kiểm hết/sắp hết hạn" value={xeKpi.dangKiem} percent={getPercent(xeKpi.dangKiem, summary.tongXe)} tone="bg-rose-50 text-rose-700" barColor="bg-rose-500" ratio={summary.tongXe ? xeKpi.dangKiem / summary.tongXe : 0} onClick={() => toggleCardFilter({ loaiGiayTo: 'Đăng kiểm', tinhTrangHan: 'canh-bao' })} active={isCardActive({ loaiGiayTo: 'Đăng kiểm', tinhTrangHan: 'canh-bao' })} />
+              <MetricCard icon={ShieldCheck} label="Bảo hiểm hết/sắp hết hạn" value={xeKpi.baoHiem} percent={getPercent(xeKpi.baoHiem, summary.tongXe)} tone="bg-amber-50 text-amber-700" barColor="bg-amber-500" ratio={summary.tongXe ? xeKpi.baoHiem / summary.tongXe : 0} onClick={() => toggleCardFilter({ loaiGiayTo: 'Bảo hiểm', tinhTrangHan: 'canh-bao' })} active={isCardActive({ loaiGiayTo: 'Bảo hiểm', tinhTrangHan: 'canh-bao' })} />
+              <MetricCard icon={Stamp} label="Phù hiệu hết/sắp hết hạn" value={xeKpi.phuHieu} percent={getPercent(xeKpi.phuHieu, summary.tongXe)} tone="bg-orange-50 text-orange-700" barColor="bg-orange-500" ratio={summary.tongXe ? xeKpi.phuHieu / summary.tongXe : 0} onClick={() => toggleCardFilter({ loaiGiayTo: 'Phù hiệu', tinhTrangHan: 'canh-bao' })} active={isCardActive({ loaiGiayTo: 'Phù hiệu', tinhTrangHan: 'canh-bao' })} />
+            </section>
 
-        <section className="mt-5 rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-base font-bold text-slate-950">Tra cứu và báo cáo tổng hợp</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Có {formatNumber(activeRows.length)} dòng sau lọc. Excel xuất toàn bộ dữ liệu đang lọc.
-              </p>
-            </div>
-            <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-1">
-              <button type="button" onClick={() => setActiveReportTab('nhan-su')} className={`rounded px-3 py-1.5 text-sm font-bold ${activeTab === 'nhan-su' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}>Nhân sự</button>
-              <button type="button" onClick={() => setActiveReportTab('xe')} className={`rounded px-3 py-1.5 text-sm font-bold ${activeTab === 'xe' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}>Phương tiện</button>
-            </div>
-          </div>
-          <div className="p-4">
-            <DataTable
-              type={activeTab}
-              rows={activeRows}
-              page={tablePage}
-              pageSize={tablePageSize}
-              onPageChange={setTablePage}
-              onPageSizeChange={setTablePageSize}
-            />
-          </div>
-        </section>
+            <section className="mt-5">
+              <ChartPanel title="Cơ cấu đội xe" totalLabel={`${formatNumber(filteredXe.length)} xe`}>
+                <DonutChart title="Xe theo trạng thái" rows={filteredXe} keyName="trangThaiXe" icon={Car} />
+                <DonutChart title="Xe theo loại" rows={filteredXe} keyName="loaiXe" icon={Gauge} />
+                <DonutChart title="Xe theo đội xe" rows={filteredXe} keyName="doiXe" icon={Car} />
+                <DonutChart title="Xe theo đơn vị chủ quản" rows={filteredXe} keyName="donViChuQuan" icon={BriefcaseBusiness} />
+              </ChartPanel>
+            </section>
+
+            <section className="mt-5 grid gap-5 xl:grid-cols-2">
+              <TopBarChart title="Top 10 xe chạy nhiều km nhất" rows={topKmRows} unit="km" />
+              <TopBarChart title="Top 10 xe có nhiều chuyến nhất" rows={topTripRows} unit="chuyến" />
+            </section>
+
+            <section className="mt-5 rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-slate-950">Danh sách phương tiện</h2>
+                  <p className="mt-1 text-sm text-slate-500">Có {formatNumber(filteredXe.length)} dòng sau lọc. Excel xuất toàn bộ dữ liệu đang lọc.</p>
+                </div>
+                <Button type="button" className="h-9 bg-emerald-500 hover:bg-emerald-600" onClick={() => exportExcel('xe')} disabled={Boolean(exporting)}>
+                  {exporting === 'xe' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                  Xuất phương tiện
+                </Button>
+              </div>
+              <div className="p-4">
+                <DataTable
+                  type="xe"
+                  rows={filteredXe}
+                  page={tablePage}
+                  pageSize={tablePageSize}
+                  onPageChange={setTablePage}
+                  onPageSizeChange={setTablePageSize}
+                />
+              </div>
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

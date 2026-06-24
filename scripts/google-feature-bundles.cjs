@@ -299,7 +299,7 @@ function buildWarningNote(items) {
 function pickActiveWarnings(items) {
   return (Array.isArray(items) ? items : [])
     .filter((item) => item && item.level && item.level !== 'xanh')
-    .map((item) => ({ name: item.name, date: item.date || '', level: item.level, label: item.label }));
+    .map((item) => ({ name: item.name, date: item.date || '', level: item.level, label: item.label, days: item.days ?? null }));
 }
 
 function countBy(items, keyName) {
