@@ -557,6 +557,10 @@
           const href = `/vehicle_profile_standalone.html?ID_Xe=${encodeURIComponent(row.idXe)}`;
           return `<td><a href="${href}" target="_blank" rel="noreferrer" style="font-weight:800;color:#1d4ed8;text-decoration:underline;text-underline-offset:2px;">${escapeHtml(row[key] || row.idXe)}</a></td>`;
         }
+        if (state.tab === 'nhan-su' && key === 'hoTen' && clean(row.idNhanSu)) {
+          const href = `/nhan_su_profile_standalone.html?ID_NhanSu=${encodeURIComponent(row.idNhanSu)}`;
+          return `<td><a href="${href}" target="_blank" rel="noreferrer" style="font-weight:800;color:#1d4ed8;text-decoration:underline;text-underline-offset:2px;">${escapeHtml(row[key] || row.idNhanSu)}</a></td>`;
+        }
         return `<td>${escapeHtml(row[key])}</td>`;
       }
       function renderTable(rows, columns) {

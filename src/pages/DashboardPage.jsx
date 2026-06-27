@@ -573,13 +573,24 @@ function DataTable({ type, rows, page, pageSize, onPageChange, onPageSizeChange 
                       </div>
                     ) : type === 'xe' && key === 'bienSo' && row.idXe ? (
                       <a
-                        className="inline-flex max-w-full items-center gap-1 font-black text-blue-700 underline-offset-2 hover:underline"
+                        className="inline-flex max-w-full items-center gap-1 font-medium text-blue-700 underline-offset-2 hover:underline"
                         href={`/vehicle_profile_standalone.html?ID_Xe=${encodeURIComponent(row.idXe)}`}
                         target="_blank"
                         rel="noreferrer"
                         title={`Mở hồ sơ xe ${row.bienSo || row.idXe}`}
                       >
                         <span className="truncate">{row[key] || row.idXe}</span>
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                      </a>
+                    ) : type === 'nhan-su' && key === 'hoTen' && row.idNhanSu ? (
+                      <a
+                        className="inline-flex max-w-full items-center gap-1 font-medium text-blue-700 underline-offset-2 hover:underline"
+                        href={`/nhan_su_profile_standalone.html?ID_NhanSu=${encodeURIComponent(row.idNhanSu)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`Mở hồ sơ nhân sự ${row.hoTen || row.idNhanSu}`}
+                      >
+                        <span className="line-clamp-2">{row[key] || row.idNhanSu}</span>
                         <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                       </a>
                     ) : (

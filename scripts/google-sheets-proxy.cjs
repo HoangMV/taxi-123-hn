@@ -13,6 +13,7 @@ const apiRoutes = new Map(
   [
     'dashboard-qlvt',
     'vehicle-profile',
+    'nhan-su-profile',
     'ban-giao-xe',
     'ban-giao-so-bhxh',
     'de-nghi-dao-tao-lai-xe',

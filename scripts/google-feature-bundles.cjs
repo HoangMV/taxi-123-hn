@@ -5,6 +5,7 @@ const {
   readGoogleSheetTables
 } = require('./google-sheets-service.cjs');
 const { buildVehicleProfileBundle } = require('./vehicle-profile-builder.cjs');
+const { buildNhanSuProfileBundle } = require('./nhan-su-profile-builder.cjs');
 
 function buildMap(rows, keyName) {
   return new Map(
@@ -607,6 +608,15 @@ const featureConfigs = {
     failedMessage: 'Không tải được hồ sơ phương tiện từ Google Sheets.',
     mainKey: 'ID_Xe',
     build: ({ id, query, env }) => buildVehicleProfileBundle({ id, query, env })
+  },
+
+  'nhan-su-profile': {
+    idKeys: ['ID_NhanSu', 'idNhanSu', 'idnhansu', 'IDNhanSu'],
+    missingIdMessage: 'Thiếu tham số ID_NhanSu.',
+    notFoundPrefix: 'Không tìm thấy nhân sự với ID_NhanSu',
+    failedMessage: 'Không tải được hồ sơ nhân sự từ Google Sheets.',
+    mainKey: 'ID_NhanSu',
+    build: ({ id, query, env }) => buildNhanSuProfileBundle({ id, query, env })
   },
 
   'ban-giao-xe': {
