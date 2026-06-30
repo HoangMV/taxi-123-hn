@@ -9441,16 +9441,18 @@
         }
 
         function renderOptionalTable(title, rows, clsName, no, note) {
-            if (!rows || rows.length === 0) return '';
             const tableType = tableTypeFromTitleV78(title);
             let extraClass = '';
             if (tableType === 'hdld') extraClass = 'hdld-table';
             if (tableType === 'ttds') extraClass = 'ttds-table';
             if (tableType === 'suckhoe') extraClass = 'suckhoe-table';
+            const bodyHtml = (!rows || rows.length === 0)
+                ? `<div class="empty">Chưa phát sinh ${escapeHtml(title)}.</div>`
+                : renderRowsByTypeV78(rows, tableType, extraClass);
             return `<div class="module ${clsName || 'record'} keep">
         <div class="module-head"><div class="module-no">${escapeHtml(no)}</div>
         <div class="module-titlebox"><div class="module-title">${escapeHtml(title)}</div><div class="module-note">${escapeHtml(note || 'Dữ liệu phát sinh của nhân sự')}</div></div></div>
-        <div class="module-body">${renderRowsByTypeV78(rows, tableType, extraClass)}</div></div>`;
+        <div class="module-body">${bodyHtml}</div></div>`;
         }
 
         /* ===== Kết luận 04 tiêu chí (V80) + thẻ tiêu chí/rủi ro (V81/V79) ===== */

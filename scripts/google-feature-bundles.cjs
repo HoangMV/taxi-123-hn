@@ -152,6 +152,8 @@ const DASHBOARD_TABLES = [
   'LAIXE_GPLX',
   'NHANSU_SUCKHOE',
   'LAIXE_DAOTAO',
+  'XE_THOATHUAN_DANSU',
+  'NHANSU_NGUOITHAN',
   'LAIXE_PHANCONG_XE',
   'LOG_GAN_DOIXE_NHANSU',
   'DONVI',
@@ -270,6 +272,13 @@ function pickCurrentRow(rows, options = {}) {
   return sortRowsByDateDesc(activeRows.length ? activeRows : candidates, dateFields)[0] || candidates[0];
 }
 
+function pickGuarantor(rows) {
+  const candidates = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  if (candidates.length === 0) return null;
+  const baoLanh = candidates.find((row) => valueContains(row?.QuanHe, ['nbl', 'bao lanh', 'bảo lãnh']));
+  return baoLanh || candidates[0];
+}
+
 function formatDashboardDate(value) {
   const date = parseDateValue(value);
   if (!date) return '';
@@ -385,6 +394,9 @@ function buildDashboardReport(tables, missingSources) {
   const bhxhByNhanSu = groupRowsBy(tables.NHANSU_BHXH, 'Ref_NhanSu');
   const gplxByNhanSu = groupRowsBy(tables.LAIXE_GPLX, 'Ref_NhanSu');
   const sucKhoeByNhanSu = groupRowsBy(tables.NHANSU_SUCKHOE, 'Ref_NhanSu');
+  const daoTaoByNhanSu = groupRowsBy(tables.LAIXE_DAOTAO, 'Ref_NhanSu');
+  const thoaThuanByNhanSu = groupRowsBy(tables.XE_THOATHUAN_DANSU, 'Ref_LaiXe');
+  const nguoiThanByNhanSu = groupRowsBy(tables.NHANSU_NGUOITHAN, 'Ref_NhanSu');
   const phanCongByNhanSu = groupRowsBy(tables.LAIXE_PHANCONG_XE, 'Ref_NhanSu');
   const phanCongByXe = groupRowsBy(tables.LAIXE_PHANCONG_XE, 'Ref_Xe');
   const phuHieuByXe = groupRowsBy(tables.XE_PHUHIEU, 'Ref_Xe');
@@ -401,6 +413,9 @@ function buildDashboardReport(tables, missingSources) {
     const bhxh = pickCurrentRow(bhxhByNhanSu.get(nhanSuId), { statusFields: ['TrangThaiBHXH'], activeKeywords: ['đang tham gia'], dateFields: ['NgayBatDauThamGia', 'NgayKetThucThamGia'] });
     const gplx = pickCurrentRow(gplxByNhanSu.get(nhanSuId), { dateFields: ['NgayHetHan', 'NgayCap'] });
     const sucKhoe = pickCurrentRow(sucKhoeByNhanSu.get(nhanSuId), { dateFields: ['NgayHetHan', 'NgayKham'] });
+    const daoTao = pickCurrentRow(daoTaoByNhanSu.get(nhanSuId), { dateFields: ['NgayHetHan', 'NgayCapChungChi'] });
+    const thoaThuan = pickCurrentRow(thoaThuanByNhanSu.get(nhanSuId), { statusFields: ['TrangThaiThoaThuan'], dateFields: ['NgayHetHan', 'NgayKy'] });
+    const nguoiBaoLanh = pickGuarantor(nguoiThanByNhanSu.get(nhanSuId));
     const phanCong = pickCurrentRow(phanCongByNhanSu.get(nhanSuId), { dateFields: ['NgayBatDau', 'NgayKetThuc'] });
     const xe = xeById.get(cleanValue(phanCong?.Ref_Xe)) || xeById.get(cleanValue(nhanSu.Ref_XeHienTai));
     const donVi = donViById.get(cleanValue(nhanSu.Ref_DonViDuocCapPH));
@@ -441,12 +456,21 @@ function buildDashboardReport(tables, missingSources) {
       trangThaiHopDong: cleanValue(hopDong?.TrangThai),
       soGplx: cleanValue(gplx?.SoGPLX),
       hangGplx: cleanValue(gplx?.HangGPLX),
+      ngayCapGplx: formatDashboardDate(gplx?.NgayCap),
       hanGplx: formatDashboardDate(gplx?.NgayHetHan),
+      ngayCapGksk: formatDashboardDate(sucKhoe?.NgayKham),
       hanSucKhoe: formatDashboardDate(sucKhoe?.NgayHetHan),
+      thoiGianTapHuan: cleanValue(daoTao?.NoiDungDaoTao) || cleanValue(daoTao?.SoNgayDaoTao),
+      ngayCapGcnTapHuan: formatDashboardDate(daoTao?.NgayCapChungChi),
+      ngayHetHanGcn: formatDashboardDate(daoTao?.NgayHetHan),
+      ngayKyThoaThuan: formatDashboardDate(thoaThuan?.NgayKy),
+      ngayKetThucThoaThuan: formatDashboardDate(thoaThuan?.NgayHetHan),
       soSoBhxh: cleanValue(bhxh?.SoSoBHXH),
       maSoBhxh: cleanValue(bhxh?.MaSoBHXH),
       trangThaiBhxh: cleanValue(bhxh?.TrangThaiBHXH),
       mucLuongDongBhxh: cleanValue(bhxh?.MucLuongDongBHXH),
+      hoTenNguoiBaoLanh: cleanValue(nguoiBaoLanh?.HoTen),
+      sdtNguoiBaoLanh: cleanValue(nguoiBaoLanh?.SoDienThoai),
       canhBao: buildWarningNote(warningItems),
       warningLevel: warningItems.some((item) => item.level === 'do') ? 'do' : warningItems.some((item) => item.level === 'vang') ? 'vang' : warningItems.some((item) => item.level === 'xam') ? 'xam' : 'xanh',
       warningItems: pickActiveWarnings(warningItems)

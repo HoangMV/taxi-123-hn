@@ -20,12 +20,21 @@ export const NHAN_SU_COLUMNS = [
   ['trangThaiHopDong', 'Trạng thái hợp đồng'],
   ['soGplx', 'Số GPLX'],
   ['hangGplx', 'Hạng GPLX'],
+  ['ngayCapGplx', 'Ngày cấp GPLX'],
   ['hanGplx', 'Hạn GPLX'],
+  ['ngayCapGksk', 'Ngày cấp GKSK'],
   ['hanSucKhoe', 'Hạn sức khỏe'],
+  ['thoiGianTapHuan', 'Thời gian tập huấn'],
+  ['ngayCapGcnTapHuan', 'Ngày cấp GCN tập huấn'],
+  ['ngayHetHanGcn', 'Ngày hết hạn GCN'],
+  ['ngayKyThoaThuan', 'Ngày ký thoả thuận'],
+  ['ngayKetThucThoaThuan', 'Ngày kết thúc thoả thuận'],
   ['soSoBhxh', 'Số sổ BHXH'],
   ['maSoBhxh', 'Mã số BHXH'],
   ['trangThaiBhxh', 'Trạng thái BHXH'],
   ['mucLuongDongBhxh', 'Mức lương đóng BHXH'],
+  ['hoTenNguoiBaoLanh', 'Họ tên người bảo lãnh'],
+  ['sdtNguoiBaoLanh', 'SĐT người bảo lãnh'],
   ['canhBao', 'Ghi chú cảnh báo']
 ];
 
