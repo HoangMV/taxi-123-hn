@@ -43,7 +43,7 @@ export function buildKpiPhuongTien(xeRows) {
   const tong = rows.length;
   const dangHoatDong = rows.filter(isActiveXe).length;
   const ngung = rows.filter(isNgungXe).length;
-  const xuatHang = rows.filter((row) => normalizeText(row.trangThaiXe).includes('xuat hang')).length;
+  const xuatHang = rows.filter((row) => cleanValue(row.daXuatHang) === 'Có').length;
   const chuaPhanCong = rows.filter((row) => isActiveXe(row) && !cleanValue(row.laiXeDangLai)).length;
   const nhieuLaiXe = rows.filter((row) => isActiveXe(row) && Number(row.soLaiXe) >= 2).length;
   return {
@@ -71,7 +71,7 @@ export function buildThongKeDonVi(xeRows) {
     o.tong += 1;
     if (isActiveXe(row)) { o.dangHD += 1; if (!cleanValue(row.laiXeDangLai)) o.chuaPC += 1; }
     if (isNgungXe(row)) o.ngung += 1;
-    if (normalizeText(row.trangThaiXe).includes('xuat hang')) o.xuatHang += 1;
+    if (cleanValue(row.daXuatHang) === 'Có') o.xuatHang += 1;
   });
   return [...map.values()].sort((a, b) => b.tong - a.tong);
 }
@@ -309,7 +309,7 @@ const demTruoc = (dates, mocEnd) => dates.filter((d) => d <= mocEnd).length;
 export function buildBienDong(nhanSuRows, xeRows, now = new Date()) {
   const months = thangGanNhat(SO_THANG_BIEN_DONG, now);
   const xeNhap = cotNgay(xeRows, 'ngayDuaVaoHoatDong');
-  const xeXuat = cotNgay(xeRows, 'ngayNgungHoatDong');
+  const xeXuat = cotNgay(xeRows, 'ngayXuatHang'); // xuất hãng theo bảng XE_XUAT_HANG
   const nsTuyen = cotNgay(nhanSuRows, 'ngayNhanViec');
   const nsNghi = cotNgay(nhanSuRows, 'ngayNghiViec');
 

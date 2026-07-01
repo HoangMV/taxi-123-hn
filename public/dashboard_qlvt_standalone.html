@@ -981,7 +981,7 @@
     /* ---------- compute (port từ compute.js) ---------- */
     function kpiXe(rows) {
       var tong = rows.length, dhd = rows.filter(isActiveXe).length, ngung = rows.filter(isNgungXe).length;
-      var xuat = rows.filter(function (r) { return norm(r.trangThaiXe).indexOf('xuat hang') >= 0; }).length;
+      var xuat = rows.filter(function (r) { return clean(r.daXuatHang) === 'Có'; }).length;
       var chuaPC = rows.filter(function (r) { return isActiveXe(r) && !clean(r.laiXeDangLai); }).length;
       var nhieuLX = rows.filter(function (r) { return isActiveXe(r) && Number(r.soLaiXe) >= 2; }).length;
       return { tong: tong, dhd: dhd, tlDhd: pct(dhd, tong), xuat: xuat, tlXuat: pct(xuat, tong), ngung: ngung, tlNgung: pct(ngung, tong), chuaPC: chuaPC, tlChuaPC: pct(chuaPC, tong), nhieuLX: nhieuLX, tlNhieuLX: pct(nhieuLX, tong) };
@@ -1033,7 +1033,7 @@
         var o = m[ten]; o.tong++;
         if (isActiveXe(r)) { o.dangHD++; if (!clean(r.laiXeDangLai)) o.chuaPC++; }
         if (isNgungXe(r)) o.ngung++;
-        if (norm(r.trangThaiXe).indexOf('xuat hang') >= 0) o.xuatHang++;
+        if (clean(r.daXuatHang) === 'Có') o.xuatHang++;
       });
       return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return b.tong - a.tong; });
     }
@@ -1208,7 +1208,7 @@
         '<div class="card"><h3>✅ Tỷ lệ tuân thủ theo hạng mục</h3><div class="gauges">' + gaugeHtml + '</div></div>' +
         '</div>';
       // biến động tháng
-      var bx = bienDong(xe, 'ngayDuaVaoHoatDong', 'ngayNgungHoatDong'), bn = bienDong(ns, 'ngayNhanViec', 'ngayNghiViec');
+      var bx = bienDong(xe, 'ngayDuaVaoHoatDong', 'ngayXuatHang'), bn = bienDong(ns, 'ngayNhanViec', 'ngayNghiViec');
       var cur = bx.series[bx.series.length - 1] || {}, curn = bn.series[bn.series.length - 1] || {};
       html += '<section class="panel"><div class="panel-head"><h2>📈 Biến động tháng này</h2><span class="total-pill">' + esc(bx.kyLabel) + '</span></div><div class="panel-body"><div class="grid g4">' +
         biCard('Xe vào mới', cur.nhap || 0, '#16a34a') + biCard('Xe xuất hãng', cur.xuat || 0, '#ef4444') + biCard('Nhân sự tuyển mới', curn.nhap || 0, '#16a34a') + biCard('Nhân sự nghỉ việc', curn.xuat || 0, '#ef4444') +
@@ -1332,7 +1332,7 @@
     /* ----- Màn 5: Biến động ----- */
     function renderBienDong() {
       var xe = filterXe(emptyF()), ns = filterNs(emptyF());
-      var bx = bienDong(xe, 'ngayDuaVaoHoatDong', 'ngayNgungHoatDong'), bn = bienDong(ns, 'ngayNhanViec', 'ngayNghiViec');
+      var bx = bienDong(xe, 'ngayDuaVaoHoatDong', 'ngayXuatHang'), bn = bienDong(ns, 'ngayNhanViec', 'ngayNghiViec');
       var hsBd = (state.data && state.data.hoSoSummary && state.data.hoSoSummary.bienDong) || [];
       var hsSeries = hsBd.map(function (m) { return { ky: m.ky, nhap: m.moi, xuat: m.het, cuoiKy: m.cuoiKy }; });
       var html = '<p style="margin:18px 0 0;color:#64748b;font-size:13px">Phân tích biến động 6 tháng gần nhất (dựa trên ngày đưa vào hoạt động / ngừng của xe và ngày nhận / nghỉ việc của nhân sự).</p>';
@@ -1362,6 +1362,7 @@
       {
         group: 'Báo cáo phương tiện', items: [
           { key: 'xe_dang_hd', ten: 'Xe đang hoạt động', type: 'xe', dateKeys: ['ngayDuaVaoHoatDong'], filter: isActiveXe },
+          { key: 'xe_xuat_hang', ten: 'Xe xuất hãng', type: 'xe', dateKeys: ['ngayXuatHang'], filter: function (r) { return clean(r.daXuatHang) === 'Có'; } },
           { key: 'xe_ngung', ten: 'Xe ngừng hoạt động', type: 'xe', dateKeys: ['ngayNgungHoatDong'], filter: isNgungXe },
           { key: 'xe_chua_lx', ten: 'Xe chưa có lái xe', type: 'xe', dateKeys: ['ngayDuaVaoHoatDong'], filter: function (r) { return !clean(r.laiXeDangLai); } }
         ]
@@ -1378,13 +1379,53 @@
           { key: 'het_dk', ten: 'Xe sắp/đã hết hạn đăng kiểm', type: 'xe', dateKeys: ['hanDangKiem'], filter: function (r) { return hasCB(r, 'Đăng kiểm'); } },
           { key: 'het_ph', ten: 'Xe sắp/đã hết hạn phù hiệu', type: 'xe', dateKeys: ['hanPhuHieu'], filter: function (r) { return hasCB(r, 'Phù hiệu'); } },
           { key: 'het_bh', ten: 'Xe sắp/đã hết hạn bảo hiểm', type: 'xe', dateKeys: ['hanBaoHiemTnds', 'hanBaoHiemThanVo'], filter: function (r) { return hasCB(r, 'Bảo hiểm'); } },
-          { key: 'het_tx', ten: 'Xe sắp/đã hết hạn taximet', type: 'xe', dateKeys: ['hanTaximet'], filter: function (r) { return hasCB(r, 'Taximet'); } },
+          { key: 'het_taximet', ten: 'Xe sắp/đã hết hạn taximet', source: 'table', tableKey: 'het_taximet', dateKey: 'ngayHetHan' },
+          { key: 'xe_thechap', ten: 'Danh sách xe đang thế chấp', source: 'table', tableKey: 'xe_thechap' },
+          { key: 'xe_thoathuan_tnds', ten: 'Thỏa thuận dân sự (TNDS) lái xe', source: 'table', tableKey: 'xe_thoathuan_tnds' },
           { key: 'het_gplx', ten: 'Lái xe sắp/đã hết hạn GPLX', type: 'nhan-su', dateKeys: ['hanGplx'], filter: function (r) { return hasCB(r, 'GPLX'); } },
-          { key: 'het_sk', ten: 'Lái xe sắp/đã hết hạn sức khỏe', type: 'nhan-su', dateKeys: ['hanSucKhoe'], filter: function (r) { return hasCB(r, 'Sức khỏe'); } },
-          { key: 'het_hd', ten: 'HĐLĐ sắp/đã hết hạn', type: 'nhan-su', dateKeys: ['ngayKetThuc'], filter: function (r) { return hasCB(r, 'Hợp đồng lao động'); } }
+          { key: 'ns_sap_het_skhoe', ten: 'Lái xe sắp/đã hết hạn sức khỏe', source: 'table', tableKey: 'ns_sap_het_skhoe', dateKey: 'ngayHetHan' },
+          { key: 'ns_sap_het_daotao', ten: 'Lái xe sắp/đã hết hạn đào tạo/tập huấn', source: 'table', tableKey: 'ns_sap_het_daotao', dateKey: 'ngayHetHan' },
+          { key: 'ns_sap_het_hdld', ten: 'HĐLĐ sắp/đã hết hạn', source: 'table', tableKey: 'ns_sap_het_hdld', dateKey: 'ngayHetHan' }
+        ]
+      },
+      {
+        group: 'Khen thưởng / vi phạm / phản ánh', items: [
+          { key: 'ns_khenthuong_kyluat', ten: 'Danh sách khen thưởng / kỷ luật', source: 'table', tableKey: 'ns_khenthuong_kyluat', dateKey: 'NgayApDung' },
+          { key: 'lx_vipham_atgt', ten: 'Danh sách vi phạm ATGT', source: 'table', tableKey: 'lx_vipham_atgt', dateKey: 'NgayViPham' },
+          { key: 'lx_vipham_noibo', ten: 'Danh sách vi phạm nội bộ', source: 'table', tableKey: 'lx_vipham_noibo', dateKey: 'NgayViPham' },
+          { key: 'phan_anh', ten: 'Danh sách phản ánh / kiến nghị', source: 'table', tableKey: 'phan_anh', dateKey: 'NgayPhanAnh' }
+        ]
+      },
+      {
+        group: 'Báo cáo tổng hợp', items: [
+          { key: 'tt_tong_hop', ten: 'Tổng hợp tuân thủ pháp lý', source: 'compute', compute: 'tuanThu' },
+          { key: 'bd_tong_hop', ten: 'Tổng hợp biến động (6 tháng)', source: 'compute', compute: 'bienDong' },
+          { key: 'kpi_tong_hop', ten: 'Bảng chỉ số tổng quan toàn hệ thống', source: 'compute', compute: 'kpi' }
         ]
       }
     ];
+    // Dựng 3 báo cáo tổng hợp từ compute client.
+    function buildComputeReport(kind) {
+      var xe = filterXe(emptyF()), ns = filterNs(emptyF());
+      if (kind === 'tuanThu') {
+        var tt = tuanThu();
+        var rows = tt.pt.map(function (h) { return { doiTuong: 'Phương tiện', nhom: h.nhom, du: h.conHan, sap: h.sapHet, qua: h.quaHan, tyLe: h.tyLe + '%' }; })
+          .concat(tt.ns.map(function (h) { return { doiTuong: 'Nhân sự', nhom: h.nhom, du: h.conHan, sap: h.sapHet, qua: h.quaHan, tyLe: h.tyLe + '%' }; }));
+        return { columns: [['doiTuong', 'Đối tượng'], ['nhom', 'Hạng mục'], ['du', 'Đủ điều kiện'], ['sap', 'Sắp hết hạn'], ['qua', 'Quá hạn'], ['tyLe', 'Tỷ lệ tuân thủ']], rows: rows };
+      }
+      if (kind === 'bienDong') {
+        var bx = bienDong(xe, 'ngayDuaVaoHoatDong', 'ngayXuatHang'), bn = bienDong(ns, 'ngayNhanViec', 'ngayNghiViec');
+        var r = function (ten, t) { return { doiTuong: ten, dauKy: t.dauKy, tang: '+' + t.nhap, giam: '-' + t.xuat, cuoiKy: t.cuoiKy, tangGiam: (t.tangGiam >= 0 ? '+' : '') + t.tangGiam }; };
+        return { columns: [['doiTuong', 'Đối tượng'], ['dauKy', 'Đầu kỳ'], ['tang', 'Tăng'], ['giam', 'Giảm'], ['cuoiKy', 'Cuối kỳ'], ['tangGiam', 'Tăng/giảm']], rows: [r('Phương tiện', bx.tong), r('Nhân sự', bn.tong)] };
+      }
+      var p = kpiXe(xe), n = kpiNs(ns), h = kpiHoSo();
+      var rows2 = [
+        { chiTieu: 'Tổng số xe', giaTri: p.tong, tyLe: '' }, { chiTieu: 'Xe đang hoạt động', giaTri: p.dhd, tyLe: p.tlDhd + '%' }, { chiTieu: 'Xe ngừng hoạt động', giaTri: p.ngung, tyLe: p.tlNgung + '%' }, { chiTieu: 'Xe xuất hãng', giaTri: p.xuat, tyLe: p.tlXuat + '%' },
+        { chiTieu: 'Tổng nhân sự', giaTri: n.tong, tyLe: '' }, { chiTieu: 'Nhân sự đang làm việc', giaTri: n.dl, tyLe: n.tlDl + '%' }, { chiTieu: 'Chưa tham gia BHXH', giaTri: n.chuaBh, tyLe: n.tlChuaBh + '%' },
+        { chiTieu: 'Tổng hồ sơ pháp lý', giaTri: h.tong, tyLe: '' }, { chiTieu: 'Hồ sơ còn hiệu lực', giaTri: h.con, tyLe: h.tlCon + '%' }, { chiTieu: 'Hồ sơ sắp hết hạn', giaTri: h.sap, tyLe: h.tlSap + '%' }, { chiTieu: 'Hồ sơ quá hạn', giaTri: h.qua, tyLe: h.tlQua + '%' }
+      ];
+      return { columns: [['chiTieu', 'Chỉ tiêu'], ['giaTri', 'Giá trị'], ['tyLe', 'Tỷ lệ']], rows: rows2 };
+    }
     function hasCB(row, loai) { return (row.warningItems || []).some(function (it) { return warnMatchLoai(it, loai) && (norm(it.level) === 'do' || norm(it.level) === 'vang'); }); }
     var RP_COLS = { xe: [['bienSo', 'Biển số'], ['loaiXe', 'Loại xe'], ['doiXe', 'Đội xe'], ['trangThaiXe', 'Trạng thái'], ['laiXeDangLai', 'Lái xe'], ['canhBao', 'Cảnh báo']], 'nhan-su': [['hoTen', 'Họ tên'], ['doiXe', 'Đội xe'], ['chucDanh', 'Chức danh'], ['trangThaiLamViec', 'Trạng thái'], ['bienSoXe', 'Biển số'], ['canhBao', 'Cảnh báo']] };
     function renderBaoCao() {
@@ -1392,15 +1433,32 @@
       var right;
       if (!state.report) { right = '<div style="text-align:center;padding:70px;color:#64748b"><div style="font-size:42px">📄</div><h3 style="margin:12px 0 4px">Chọn một báo cáo bên trái</h3><div style="font-size:13px">Xem trước dữ liệu rồi xuất Excel.</div></div>'; }
       else {
-        var src = state.report.type === 'xe' ? filterXe(emptyF()) : filterNs(emptyF());
         var from = dayMs(state.rpFrom), to = dayMs(state.rpTo);
-        var rows = src.filter(state.report.filter).filter(function (r) { if (!from && !to) return true; var days = (state.report.dateKeys || []).map(function (k) { return dayMs(r[k]); }).filter(function (x) { return x != null; }); if (!days.length) return false; return days.some(function (d) { return (!from || d >= from) && (!to || d <= to); }); }).map(function (r, i) { return Object.assign({}, r, { stt: i + 1 }); });
-        var cols = RP_COLS[state.report.type];
-        var body = rows.map(function (r) { return '<tr><td>' + r.stt + '</td>' + cols.map(function (c) { if (c[0] === 'canhBao') { return '<td>' + cbCell(r) + '</td>'; } return '<td>' + esc(r[c[0]] || '') + '</td>'; }).join('') + '</tr>'; }).join('') || '<tr><td colspan="' + (cols.length + 1) + '" style="text-align:center;color:#64748b;padding:24px">Không có dữ liệu.</td></tr>';
-        right = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid #eef2f7;padding-bottom:12px;margin-bottom:14px"><div><h2 style="margin:0;font-size:16px;font-weight:800">' + esc(state.report.ten) + '</h2><div style="font-size:13px;color:#64748b;margin-top:4px">' + fmt(rows.length) + ' dòng.</div></div><button class="btn green" id="rpExport">⬇ Xuất Excel</button></div>' +
-          '<div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;background:#f8fafc;border:1px solid #eef2f7;border-radius:8px;padding:12px;margin-bottom:14px"><label class="f" style="width:150px"><span>Từ ngày</span><input type="date" id="rpFrom" value="' + esc(state.rpFrom) + '"></label><label class="f" style="width:150px"><span>Đến ngày</span><input type="date" id="rpTo" value="' + esc(state.rpTo) + '"></label><button class="btn amber" id="rpClear">Bỏ lọc</button><span style="font-size:12px;color:#94a3b8">Lọc theo mốc thời gian của báo cáo.</span></div>' +
-          '<div class="scroll" style="max-height:540px"><table><thead><tr><th>STT</th>' + cols.map(function (c) { return '<th>' + esc(c[1]) + '</th>'; }).join('') + '</tr></thead><tbody>' + body + '</tbody></table></div>';
-        state._rpRows = rows;
+        var rows, cols, isCompute = state.report.source === 'compute';
+        if (state.report.source === 'table') {
+          var tbl = (state.data && state.data.reportTables && state.data.reportTables[state.report.tableKey]) || { columns: [], rows: [] };
+          cols = tbl.columns;
+          var dk = state.report.dateKey;
+          rows = tbl.rows.filter(function (r) { if (!from && !to) return true; if (!dk) return true; var d = dayMs(r[dk]); if (d == null) return false; return (!from || d >= from) && (!to || d <= to); }).map(function (r, i) { return Object.assign({}, r, { stt: i + 1 }); });
+        } else if (isCompute) {
+          var cr = buildComputeReport(state.report.compute);
+          cols = cr.columns; rows = cr.rows.map(function (r, i) { return Object.assign({}, r, { stt: i + 1 }); });
+        } else {
+          var src = state.report.type === 'xe' ? filterXe(emptyF()) : filterNs(emptyF());
+          rows = src.filter(state.report.filter).filter(function (r) { if (!from && !to) return true; var days = (state.report.dateKeys || []).map(function (k) { return dayMs(r[k]); }).filter(function (x) { return x != null; }); if (!days.length) return false; return days.some(function (d) { return (!from || d >= from) && (!to || d <= to); }); }).map(function (r, i) { return Object.assign({}, r, { stt: i + 1 }); });
+          cols = RP_COLS[state.report.type];
+        }
+        // Phân trang 25 dòng/trang.
+        var SIZE = 25, total = rows.length, pages = Math.max(1, Math.ceil(total / SIZE));
+        var pg = Math.min(state.rpPage || 1, pages), start = total ? (pg - 1) * SIZE : 0, end = Math.min(start + SIZE, total);
+        var pageRows = rows.slice(start, end);
+        var body = pageRows.map(function (r) { return '<tr><td>' + r.stt + '</td>' + cols.map(function (c) { if (c[0] === 'canhBao') { return '<td>' + cbCell(r) + '</td>'; } return '<td>' + esc(r[c[0]] || '') + '</td>'; }).join('') + '</tr>'; }).join('') || '<tr><td colspan="' + (cols.length + 1) + '" style="text-align:center;color:#64748b;padding:24px">Không có dữ liệu.</td></tr>';
+        var filterHtml = isCompute ? '' : '<div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;background:#f8fafc;border:1px solid #eef2f7;border-radius:8px;padding:12px;margin-bottom:14px"><label class="f" style="width:150px"><span>Từ ngày</span><input type="date" id="rpFrom" value="' + esc(state.rpFrom) + '"></label><label class="f" style="width:150px"><span>Đến ngày</span><input type="date" id="rpTo" value="' + esc(state.rpTo) + '"></label><button class="btn amber" id="rpClear">Bỏ lọc</button><span style="font-size:12px;color:#94a3b8">Lọc theo mốc thời gian của báo cáo.</span></div>';
+        var pager = '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:#475569"><div style="font-weight:600">' + (total ? 'Hiển thị ' + fmt(start + 1) + '-' + fmt(end) + ' / ' + fmt(total) + ' dòng' : 'Không có dòng') + '</div><div style="display:flex;align-items:center;gap:8px"><button class="pg-btn" data-rppg="-1"' + (pg <= 1 ? ' disabled' : '') + '>‹</button><b>Trang ' + pg + ' / ' + pages + '</b><button class="pg-btn" data-rppg="1"' + (pg >= pages ? ' disabled' : '') + '>›</button></div></div>';
+        right = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid #eef2f7;padding-bottom:12px;margin-bottom:14px"><div><h2 style="margin:0;font-size:16px;font-weight:800">' + esc(state.report.ten) + '</h2><div style="font-size:13px;color:#64748b;margin-top:4px">' + fmt(total) + ' dòng.</div></div><button class="btn green" id="rpExport">⬇ Xuất Excel</button></div>' +
+          filterHtml +
+          '<div class="scroll"><table><thead><tr><th>STT</th>' + cols.map(function (c) { return '<th>' + esc(c[1]) + '</th>'; }).join('') + '</tr></thead><tbody>' + body + '</tbody></table></div>' + pager;
+        state._rpRows = rows; state._rpCols = cols;
       }
       $('page').innerHTML = '<div class="rp-grid"><div class="panel" style="margin-top:0"><div class="panel-body"><h2 style="margin:0 0 8px;font-size:15px;font-weight:700">Nhóm báo cáo</h2>' + list + '</div></div><div class="panel" style="margin-top:0"><div class="panel-body">' + right + '</div></div></div>';
     }
@@ -1465,15 +1523,18 @@
         a.onerror = rej; document.head.appendChild(a);
       });
     }
-    function exportExcel(type, rows) {
+    function exportExcel(type, rows, customCols, fileName) {
       if (!rows || !rows.length) { showMessage('Không có dữ liệu để xuất.', 'warn'); return; }
       ensureLibs().then(function () {
-        var cols = type === 'xe' ? xeColumns : nsColumns;
-        var wb = new ExcelJS.Workbook(); var ws = wb.addWorksheet(type === 'xe' ? 'Phương tiện' : 'Nhân sự');
-        ws.columns = cols.map(function (c) { return { key: c[0], header: c[1], width: Math.min(Math.max(c[1].length + 8, 14), 34) }; });
+        var cols = customCols || (type === 'xe' ? xeColumns : nsColumns);
+        var hasStt = cols.some(function (c) { return c[0] === 'stt'; });
+        if (!hasStt) cols = [['stt', 'STT']].concat(cols);
+        var wb = new ExcelJS.Workbook(); var ws = wb.addWorksheet('Báo cáo');
+        ws.columns = cols.map(function (c) { return { key: c[0], header: c[1], width: Math.min(Math.max(c[1].length + 8, 14), 40) }; });
         rows.forEach(function (r, i) { ws.addRow(Object.assign({}, r, { stt: i + 1 })); });
         ws.views = [{ state: 'frozen', ySplit: 1 }]; ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
-        wb.xlsx.writeBuffer().then(function (buf) { saveAs(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), (type === 'xe' ? 'Bao_cao_phuong_tien' : 'Bao_cao_nhan_su') + '_QLVT_' + new Date().toISOString().slice(0, 10) + '.xlsx'); });
+        var name = fileName || ((type === 'xe' ? 'Bao_cao_phuong_tien' : 'Bao_cao_nhan_su') + '_QLVT_' + new Date().toISOString().slice(0, 10));
+        wb.xlsx.writeBuffer().then(function (buf) { saveAs(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name + '.xlsx'); });
       }).catch(function () { showMessage('Không tải được thư viện xuất Excel.', 'error'); });
     }
 
@@ -1485,21 +1546,22 @@
       var t = e.target;
       if (t.matches('select[data-scr],input[data-scr]')) { state.filters[t.dataset.scr][t.dataset.key] = t.value; renderPage(); }
       else if (t.matches('select[data-size]')) { var s = t.dataset.size; state.tblSize[s] = Number(t.value); state.tblPage[s] = 1; renderPage(); }
-      else if (t.id === 'rpFrom') { state.rpFrom = t.value; renderBaoCao(); }
-      else if (t.id === 'rpTo') { state.rpTo = t.value; renderBaoCao(); }
+      else if (t.id === 'rpFrom') { state.rpFrom = t.value; state.rpPage = 1; renderBaoCao(); }
+      else if (t.id === 'rpTo') { state.rpTo = t.value; state.rpPage = 1; renderBaoCao(); }
     });
     document.addEventListener('click', function (e) {
-      var t = e.target.closest('[data-page],[data-reset],[data-tt],[data-rp],[data-pg],[data-export],[data-from],#rpExport,#rpClear,#refreshButton');
+      var t = e.target.closest('[data-page],[data-reset],[data-tt],[data-rp],[data-pg],[data-rppg],[data-export],[data-from],#rpExport,#rpClear,#refreshButton');
       if (!t) return;
       if (t.dataset.page) { setPage(t.dataset.page); }
       else if (t.dataset.reset != null) { state.filters[t.dataset.reset] = emptyF(); renderPage(); }
       else if (t.dataset.tt) { state.ttTab = t.dataset.tt; renderTuanThu(); }
-      else if (t.dataset.rp) { state.report = findReport(t.dataset.rp); state.rpFrom = ''; state.rpTo = ''; renderBaoCao(); }
+      else if (t.dataset.rp) { state.report = findReport(t.dataset.rp); state.rpFrom = ''; state.rpTo = ''; state.rpPage = 1; renderBaoCao(); }
       else if (t.dataset.pg) { var s = t.dataset.pg; state.tblPage[s] = Math.max(1, (state.tblPage[s] || 1) + Number(t.dataset.dir)); renderPage(); }
+      else if (t.dataset.rppg != null) { state.rpPage = Math.max(1, (state.rpPage || 1) + Number(t.dataset.rppg)); renderBaoCao(); }
       else if (t.dataset.export) { var type = t.dataset.export; exportExcel(type, type === 'xe' ? filterXe(state.filters.phuongtien) : filterNs(state.filters.nhansu)); }
       else if (t.dataset.from != null) { state.filters[t.dataset.scr].tuNgay = t.dataset.from; state.filters[t.dataset.scr].denNgay = t.dataset.to; renderPage(); }
-      else if (t.id === 'rpExport') { exportExcel(state.report.type, state._rpRows || []); }
-      else if (t.id === 'rpClear') { state.rpFrom = ''; state.rpTo = ''; renderBaoCao(); }
+      else if (t.id === 'rpExport') { exportExcel(state.report.type, state._rpRows || [], (state.report.source === 'table' || state.report.source === 'compute') ? state._rpCols : null, state.report.key + '_' + new Date().toISOString().slice(0, 10)); }
+      else if (t.id === 'rpClear') { state.rpFrom = ''; state.rpTo = ''; state.rpPage = 1; renderBaoCao(); }
       else if (t.id === 'refreshButton') { loadData(); }
     });
     function findReport(key) { var r = null; REPORTS.forEach(function (g) { g.items.forEach(function (it) { if (it.key === key) r = it; }); }); return r; }

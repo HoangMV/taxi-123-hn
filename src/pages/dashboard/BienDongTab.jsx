@@ -57,14 +57,14 @@ const BienDongTab = () => {
       {/* KPI-strip tóm tắt biến động kỳ */}
       <section className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <MetricCard icon={Car} label="Xe vào mới trong kỳ" value={pt.nhap} percent={`Cuối kỳ: ${formatNumber(pt.cuoiKy)} xe`} tone="bg-emerald-50 text-emerald-700" barColor="bg-emerald-500" ratio={null} />
-        <MetricCard icon={ArrowDownRight} label="Xe rời đi trong kỳ" value={pt.xuat} percent={`${pt.tangGiam >= 0 ? '+' : ''}${formatNumber(pt.tangGiam)} so đầu kỳ`} tone="bg-red-50 text-red-700" barColor="bg-red-500" ratio={null} />
+        <MetricCard icon={ArrowDownRight} label="Xe xuất hãng trong kỳ" value={pt.xuat} percent={`${pt.tangGiam >= 0 ? '+' : ''}${formatNumber(pt.tangGiam)} so đầu kỳ`} tone="bg-red-50 text-red-700" barColor="bg-red-500" ratio={null} />
         <MetricCard icon={Users} label="Nhân sự tuyển mới" value={ns.nhap} percent={`Cuối kỳ: ${formatNumber(ns.cuoiKy)} người`} tone="bg-blue-50 text-blue-700" barColor="bg-blue-500" ratio={null} />
         <MetricCard icon={ArrowUpRight} label="Nhân sự nghỉ việc" value={ns.xuat} percent={`${ns.tangGiam >= 0 ? '+' : ''}${formatNumber(ns.tangGiam)} so đầu kỳ`} tone="bg-amber-50 text-amber-700" barColor="bg-amber-500" ratio={null} />
       </section>
 
       <section className="mt-4 grid gap-4 xl:grid-cols-3">
         <SectionCard title="🚗 Biến động phương tiện">
-          <ComboChart series={bienDong.phuongTien.series} labelNhap="Xe nhập mới" labelXuat="Xe xuất hãng" />
+          <ComboChart series={bienDong.phuongTien.series} labelNhap="Xe vào mới" labelXuat="Xe xuất hãng" />
         </SectionCard>
         <SectionCard title="👥 Biến động nhân sự">
           <ComboChart series={bienDong.nhanSu.series} labelNhap="Tuyển mới" labelXuat="Nghỉ việc" />

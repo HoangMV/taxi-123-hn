@@ -162,6 +162,7 @@ const DASHBOARD_TABLES = [
   'DM_DOIXE',
   'DM_NGANHANG',
   'XE',
+  'XE_XUAT_HANG',
   'XE_PHUHIEU',
   'XE_DANGKIEM',
   'XE_BAOHIEM',
@@ -170,7 +171,10 @@ const DASHBOARD_TABLES = [
   'XE_SO_KM_THANG',
   'KIEMTRA_XE_TAXI',
   'KIEMTRA_XE_TAXI_CHITIET',
-  'PHAN_ANH_KHIEU_NAI'
+  'PHAN_ANH_KHIEU_NAI',
+  'LAIXE_KHENTHUONG_KYLUAT',
+  'LAIXE_VIPHAM_ATGT',
+  'LAIXE_VIPHAM_NOIBO'
 ];
 
 function chunkArray(items, size) {
@@ -480,6 +484,96 @@ function buildHoSoSummary(tables, activeXeIds, activeNsIds, now = new Date()) {
   };
 }
 
+/* ============================================================
+ * BÁO CÁO CHI TIẾT — dựng sẵn các danh sách báo cáo (port từ buildBaoCao_ của .gs).
+ * Trả về map key -> { columns:[...], rows:[{...}], dateKey } để frontend hiển thị + xuất.
+ * ============================================================ */
+function buildReportDatasets(tables, nhanSuReport, xeReport) {
+  // Map nhanh id -> thông tin hiển thị.
+  const nsInfo = new Map();
+  nhanSuReport.forEach((r) => nsInfo.set(r.idNhanSu, { ten: r.hoTen, doiXe: r.doiXe, chucDanh: r.chucDanh }));
+  const xeInfo = new Map();
+  xeReport.forEach((r) => xeInfo.set(r.idXe, { ten: r.bienSo, doiXe: r.doiXe }));
+
+  const S = (v) => cleanValue(v);
+  const D = (v) => formatDashboardDate(v);
+
+  // Báo cáo danh sách: join bảng con về master theo refCol, lấy các cột chỉ định.
+  // masterMap: Map id -> {ten, doiXe, chucDanh?}; cols: [{col, label, date?}]
+  function danhSach(sheet, refCol, masterMap, tenLabel, extraLabel, cols) {
+    const rows = Array.isArray(tables[sheet]) ? tables[sheet] : [];
+    const out = [];
+    rows.forEach((row) => {
+      const ref = cleanValue(row[refCol]);
+      if (!ref) return;
+      const m = masterMap.get(ref);
+      if (!m) return;
+      const rec = { ten: m.ten, phu: m.doiXe || m.chucDanh || '' };
+      cols.forEach((c) => { rec[c.col] = c.date ? D(row[c.col]) : S(row[c.col]); });
+      out.push(rec);
+    });
+    const columns = [['ten', tenLabel], ['phu', extraLabel]].concat(cols.map((c) => [c.col, c.label]));
+    return { columns, rows: out };
+  }
+
+  // Báo cáo hết hạn: chỉ lấy bản ghi quá hạn hoặc sắp hết (theo expiryCol), sort gần nhất.
+  function hetHan(sheet, refCol, expiryCol, masterMap, tenLabel, extraLabel, extraCols) {
+    const rows = Array.isArray(tables[sheet]) ? tables[sheet] : [];
+    const out = [];
+    rows.forEach((row) => {
+      const ref = cleanValue(row[refCol]);
+      if (!ref) return;
+      const m = masterMap.get(ref);
+      if (!m) return;
+      const wl = getWarningLevel(row[expiryCol]);
+      if (wl.level !== 'do' && wl.level !== 'vang') return;
+      const rec = { ten: m.ten, phu: m.doiXe || '', ngayHetHan: D(row[expiryCol]), conLai: wl.days == null ? '' : (wl.days < 0 ? `Quá ${-wl.days} ngày` : `${wl.days} ngày`), _days: wl.days == null ? 99999 : wl.days };
+      (extraCols || []).forEach((c) => { rec[c.col] = S(row[c.col]); });
+      out.push(rec);
+    });
+    out.sort((a, b) => a._days - b._days);
+    out.forEach((r) => delete r._days);
+    const columns = [['ten', tenLabel], ['phu', extraLabel]]
+      .concat((extraCols || []).map((c) => [c.col, c.label]))
+      .concat([['ngayHetHan', 'Ngày hết hạn'], ['conLai', 'Còn lại']]);
+    return { columns, rows: out };
+  }
+
+  return {
+    // Hồ sơ pháp lý — xe
+    het_taximet: hetHan('XE_TAXIMET', 'Ref_Xe', 'NgayHetHanKiemDinh', xeInfo, 'Biển số', 'Đội xe', [{ col: 'SoThietBi', label: 'Số thiết bị' }]),
+    xe_thechap: danhSach('XE_THECHAP_NGANHANG', 'Ref_Xe', xeInfo, 'Biển số', 'Đội xe', [
+      { col: 'SoHopDongTheChap', label: 'Số HĐ thế chấp' }, { col: 'NgayTheChap', label: 'Ngày thế chấp', date: true },
+      { col: 'NgayHetHan', label: 'Ngày hết hạn', date: true }, { col: 'TrangThaiTheChap', label: 'Trạng thái' }
+    ]),
+    xe_thoathuan_tnds: danhSach('XE_THOATHUAN_DANSU', 'Ref_Xe', xeInfo, 'Biển số', 'Đội xe', [
+      { col: 'SoThoaThuan', label: 'Số thỏa thuận' }, { col: 'NgayKy', label: 'Ngày ký', date: true },
+      { col: 'NgayHetHan', label: 'Ngày hết hạn', date: true }, { col: 'TrangThaiThoaThuan', label: 'Trạng thái' }
+    ]),
+    // Hồ sơ pháp lý — nhân sự
+    ns_sap_het_skhoe: hetHan('NHANSU_SUCKHOE', 'Ref_NhanSu', 'NgayHetHan', nsInfo, 'Họ và tên', 'Đội xe', [{ col: 'LoaiKhamSucKhoe', label: 'Loại khám' }]),
+    ns_sap_het_daotao: hetHan('LAIXE_DAOTAO', 'Ref_NhanSu', 'NgayHetHan', nsInfo, 'Họ và tên', 'Đội xe', [{ col: 'NoiDungDaoTao', label: 'Nội dung' }]),
+    ns_sap_het_hdld: hetHan('NHANSU_HOPDONG_LAODONG', 'Ref_NhanSu', 'NgayKetThuc', nsInfo, 'Họ và tên', 'Đội xe', [{ col: 'SoHopDong', label: 'Số HĐ' }, { col: 'LoaiHopDong', label: 'Loại HĐ' }]),
+    // Khen thưởng / vi phạm / phản ánh
+    ns_khenthuong_kyluat: danhSach('LAIXE_KHENTHUONG_KYLUAT', 'Ref_NhanSu', nsInfo, 'Họ và tên', 'Đội xe', [
+      { col: 'Loai', label: 'Loại' }, { col: 'NgayApDung', label: 'Ngày áp dụng', date: true }, { col: 'NoiDung', label: 'Nội dung' },
+      { col: 'HinhThuc', label: 'Hình thức' }, { col: 'MucDo', label: 'Mức độ' }, { col: 'TrangThai', label: 'Trạng thái' }
+    ]),
+    lx_vipham_atgt: danhSach('LAIXE_VIPHAM_ATGT', 'Ref_NhanSu', nsInfo, 'Họ và tên', 'Đội xe', [
+      { col: 'NgayViPham', label: 'Ngày vi phạm', date: true }, { col: 'HanhViViPham', label: 'Hành vi' }, { col: 'SoBienBan', label: 'Số biên bản' },
+      { col: 'HinhThucXuLy', label: 'Hình thức xử lý' }, { col: 'SoTienPhat', label: 'Tiền phạt' }, { col: 'TrangThaiXuLy', label: 'Trạng thái' }
+    ]),
+    lx_vipham_noibo: danhSach('LAIXE_VIPHAM_NOIBO', 'Ref_NhanSu', nsInfo, 'Họ và tên', 'Đội xe', [
+      { col: 'NgayViPham', label: 'Ngày vi phạm', date: true }, { col: 'NoiDungViPham', label: 'Nội dung' }, { col: 'MucDoViPham', label: 'Mức độ' },
+      { col: 'HinhThucXuLy', label: 'Hình thức xử lý' }, { col: 'TrangThaiXuLy', label: 'Trạng thái' }
+    ]),
+    phan_anh: danhSach('PHAN_ANH_KHIEU_NAI', 'Ref_NhanSuBiPhanAnh', nsInfo, 'NS bị phản ánh', 'Đội xe', [
+      { col: 'SoVuViec', label: 'Số vụ việc' }, { col: 'NgayPhanAnh', label: 'Ngày phản ánh', date: true }, { col: 'NoiDungPhanAnh', label: 'Nội dung' },
+      { col: 'MucDo', label: 'Mức độ' }, { col: 'TrangThaiXuLy', label: 'Trạng thái xử lý' }
+    ])
+  };
+}
+
 function buildDashboardReport(tables, missingSources) {
   // Bỏ dòng rỗng (không có khóa) để tổng khớp bản .gs.
   const nhanSuRows = (tables.NHANSU || []).filter((row) => cleanValue(row.ID_NhanSu));
@@ -507,6 +601,7 @@ function buildDashboardReport(tables, missingSources) {
   const taximetByXe = groupRowsBy(tables.XE_TAXIMET, 'Ref_Xe');
   const theChapByXe = groupRowsBy(tables.XE_THECHAP_NGANHANG, 'Ref_Xe');
   const kmByXe = groupRowsBy(tables.XE_SO_KM_THANG, 'Ref_Xe');
+  const xuatHangByXe = groupRowsBy(tables.XE_XUAT_HANG, 'Ref_Xe');
 
   const warnings = [];
   const nhanSuReport = nhanSuRows.map((nhanSu, index) => {
@@ -595,6 +690,7 @@ function buildDashboardReport(tables, missingSources) {
     const taximet = pickCurrentRow(taximetByXe.get(xeId), { dateFields: ['NgayHetHanKiemDinh', 'NgayKiemDinh'] });
     const theChap = pickCurrentRow(theChapByXe.get(xeId), { statusFields: ['TrangThaiTheChap', 'TrangThaiKhoanVay'], dateFields: ['NgayHetHan', 'NgayTheChap'] });
     const kmRow = pickCurrentRow(kmByXe.get(xeId), { dateFields: ['Nam', 'Thang', 'NgayTao'] });
+    const xuatHang = pickCurrentRow(xuatHangByXe.get(xeId), { dateFields: ['NgayXuatHang'] });
     const donViChuQuan = donViById.get(cleanValue(xe.Ref_DonViChuQuan));
     const donViQuanLy = donViById.get(cleanValue(xe.Ref_DonViQuanLyHienTai));
     const doiXeRef = cleanValue(xe.Ref_DoiXe) || cleanValue(laiXe?.Ref_DoiXe);
@@ -647,6 +743,8 @@ function buildDashboardReport(tables, missingSources) {
       trangThaiKhoanVay: cleanValue(theChap?.TrangThaiKhoanVay),
       kmLuyKe: cleanValue(kmRow?.LuyKeKmXeChay) || cleanValue(kmRow?.SoKmHoatDong),
       soChuyenThang: cleanValue(kmRow?.SoChuyenTrongThang),
+      daXuatHang: xuatHang ? 'Có' : '',
+      ngayXuatHang: formatDashboardDate(xuatHang?.NgayXuatHang),
       canhBao: buildWarningNote(warningItems),
       warningLevel: warningItems.some((item) => item.level === 'do') ? 'do' : warningItems.some((item) => item.level === 'vang') ? 'vang' : warningItems.some((item) => item.level === 'xam') ? 'xam' : 'xanh',
       warningItems: pickActiveWarnings(warningItems)
@@ -663,6 +761,7 @@ function buildDashboardReport(tables, missingSources) {
   const activeXeIds = new Set(activeXe.map((item) => item.idXe).filter(Boolean));
   const activeNsIds = new Set(activeNhanSu.map((item) => item.idNhanSu).filter(Boolean));
   const hoSoSummary = buildHoSoSummary(tables, activeXeIds, activeNsIds);
+  const reportTables = buildReportDatasets(tables, nhanSuReport, xeReport);
 
   return {
     row: {},
@@ -703,6 +802,7 @@ function buildDashboardReport(tables, missingSources) {
       xe: xeReport
     },
     hoSoSummary,
+    reportTables,
     warnings,
     missingSources,
     generatedAt: new Date().toISOString(),
