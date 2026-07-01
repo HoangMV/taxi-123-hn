@@ -1,9 +1,11 @@
 import React from 'react';
 import {
+  BarController,
   BarElement,
   CategoryScale,
   Chart as ChartJS,
   Legend,
+  LineController,
   LineElement,
   LinearScale,
   PointElement,
@@ -11,7 +13,9 @@ import {
 } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Legend, Tooltip);
+// Chart mixed (bar + line) BẮT BUỘC đăng ký controller, nếu không production build
+// (tree-shaken) sẽ crash "bar is not a registered controller" → trang trắng.
+ChartJS.register(BarController, LineController, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Legend, Tooltip);
 ChartJS.defaults.font.family = '"Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Arial, sans-serif';
 ChartJS.defaults.color = '#475569';
 

@@ -232,7 +232,7 @@ button,input,select{font:inherit}
               <h3>🚗 Phương tiện <span class="tag" id="pt_tong">0</span></h3>
               <div class="kpi-main"><div class="n c-ink" id="pt_dhd">0</div><div class="l">đang hoạt động · <b id="pt_dhd_p">0%</b></div></div>
               <div class="kpi-sub">
-                <div class="kpi-box"><div class="v c-amber" id="pt_xh">0</div><div class="k">Xuất hàng</div><div class="p c-amber" id="pt_xh_p">0%</div></div>
+                <div class="kpi-box"><div class="v c-amber" id="pt_xh">0</div><div class="k">Xuất hãng</div><div class="p c-amber" id="pt_xh_p">0%</div></div>
                 <div class="kpi-box"><div class="v c-red" id="pt_ng">0</div><div class="k">Ngừng hoạt động</div><div class="p c-red" id="pt_ng_p">0%</div></div>
                 <div class="kpi-box"><div class="v c-blue" id="pt_cpc">0</div><div class="k">Chưa phân công</div><div class="p c-blue" id="pt_cpc_p">0%</div></div>
                 <div class="kpi-box"><div class="v c-ink" id="pt_nlx">0</div><div class="k">Có nhiều lái xe</div><div class="p c-ink" id="pt_nlx_p">0%</div></div>
@@ -283,7 +283,7 @@ button,input,select{font:inherit}
             <h3>📈 Biến động tháng này <span class="tag" id="bd_ky">—</span></h3>
             <div class="kpi-strip" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
               <div class="kpi-c k-green"><div class="v c-green" id="bd_xenhap">0</div><div class="k">Xe vào mới</div></div>
-              <div class="kpi-c k-red"><div class="v c-red" id="bd_xexuat">0</div><div class="k">Xe xuất hàng</div></div>
+              <div class="kpi-c k-red"><div class="v c-red" id="bd_xexuat">0</div><div class="k">Xe xuất hãng</div></div>
               <div class="kpi-c k-green"><div class="v c-green" id="bd_nstuyen">0</div><div class="k">Nhân sự tuyển mới</div></div>
               <div class="kpi-c k-red"><div class="v c-red" id="bd_nsnghi">0</div><div class="k">Nhân sự nghỉ việc</div></div>
             </div>
@@ -308,7 +308,7 @@ button,input,select{font:inherit}
           <div class="kpi-strip">
             <div class="kpi-c k-ink"><div class="v c-ink" id="m2_tong">0</div><div class="k">Tổng số xe</div></div>
             <div class="kpi-c k-green"><div class="v c-green" id="m2_dhd">0</div><div class="k">Đang hoạt động</div><div class="p c-green" id="m2_dhd_p">0%</div></div>
-            <div class="kpi-c k-amber"><div class="v c-amber" id="m2_xh">0</div><div class="k">Xuất hàng</div><div class="p c-amber" id="m2_xh_p">0%</div></div>
+            <div class="kpi-c k-amber"><div class="v c-amber" id="m2_xh">0</div><div class="k">Xuất hãng</div><div class="p c-amber" id="m2_xh_p">0%</div></div>
             <div class="kpi-c k-red"><div class="v c-red" id="m2_ng">0</div><div class="k">Ngừng hoạt động</div><div class="p c-red" id="m2_ng_p">0%</div></div>
             <div class="kpi-c k-blue"><div class="v c-blue" id="m2_cpc">0</div><div class="k">Chưa phân công</div><div class="p c-blue" id="m2_cpc_p">0%</div></div>
             <div class="kpi-c k-ink"><div class="v c-ink" id="m2_nlx">0</div><div class="k">Có nhiều lái xe</div><div class="p c-ink" id="m2_nlx_p">0%</div></div>
@@ -325,7 +325,7 @@ button,input,select{font:inherit}
             <div class="card"><h3>🚚 Phân bố theo đội xe</h3><div class="chart-box" style="height:360px"><canvas id="m2_doi"></canvas></div></div>
           </div>
           <div class="card" style="margin-top:14px"><h3>🏢 Thống kê theo đơn vị</h3>
-            <div style="overflow:auto"><table class="tt-table"><thead><tr><th>Đơn vị</th><th class="num">Tổng số xe</th><th class="num">Đang hoạt động</th><th class="num">Xuất hàng</th><th class="num">Ngừng HĐ</th><th class="num">Chưa phân công</th></tr></thead><tbody id="m2_tkdv"></tbody></table></div>
+            <div style="overflow:auto"><table class="tt-table"><thead><tr><th>Đơn vị</th><th class="num">Tổng số xe</th><th class="num">Đang hoạt động</th><th class="num">Xuất hãng</th><th class="num">Ngừng HĐ</th><th class="num">Chưa phân công</th></tr></thead><tbody id="m2_tkdv"></tbody></table></div>
           </div>
           <div class="grid g2" style="margin-top:14px">
             <div class="card"><h3>🚀 Top 10 xe nhiều chuyến nhất</h3><div class="chart-box" style="height:320px"><canvas id="m2_topchuyen"></canvas></div></div>
@@ -688,10 +688,10 @@ function renderBienDong(d){
   $('bdLoading').style.display='none'; $('bdBody').style.display='block';
   $('hCapNhat').textContent='Cập nhật: '+(d.capNhat||'');
   $('bdNote').textContent='Phân tích '+d.soThang+' tháng gần nhất. Cột = phát sinh trong tháng; đường = số luỹ kế cuối kỳ.';
-  comboChart('bd_pt', d.phuongTien.series, 'Xe nhập mới', 'Xe xuất hàng');
+  comboChart('bd_pt', d.phuongTien.series, 'Xe nhập mới', 'Xe xuất hãng');
   comboChart('bd_ns', d.nhanSu.series, 'Tuyển mới', 'Nghỉ việc');
   comboChart('bd_hs', d.hoSo.series, 'Hồ sơ mới', 'Hồ sơ hết hạn');
-  $('bd_t_pt').innerHTML=tongTable(d.phuongTien.tong,'Nhập mới','Xuất hàng');
+  $('bd_t_pt').innerHTML=tongTable(d.phuongTien.tong,'Nhập mới','Xuất hãng');
   $('bd_t_ns').innerHTML=tongTable(d.nhanSu.tong,'Tuyển mới','Nghỉ việc');
   $('bd_t_hs').innerHTML=tongTable(d.hoSo.tong,'Hồ sơ mới','Hồ sơ hết hạn');
 }

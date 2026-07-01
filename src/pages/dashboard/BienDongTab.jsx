@@ -64,7 +64,7 @@ const BienDongTab = () => {
 
       <section className="mt-4 grid gap-4 xl:grid-cols-3">
         <SectionCard title="🚗 Biến động phương tiện">
-          <ComboChart series={bienDong.phuongTien.series} labelNhap="Xe nhập mới" labelXuat="Xe xuất hàng" />
+          <ComboChart series={bienDong.phuongTien.series} labelNhap="Xe nhập mới" labelXuat="Xe xuất hãng" />
         </SectionCard>
         <SectionCard title="👥 Biến động nhân sự">
           <ComboChart series={bienDong.nhanSu.series} labelNhap="Tuyển mới" labelXuat="Nghỉ việc" />

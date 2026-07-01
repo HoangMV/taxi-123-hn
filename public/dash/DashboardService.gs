@@ -414,7 +414,7 @@ function buildPhuongTien_(bl) {
     theoNam: theoNam,
     tinhTrang: [
       { nhan: 'Đang hoạt động', soLuong: dhd.length }, { nhan: 'Ngừng hoạt động', soLuong: ngung },
-      { nhan: 'Xuất hàng', soLuong: xuatHang }
+      { nhan: 'Xuất hãng', soLuong: xuatHang }
     ],
     phanBoDoi: phanBoDoi,
     thongKeDonVi: thongKeDonVi,
@@ -630,7 +630,7 @@ function danhMucBaoCao_() {
   return [
     { nhom: 'Báo cáo phương tiện', items: [
       { key: 'xe_dang_hoatdong', ten: 'Danh sách xe đang hoạt động' },
-      { key: 'xe_xuat_hang', ten: 'Danh sách xe xuất hàng' },
+      { key: 'xe_xuat_hang', ten: 'Danh sách xe xuất hãng' },
       { key: 'xe_ngung', ten: 'Danh sách xe ngừng hoạt động' },
       { key: 'xe_chua_laixe', ten: 'Danh sách xe chưa có lái xe' }
     ]},
@@ -806,7 +806,7 @@ function buildBaoCao_(key, bl) {
       if (!trongKhoangNgay_(iN >= 0 ? r[iN] : '', tuHan, denHan)) return;
       rows.push([xe[id].bien, xe[id].nhan, formatDateVnSafe_(iN >= 0 ? r[iN] : '')]);
     });
-    return baoCao_('Danh sách xe xuất hàng', ['Biển số', 'Nhãn hiệu', 'Ngày xuất hàng'], rows);
+    return baoCao_('Danh sách xe xuất hãng', ['Biển số', 'Nhãn hiệu', 'Ngày xuất hãng'], rows);
   }
   if (key === 'xe_chua_laixe') {
     const pc = countActiveByRef_(CFG_PHANCONG_XE.sheet, CFG_PHANCONG_XE.refXe, CFG_PHANCONG_XE.trangThai, CFG_PHANCONG_XE.TT_ACTIVE);

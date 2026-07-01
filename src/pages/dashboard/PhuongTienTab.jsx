@@ -132,7 +132,7 @@ const PhuongTienTab = () => {
         <MetricCard icon={Car} label="Tổng số xe" value={kpi.tong} percent="Theo bộ lọc" tone="bg-indigo-50 text-indigo-700" barColor="bg-indigo-500" ratio={1} />
         <MetricCard icon={Gauge} label="Đang hoạt động" value={kpi.dangHoatDong} percent={`${kpi.tlDangHoatDong}%`} tone="bg-cyan-50 text-cyan-700" barColor="bg-cyan-500" ratio={kpi.tong ? kpi.dangHoatDong / kpi.tong : 0} onClick={() => setFilter('nhomTrangThaiXe', filters.nhomTrangThaiXe === 'hoat-dong' ? '' : 'hoat-dong')} active={filters.nhomTrangThaiXe === 'hoat-dong'} />
         <MetricCard icon={AlertTriangle} label="Ngừng hoạt động" value={kpi.ngung} percent={`${kpi.tlNgung}%`} tone="bg-red-50 text-red-700" barColor="bg-red-500" ratio={kpi.tong ? kpi.ngung / kpi.tong : 0} onClick={() => setFilter('nhomTrangThaiXe', filters.nhomTrangThaiXe === 'ngung' ? '' : 'ngung')} active={filters.nhomTrangThaiXe === 'ngung'} />
-        <MetricCard icon={Stamp} label="Xuất hàng" value={kpi.xuatHang} percent={`${kpi.tlXuatHang}%`} tone="bg-amber-50 text-amber-700" barColor="bg-amber-500" ratio={kpi.tong ? kpi.xuatHang / kpi.tong : 0} />
+        <MetricCard icon={Stamp} label="Xuất hãng" value={kpi.xuatHang} percent={`${kpi.tlXuatHang}%`} tone="bg-amber-50 text-amber-700" barColor="bg-amber-500" ratio={kpi.tong ? kpi.xuatHang / kpi.tong : 0} />
         <MetricCard icon={ShieldCheck} label="Chưa phân công lái xe" value={kpi.chuaPhanCong} percent={`${kpi.tlChuaPhanCong}%`} tone="bg-blue-50 text-blue-700" barColor="bg-blue-500" ratio={kpi.tong ? kpi.chuaPhanCong / kpi.tong : 0} />
         <MetricCard icon={Car} label="Có nhiều lái xe" value={kpi.nhieuLaiXe} percent={`${kpi.tlNhieuLaiXe}%`} tone="bg-slate-100 text-slate-600" barColor="bg-slate-400" ratio={kpi.tong ? kpi.nhieuLaiXe / kpi.tong : 0} />
       </section>
@@ -173,7 +173,7 @@ const PhuongTienTab = () => {
                 <th className="px-3 py-2.5 font-bold">Đơn vị</th>
                 <th className="px-3 py-2.5 text-center font-bold">Tổng xe</th>
                 <th className="px-3 py-2.5 text-center font-bold">Đang HĐ</th>
-                <th className="px-3 py-2.5 text-center font-bold">Xuất hàng</th>
+                <th className="px-3 py-2.5 text-center font-bold">Xuất hãng</th>
                 <th className="px-3 py-2.5 text-center font-bold">Ngừng HĐ</th>
                 <th className="px-3 py-2.5 text-center font-bold">Chưa phân công</th>
               </tr>

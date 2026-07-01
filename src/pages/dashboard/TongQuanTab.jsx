@@ -122,7 +122,7 @@ const TongQuanTab = () => {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[
             { label: 'Xe vào mới', value: bienDong.thangNay.xeNhap, icon: ArrowUpRight, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { label: 'Xe xuất hàng', value: bienDong.thangNay.xeXuat, icon: ArrowDownRight, color: 'text-red-600', bg: 'bg-red-50' },
+            { label: 'Xe xuất hãng', value: bienDong.thangNay.xeXuat, icon: ArrowDownRight, color: 'text-red-600', bg: 'bg-red-50' },
             { label: 'Nhân sự tuyển mới', value: bienDong.thangNay.nsTuyen, icon: ArrowUpRight, color: 'text-emerald-600', bg: 'bg-emerald-50' },
             { label: 'Nhân sự nghỉ việc', value: bienDong.thangNay.nsNghi, icon: ArrowDownRight, color: 'text-red-600', bg: 'bg-red-50' }
           ].map((item) => {
