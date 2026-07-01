@@ -11,6 +11,12 @@ const config = {
   ROUTES: {
     HOME: '/',
     DASHBOARD: '/dashboard',
+    DASHBOARD_TONG_QUAN: '/dashboard/tong-quan',
+    DASHBOARD_PHUONG_TIEN: '/dashboard/phuong-tien',
+    DASHBOARD_NHAN_SU: '/dashboard/nhan-su',
+    DASHBOARD_TUAN_THU: '/dashboard/tuan-thu',
+    DASHBOARD_BIEN_DONG: '/dashboard/bien-dong',
+    DASHBOARD_BAO_CAO: '/dashboard/bao-cao',
     MENU: '/menu',
     THONG_KE_PHU_HIEU_REACT: '/thong-ke-phu-hieu-don-vi',
     DE_NGHI_CAP_PHU_HIEU_XE_REACT: '/de-nghi-cap-phu-hieu-xe',

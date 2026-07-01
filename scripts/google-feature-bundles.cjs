@@ -379,9 +379,111 @@ function buildDoiXeWarning(doiXe, fallback = '', legacyMap = null) {
   };
 }
 
+// 10 bảng hồ sơ pháp lý — port từ HOSO_PHUONG_TIEN / HOSO_NHAN_SU của bản .gs.
+// scope: đối tượng cần có hồ sơ ('xe' = xe đang hoạt động, 'ns' = nhân sự đang làm).
+const HOSO_TABLES = [
+  { sheet: 'XE_DANGKIEM', nhom: 'Đăng kiểm', ref: 'Ref_Xe', expiry: 'NgayHetHan', scope: 'xe' },
+  { sheet: 'XE_PHUHIEU', nhom: 'Phù hiệu', ref: 'Ref_Xe', expiry: 'NgayHetHan', scope: 'xe' },
+  { sheet: 'XE_BAOHIEM', nhom: 'Bảo hiểm', ref: 'Ref_Xe', expiry: 'NgayHetHan', scope: 'xe' },
+  { sheet: 'XE_TAXIMET', nhom: 'Taximet', ref: 'Ref_Xe', expiry: 'NgayHetHanKiemDinh', scope: 'xe' },
+  { sheet: 'XE_THECHAP_NGANHANG', nhom: 'Thế chấp', ref: 'Ref_Xe', expiry: 'NgayHetHan', status: 'TrangThaiTheChap', active: 'Đang thế chấp', scope: 'xe' },
+  { sheet: 'LAIXE_GPLX', nhom: 'GPLX', ref: 'Ref_NhanSu', expiry: 'NgayHetHan', scope: 'ns' },
+  { sheet: 'NHANSU_SUCKHOE', nhom: 'Khám sức khỏe', ref: 'Ref_NhanSu', expiry: 'NgayHetHan', scope: 'ns' },
+  { sheet: 'NHANSU_HOPDONG_LAODONG', nhom: 'HĐLĐ', ref: 'Ref_NhanSu', expiry: 'NgayKetThuc', scope: 'ns' },
+  { sheet: 'NHANSU_BHXH', nhom: 'BHXH', ref: 'Ref_NhanSu', expiry: 'NgayKetThucThamGia', status: 'TrangThaiBHXH', active: 'Đang tham gia', scope: 'ns' },
+  { sheet: 'LAIXE_DAOTAO', nhom: 'Đào tạo', ref: 'Ref_NhanSu', expiry: 'NgayHetHan', scope: 'ns' }
+];
+
+// Tổng hợp hồ sơ pháp lý: đếm TOÀN BỘ dòng của 10 bảng (giống .gs), phân loại
+// còn hạn / sắp hết / quá hạn theo ngày; thiếu = đối tượng active không có bản ghi;
+// tuân thủ tính theo ĐỐI TƯỢNG (xe/người có ≥1 hồ sơ còn hiệu lực).
+function buildHoSoSummary(tables, activeXeIds, activeNsIds, now = new Date()) {
+  const monthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  const months = [];
+  for (let i = 5; i >= 0; i -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: monthKey(d), label: `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`, y: d.getFullYear(), m: d.getMonth() });
+  }
+  const bienDongMoi = {};
+  const bienDongHet = {};
+  months.forEach((mo) => { bienDongMoi[mo.key] = 0; bienDongHet[mo.key] = 0; });
+  const allCap = []; // mọi ngày cấp hồ sơ (để tính luỹ kế cuối kỳ)
+  const allHet = []; // mọi ngày hết hạn hồ sơ
+
+  const nhom = [];
+  let tong = 0; let conHan = 0; let sapHet = 0; let quaHan = 0; let thieuHoSo = 0;
+
+  HOSO_TABLES.forEach((h) => {
+    const rows = Array.isArray(tables[h.sheet]) ? tables[h.sheet] : [];
+    const activeSet = h.scope === 'xe' ? activeXeIds : activeNsIds;
+    const soCanCo = activeSet.size;
+    let g_tong = 0; let g_con = 0; let g_sap = 0; let g_qua = 0;
+    const coHoSo = new Set(); // đối tượng có ≥1 bản ghi
+    const dtConHan = new Set(); // đối tượng có ≥1 hồ sơ còn hiệu lực
+
+    rows.forEach((row) => {
+      const ref = cleanValue(row[h.ref]);
+      if (!ref) return;
+      coHoSo.add(ref);
+      g_tong += 1; tong += 1;
+      const expRaw = row[h.expiry];
+      const expDate = parseDateValue(expRaw);
+      let level;
+      if (expDate) {
+        level = getWarningLevel(expRaw, now).level; // do | vang | xanh
+        // biến động hồ sơ: cấp mới (NgayCap) & hết hạn theo tháng
+        const capDate = parseDateValue(row.NgayCap);
+        if (capDate) { allCap.push(capDate.getTime()); const k = monthKey(capDate); if (k in bienDongMoi) bienDongMoi[k] += 1; }
+        allHet.push(expDate.getTime());
+        const k2 = monthKey(expDate); if (k2 in bienDongHet) bienDongHet[k2] += 1;
+      } else if (h.active && cleanValue(row[h.status]) === h.active) {
+        level = 'xanh'; // không có ngày nhưng trạng thái active (vd BHXH đang tham gia)
+      } else {
+        level = 'xam';
+      }
+      // Còn hiệu lực = mọi hồ sơ không quá hạn và không sắp hết (gồm cả bản ghi
+      // thiếu ngày nhưng đang active) — khớp cách bản .gs hiển thị "còn hiệu lực".
+      if (level === 'do') { g_qua += 1; quaHan += 1; }
+      else if (level === 'vang') { g_sap += 1; sapHet += 1; dtConHan.add(ref); }
+      else { g_con += 1; conHan += 1; if (level === 'xanh') dtConHan.add(ref); }
+    });
+
+    let g_thieu = 0;
+    activeSet.forEach((id) => { if (!coHoSo.has(id)) g_thieu += 1; });
+    thieuHoSo += g_thieu;
+    let g_dtConHan = 0;
+    dtConHan.forEach((id) => { if (activeSet.has(id)) g_dtConHan += 1; });
+
+    nhom.push({
+      nhom: h.nhom, scope: h.scope, tong: g_tong, conHan: g_con, sapHet: g_sap, quaHan: g_qua,
+      thieu: g_thieu, canCo: soCanCo, dtConHan: g_dtConHan,
+      tyLe: soCanCo ? Math.round((g_dtConHan / soCanCo) * 1000) / 10 : 0
+    });
+  });
+
+  // Luỹ kế cuối kỳ = số hồ sơ đã cấp trước mốc − số đã hết hạn trước mốc.
+  const demTruoc = (arr, moc) => arr.reduce((n, t) => (t <= moc ? n + 1 : n), 0);
+  const bienDongSeries = months.map((mo) => {
+    const end = new Date(mo.y, mo.m + 1, 0, 23, 59, 59).getTime();
+    return {
+      ky: mo.label,
+      moi: bienDongMoi[mo.key],
+      het: bienDongHet[mo.key],
+      cuoiKy: demTruoc(allCap, end) - demTruoc(allHet, end)
+    };
+  });
+
+  return {
+    tong, conHan, sapHet, quaHan, thieuHoSo,
+    nhom,
+    bienDong: bienDongSeries
+  };
+}
+
 function buildDashboardReport(tables, missingSources) {
-  const nhanSuRows = tables.NHANSU || [];
-  const xeRows = tables.XE || [];
+  // Bỏ dòng rỗng (không có khóa) để tổng khớp bản .gs.
+  const nhanSuRows = (tables.NHANSU || []).filter((row) => cleanValue(row.ID_NhanSu));
+  const xeRows = (tables.XE || []).filter((row) => cleanValue(row.ID_Xe));
   const donViById = buildLookupMap(tables.DONVI, ['ID_DonVi', 'MaDonVi', 'TenVietTat', 'TenDonVi']);
   const boPhanById = buildLookupMap(tables.DM_BOPHAN, ['ID_BoPhan', 'MaBoPhan', 'TenBoPhan']);
   const chucDanhById = buildLookupMap(tables.DM_CHUCDANH, ['ID_ChucDanh', 'TenChucDanh']);
@@ -440,6 +542,10 @@ function buildDashboardReport(tables, missingSources) {
       hoTen: getDisplayName(nhanSu, ['HoTen', 'Display'], nhanSuId),
       cccd: cleanValue(nhanSu.CCCD),
       ngaySinh: formatDashboardDate(nhanSu.NgaySinh),
+      ngayNhanViec: formatDashboardDate(nhanSu.NgayNhanViec),
+      ngayNghiViec: formatDashboardDate(nhanSu.NgayNghiViec),
+      gioiTinh: cleanValue(nhanSu.GioiTinh),
+      loaiNhanSu: cleanValue(nhanSu.LoaiNhanSu),
       soDienThoai: cleanValue(nhanSu.SoDienThoai),
       donVi: getDisplayName(donVi, ['TenDonVi', 'TenVietTat', 'Display']),
       doiXe: resolveDoiXeDisplay(doiXe, doiXeRef, doiXeLegacyMap),
@@ -521,10 +627,13 @@ function buildDashboardReport(tables, missingSources) {
       soCho: cleanValue(xe.SoCho),
       namSanXuat: cleanValue(xe.NamSanXuat),
       mauSon: cleanValue(xe.MauSon),
+      ngayDuaVaoHoatDong: formatDashboardDate(xe.NgayDuaVaoHoatDong),
+      ngayNgungHoatDong: formatDashboardDate(xe.NgayNgungHoatDong),
       donViChuQuan: getDisplayName(donViChuQuan, ['TenDonVi', 'TenVietTat', 'Display'], cleanValue(xe.Ref_DonViChuQuan)),
       donViQuanLyHienTai: getDisplayName(donViQuanLy, ['TenDonVi', 'TenVietTat', 'Display'], cleanValue(xe.Ref_DonViQuanLyHienTai)),
       doiXe: resolveDoiXeDisplay(doiXe, doiXeRef, doiXeLegacyMap),
       trangThaiXe: cleanValue(xe.TrangThaiXe),
+      soLaiXe: (phanCongByXe.get(xeId) || []).filter((pc) => valueContains(pc.TrangThai, ['đang', 'hieu luc', 'hiệu lực']) || !cleanValue(pc.TrangThai)).length,
       laiXeDangLai: getDisplayName(laiXe, ['HoTen', 'Display'], cleanValue(phanCong?.Ref_NhanSu)),
       soPhuHieu: cleanValue(phuHieu?.SoPhuHieu),
       hanPhuHieu: formatDashboardDate(phuHieu?.NgayHetHan),
@@ -544,11 +653,16 @@ function buildDashboardReport(tables, missingSources) {
     };
   });
 
-  const activeNhanSu = nhanSuReport.filter((item) => valueContains(item.trangThaiLamViec, ['đang', 'lam viec', 'làm việc']));
+  const activeNhanSu = nhanSuReport.filter((item) => item.trangThaiLamViec && !valueContains(item.trangThaiLamViec, ['nghi', 'nghỉ']));
   const inactiveNhanSu = nhanSuReport.filter((item) => valueContains(item.trangThaiLamViec, ['nghi', 'nghỉ']));
-  const activeXe = xeReport.filter((item) => valueContains(item.trangThaiXe, ['đang', 'hoat dong', 'hoạt động']));
+  const activeXe = xeReport.filter((item) => item.trangThaiXe && !valueContains(item.trangThaiXe, ['ngung', 'ngừng']));
   const inactiveXe = xeReport.filter((item) => valueContains(item.trangThaiXe, ['ngung', 'ngừng']));
   const warningCounts = countBy(warnings, 'level');
+
+  // Tổng hợp hồ sơ pháp lý (đếm toàn bộ dòng 10 bảng — khớp bản .gs).
+  const activeXeIds = new Set(activeXe.map((item) => item.idXe).filter(Boolean));
+  const activeNsIds = new Set(activeNhanSu.map((item) => item.idNhanSu).filter(Boolean));
+  const hoSoSummary = buildHoSoSummary(tables, activeXeIds, activeNsIds);
 
   return {
     row: {},
@@ -588,6 +702,7 @@ function buildDashboardReport(tables, missingSources) {
       nhanSu: nhanSuReport,
       xe: xeReport
     },
+    hoSoSummary,
     warnings,
     missingSources,
     generatedAt: new Date().toISOString(),

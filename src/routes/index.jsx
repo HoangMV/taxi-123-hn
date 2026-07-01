@@ -9,7 +9,13 @@ import DeNghiKiemDinhTaximetPage from '../pages/DeNghiKiemDinhTaximetPage';
 import DeNghiTheChapPage from '../pages/DeNghiTheChapPage';
 import DeNghiDaoTaoLaiXePage from '../pages/DeNghiDaoTaoLaiXePage';
 import DeNghiCapPhuHieuXePage from '../pages/DeNghiCapPhuHieuXePage';
-import DashboardPage from '../pages/DashboardPage';
+import DashboardLayout from '../pages/dashboard/DashboardLayout';
+import TongQuanTab from '../pages/dashboard/TongQuanTab';
+import PhuongTienTab from '../pages/dashboard/PhuongTienTab';
+import NhanSuTab from '../pages/dashboard/NhanSuTab';
+import TuanThuTab from '../pages/dashboard/TuanThuTab';
+import BienDongTab from '../pages/dashboard/BienDongTab';
+import BaoCaoTab from '../pages/dashboard/BaoCaoTab';
 import HdldNhanVienLaiXePage from '../pages/HdldNhanVienLaiXePage';
 import KyQuyLaiXePage from '../pages/KyQuyLaiXePage';
 import MenuPage from '../pages/MenuPage';
@@ -22,7 +28,19 @@ import ThoaThuanDanSuPage from '../pages/ThoaThuanDanSuPage';
 
 export const appRoutes = [
   { path: config.ROUTES.HOME, element: <Navigate to={config.ROUTES.MENU} replace /> },
-  { path: config.ROUTES.DASHBOARD, element: <DashboardPage /> },
+  {
+    path: config.ROUTES.DASHBOARD,
+    element: <DashboardLayout />,
+    children: [
+      { index: true, element: <Navigate to={config.ROUTES.DASHBOARD_TONG_QUAN} replace /> },
+      { path: 'tong-quan', element: <TongQuanTab /> },
+      { path: 'phuong-tien', element: <PhuongTienTab /> },
+      { path: 'nhan-su', element: <NhanSuTab /> },
+      { path: 'tuan-thu', element: <TuanThuTab /> },
+      { path: 'bien-dong', element: <BienDongTab /> },
+      { path: 'bao-cao', element: <BaoCaoTab /> }
+    ]
+  },
   { path: config.ROUTES.MENU, element: <MenuPage /> },
   { path: config.ROUTES.THONG_KE_PHU_HIEU_REACT, element: <ThongKePhuHieuDonViPage /> },
   { path: config.ROUTES.DE_NGHI_CAP_PHU_HIEU_XE_REACT, element: <DeNghiCapPhuHieuXePage /> },

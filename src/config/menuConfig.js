@@ -110,6 +110,8 @@ export const menuSections = [
 export const menuItems = menuSections.flatMap((section) => section.items);
 
 export const getPageTitleByPath = (path) => {
-  const matched = menuItems.find((item) => item.path === path);
+  // Khớp chính xác trước; nếu không, khớp theo tiền tố (vd các route con /dashboard/*).
+  const matched = menuItems.find((item) => item.path === path)
+    || menuItems.find((item) => item.path !== '/' && path.startsWith(`${item.path}/`));
   return matched ? matched.text : 'TAXI 123_HN';
 };

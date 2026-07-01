@@ -25,7 +25,8 @@ const MainLayout = ({ children }) => {
         <div className="space-y-1">
           {section.items.map((item) => {
             const Icon = item.icon;
-            const active = location.pathname === item.path;
+            const active = location.pathname === item.path
+              || (item.path !== '/' && location.pathname.startsWith(`${item.path}/`));
 
             return (
               <button
